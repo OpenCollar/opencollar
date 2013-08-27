@@ -73,7 +73,7 @@ integer DIALOG = -9000;
 integer DIALOG_RESPONSE = -9001;
 integer DIALOG_TIMEOUT = -9002;
 
-//string UPMENU = "â†‘";//when your menu hears this, give the parent menu
+//string UPMENU = "↑";//when your menu hears this, give the parent menu
 string UPMENU = "^";
 
 key g_kWearer;
@@ -641,29 +641,29 @@ default
                     }
                     else if (llGetAttached())
                     {
-                        if (sMessage == "tilt right") // was tilt up
+                        if (sMessage == "tilt up")
                         {
                             AdjustRot(<g_fRotNudge, 0, 0>);
                         }
-                        else if (sMessage == "tilt up") // was right
+                        else if (sMessage == "right")
                         {
-                            AdjustRot(<0, g_fRotNudge, 0>);             
+                            AdjustRot(<0, g_fRotNudge, 0>);                
                         }
-                        else if (sMessage == "right") // was tilt left
+                        else if (sMessage == "tilt left")
                         {
-                            AdjustRot(<0, 0, g_fRotNudge>);           
+                            AdjustRot(<0, 0, g_fRotNudge>);                
                         }            
-                        else if (sMessage == "tilt left") // was tilt down
+                        else if (sMessage == "tilt down")
                         {
-                            AdjustRot(<-g_fRotNudge, 0, 0>);              
+                            AdjustRot(<-g_fRotNudge, 0, 0>);                
                         }            
-                        else if (sMessage == "tilt down") // was left
+                        else if (sMessage == "left")
                         {
-                            AdjustRot(<0, -g_fRotNudge, 0>);              
+                            AdjustRot(<0, -g_fRotNudge, 0>);                    
                         }            
-                        else if (sMessage == "left") // was tilt right
+                        else if (sMessage == "tilt right")
                         {
-                            AdjustRot(<0, 0, -g_fRotNudge>);            
+                            AdjustRot(<0, 0, -g_fRotNudge>);                
                         }                        
                     }
                     else
