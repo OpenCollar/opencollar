@@ -1,46 +1,10 @@
-Issue: 20130815.1
+Issue: 20130901.1
 
-Welcome to OpenCollar 3.910 HOTFIX
+Welcome to OpenCollar 3.915
 
-Features & Bugfixes:
+This release contains minor fixes and provides the most stable and enjoyable experience for most. To solve more exotic issues, please try the blue beta updater for the time being. Should an issue persist even on the beta channel, please take a moment to report it at:
 
-- Unified Settings Format
-- New Person-finder Handler
-- Simplified RLV Exceptions Chat Commands
-- Verbose Option
-- Forbid Title (hides hovertext for sub)
-- Follow Me Chat Command fixed
-- Improved Leash Persistency and Behaviour
+https://github.com/OpenCollar/OpenCollarUpdater/issues?state=open 
 
-- Simplified Default Safeword: RED
-- Resizer fixed
-
-Content Upgrade:
-
-- 15 New Textures
-- New Colour Options
-- Animations Revised
-- Couple Animations Revised
-- Leash Holder V and Grabby Post
-- Quick Guide Updated
-- Chain Texture and Lock Sound Revamped
-
-HOTFIX 3.910:
-
-- Couple Animations Fixed & Renamed
-- Pose "bracelets" Re-added
-- New Animations Added
-- Informative Sign on Updater
-- Minor Cosmetic Changes on Base Collar
-
-Tripple Thank You:
-
-- Joy Stipe for an amazing programming job and death defying bugfixing
-- North Glenwalker for battling the Owner Hud into a full release version
-- Silkie Sabra for various updates on the wiki
-- Our patron members for helping with land tier
-- And all the many people who believed in us and donated individually or for running cost
-
-http://www.opencollar.at/
-
-(Release management and final fixes/content upgrade by Wendy Starfall)
+OpenCollar - submission set free™
+www.opencollar.at
