@@ -333,22 +333,28 @@ default
                 else
                 {
                     list lParams = llParseString2List(sStr, [" "], []);
-                    string sElement = llList2String(lParams, 1);
-                    string sTex = llList2String(lParams, 2);
-                    // subroutine to make chat entry of element non-case sensitive
-                    string test;
-                    integer l = 2;
-                    for (; l <= llGetNumberOfPrims(); l++)
+                    # CollarDB:  Verify you have the correct number of parameters otherwise you 
+                    #            pass bogus data here, such as dialog response stringes for buttons
+                    #            clicked.
+                    if (llGetListLength(lParams) > 3)
                     {
-                        test = ElementType(l);
-                        if (llToLower(test) == llToLower(sElement))
+                        string sElement = llList2String(lParams, 1);
+                        string sTex = llList2String(lParams, 2);
+                        // subroutine to make chat entry of element non-case sensitive
+                        string test;
+                        integer l = 2;
+                        for (; l <= llGetNumberOfPrims(); l++)
                         {
-                            sElement = test;
-                            jump break;
+                            test = ElementType(l);
+                            if (llToLower(test) == llToLower(sElement))
+                            {
+                                sElement = test;
+                                jump break;
+                            }
                         }
+                        @break;
+                        SetElementTexture(sElement, sTex);
                     }
-                    @break;
-                    SetElementTexture(sElement, sTex);
                 }
             }
         }
