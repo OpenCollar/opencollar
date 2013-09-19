@@ -35,6 +35,7 @@ string DUMPCACHE = "Dump Cache";
 string PREFUSER = "Pref User";
 string PREFDESI = "Pref Desig"; // yes, I hate cutoff buttons
 string WIKI = "Online Guide";
+string RESETALL = "Reset ALL;
 string UPMENU = "^";
 key g_kMenuID;
 key g_kWearer;
@@ -116,7 +117,8 @@ DoMenu(key keyID, integer iAuth)
     string sPrompt = "Pick an option.\nClick '" + DUMPCACHE + "' to dump all current settings to chat";
     sPrompt += "\n(You can then copy + paste them, overwriting your defaultsettings notecard)\n";
     sPrompt += "Click '" + WIKI + "' to get a link to the OpenCollar online user guide\n";
-    list lButtons = [DUMPCACHE, WIKI];
+    sPrompt += "Click '" + RESETALL + "' to reset the collar to its default settings\n";
+    list lButtons = [DUMPCACHE, WIKI, RESETALL];
     if (USER_PREF)
     {
         sPrompt += "Click '" + PREFDESI + "' to give Designer settings priority\n";
