@@ -1,10 +1,8 @@
-Issue: 20130911.1
+Issue: 20130925.1
 
-Welcome to OpenCollar 3.917
+OpenCollar 3.930 RELEASED
 
-This release contains a fix for the spy plugin contributed by LoveMeNow2012. To solve any exotic issues, please try the blue beta updater for the time being. Should an issue persist even on the beta channel, please take a moment to report it at:
+If you missed the auto-update, you can get an updater if navigating to Help/Debug in your collar menu and clicking Get Updater. Updaters are also available at the official locations at Keraxic and Qandico, as well as from the many network vendors found across the grid and on the marketplace. With this version we are closing the gap in between the beta and main channel. If you haven't already you really should update!
 
-https://github.com/OpenCollar/OpenCollarUpdater/issues?state=open 
-
-OpenCollar - submission set free™
-www.opencollar.at
+Changelog & Details:
+http://www.opencollar.at/blog.html
