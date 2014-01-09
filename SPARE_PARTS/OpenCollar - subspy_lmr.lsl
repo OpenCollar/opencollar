@@ -17,8 +17,23 @@
 //refactored link message handling
 //modified by: Zopf Resident - Ray Zopf (Raz)
 //Additions: changes on save settings, small bugfixes, added reset on runaway, warning on startup; better handling of para rp
-//07. Nov 2013
+//27. Dec 2013
 //
+//Files:
+//OpenCollar - subspy.lsl
+//
+//Prequisites: OC
+//Notecard format: ---
+//basic help:
+
+//bug: heap collision on too much chat text
+
+//todo: rework link_message{}
+//todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be
+//todo: rework listener reporting, currently much text is just discarded
+//todo: play with llListen and llGetFreeMemory
+//todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Script_Memory_Limits
+//todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Text_Storage
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -26,7 +41,7 @@
 //GLOBAL VARIABLES
 //===============================================
 
-//integer g_iDebugMode=TRUE; // set to TRUE to enable Debug messages
+integer g_iDebugMode=TRUE; // set to TRUE to enable Debug messages
 
 
 //internal variables
@@ -43,7 +58,8 @@ integer g_iListenCap = 1000;//throw away old chat lines once we reach this many 
 integer g_iListener;
 string g_sOffMsg = "Spy add-on is now disabled";
 
-list g_lOwners;
+string g_sLoc;
+
 integer g_iTraceEnabled=FALSE;
 integer g_iRadarEnabled=FALSE;
 integer g_iListenEnabled=FALSE;
@@ -90,37 +106,52 @@ string UPMENU = "BACK";
 string g_sParentMenu = "AddOns";
 string g_sSubMenu = "SubSpy";
 
+list g_lOwners;
+string g_sSubName;
+
 key g_kDialogSpyID;
 key g_kDialogRadarSettingsID;
 
-string g_sSubName;
-string g_sLoc;
 key g_kWearer;
 
 //===============================================
 //PREDEFINED FUNCTIONS
 //===============================================
 
-/*
-Debug(string sMsg){
+
+//===============================================================================
+//= parameters   :    string    sMsg    message string received
+//=
+//= return        :    none
+//=
+//= description  :    output debug messages
+//=
+//===============================================================================
+
+Debug(string sMsg)
+{
     if (!g_iDebugMode) return;
-    llOwnerSay("["+llGetScriptName()+"]" + sMsg);
+    Notify(g_kWearer,llGetScriptName() + ": " + sMsg,TRUE);
 }
-*/
-string GetScriptID(){
+
+
+string GetScriptID()
+{
     // strip away "OpenCollar - " leaving the script's individual name
     list parts = llParseString2List(llGetScriptName(), ["-"], []);
     return llStringTrim(llList2String(parts, 1), STRING_TRIM) + "_";
 }
 
-string PeelToken(string in, integer slot){
+string PeelToken(string in, integer slot)
+{
     integer i = llSubStringIndex(in, "_");
     if (!slot) return llGetSubString(in, 0, i);
     return llGetSubString(in, i + 1, -1);
 }
 
-DoReports(integer iBufferFull) {
-    //Debug("doing reports, iBufferFull: "+(string)iBufferFull);
+DoReports(integer iBufferFull) 
+{
+    Debug("doing reports, iBufferFull: "+(string)iBufferFull);
     string sReport;
 
     if (g_iRadarEnabled && !iBufferFull) { //don't report radar if triggered by full chat buffer
@@ -141,18 +172,21 @@ DoReports(integer iBufferFull) {
         }
     }
 
-    if (llStringLength(sReport)){
+    if (llStringLength(sReport))
+	{
         sReport = "Activity report for " + g_sSubName + " at " + GetTimestamp() + "\n" + sReport;
         NotifyOwners(sReport);
     }
 }
 
 
-UpdateSensor(){
+UpdateSensor()
+{
     llSensorRemove();
     //since we use the repeating sensor as a timer, turn it on if any of the spy reports are turned on, not just radar
     //also, only start the sensor/timer if we're attached so there's no spam from collars left lying around
-    if (llGetAttached() && (g_iTraceEnabled || g_iRadarEnabled || g_iListenEnabled) ){
+    if (llGetAttached() && (g_iTraceEnabled || g_iRadarEnabled || g_iListenEnabled) )
+	{
         //Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
         //Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
         llSensorRepeat("" ,"" , AGENT, g_iSensorRange, PI, (float)g_iSensorRepeat);
@@ -160,28 +194,35 @@ UpdateSensor(){
 }
 
 
-UpdateListener(){
+UpdateListener(
+{
+	Debug("updatelistener");
     if (g_iListenEnabled && llGetAttached()){ //turn on listener if not already on
         if (!g_iListener){
             //Debug("Enabling listener");
             g_iListener = llListen(0, "", g_kWearer, "");
         }
-    } else {  //turn off listener if on
+    } 
+	else 
+	{
+	//turn off listener if on
         if (g_iListener){
-            //Debug("Disabling listener");
+			Debug("turning listener off");
             llListenRemove(g_iListener);
             g_iListener = 0;
         }
     }
 }
 
-string GetTimestamp() {  // Return a string of the date and time
+string GetTimestamp()  // Return a string of the date and time
+{
     integer t = (integer)llGetWallclock(); // seconds since midnight
     return GetPSTDate() + " " + (string)(t / 3600) + ":" + PadNum((t % 3600) / 60) + ":" + PadNum(t % 60);
 }
 
 
-string PadNum(integer sValue){
+string PadNum(integer sValue)
+{
     if(sValue < 10){
         return "0" + (string)sValue;
     }
@@ -189,7 +230,9 @@ string PadNum(integer sValue){
 }
 
 
-string GetPSTDate(){ //Convert the date from UTC to PST if GMT time is less than 8 hours after midnight (and therefore tomorow's date).
+string GetPSTDate()
+
+{ //Convert the date from UTC to PST if GMT time is less than 8 hours after midnight (and therefore tomorow's date).
     string sDateUTC = llGetDate();
     if (llGetGMTclock() < 28800) // that's 28800 seconds, a.k.a. 8 hours.
     {
@@ -211,7 +254,8 @@ string GetLocation() {
 }
 
 
-key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth){
+key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth)
+{
     key kID = llGenerateKey();
     llMessageLinked(LINK_SET, DIALOG, (string)kRCPT + "|" + sPrompt + "|" + (string)iPage + "|" 
     + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kID);
@@ -219,40 +263,46 @@ key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integ
 } 
 
 
-DialogSpy(key kID, integer iAuth){
+DialogSpy(key kID, integer iAuth)
+{
     string sPrompt;
-    if (iAuth != COMMAND_OWNER) {
+    if (iAuth != COMMAND_OWNER)
+	{
         sPrompt = "\n\nACCESS DENIED: Primary Owners Only";
         g_kDialogSpyID = Dialog(kID, sPrompt, [], [UPMENU], 0, iAuth);
         return;
     }
     list lButtons ;
-    sPrompt = "\n\n- Access Granted to Primary Owners Only -\n";
-    sPrompt += "\nTrace notifies if " + g_sSubName + " teleports.\n";
-    sPrompt += "\nRadar and Listen sending reports every "+ (string)((integer)g_iSensorRepeat/60) + " minutes on who joined or left " + g_sSubName + " in a range of " + (string)((integer)g_iSensorRange) + " meters and on what " + g_sSubName + " wrote in Nearby Chat.\n";
-    sPrompt += "\nListen transmits directly what " + g_sSubName + " says in Nearby Chat. Other nearby parties chat will NOT be transmitted!\n - Messages may get capped and not all text may get transmitted -";
 
-    if(g_iTraceEnabled){
+    if(g_iTraceEnabled)
+	{
         lButtons += ["Trace Off"];
     }else{
         lButtons += ["Trace On"];
     }
-    if(g_iRadarEnabled){
+    if(g_iRadarEnabled)
+	{
         lButtons += ["Radar Off"];
     }else{
         lButtons += ["Radar On"];
     }
-    if(g_iListenEnabled){
+    if(g_iListenEnabled)
+	{
         lButtons += ["Listen Off"];
     }else{
         lButtons += ["Listen On"];
     }
     lButtons += ["RadarSettings"];
+    sPrompt = "\n\n- Access Granted to Primary Owners Only -\n";
+    sPrompt += "\nTrace notifies if " + g_sSubName + " teleports.\n";
+    sPrompt += "\nRadar and Listen sending reports every "+ (string)((integer)g_iSensorRepeat/60) + " minutes on who joined or left " + g_sSubName + " in a range of " + (string)((integer)g_iSensorRange) + " meters and on what " + g_sSubName + " wrote in Nearby Chat.\n";
+    sPrompt += "\nListen transmits directly what " + g_sSubName + " says in Nearby Chat. Other nearby parties chat will NOT be transmitted!\n - Messages may get capped and not all text may get transmitted -";
     g_kDialogSpyID = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);
 }
 
 
-DialogRadarSettings(key kID, integer iAuth){
+DialogRadarSettings(key kID, integer iAuth)
+{
     list lButtons;
     string sPromt = "\n\nSetup for the Radar Repeats, Sensors and Report Frequency:\n";
     sPromt += "\nRadar Range is set to: " + (string)((integer)g_iSensorRange) + " meters.\n";
@@ -263,19 +313,23 @@ DialogRadarSettings(key kID, integer iAuth){
 }
 
 
-integer GetOwnerChannel(key kOwner, integer iOffset){
+integer GetOwnerChannel(key kOwner, integer iOffset)
+{
     integer iChan = (integer)("0x"+llGetSubString((string)kOwner,2,7)) + iOffset;
-    if (iChan>0){
+    if (iChan>0)
+	{
         iChan=iChan*(-1);
     }
-    if (iChan > -10000){
+    if (iChan > -10000)
+	{
         iChan -= 30000;
     }
     return iChan;
 }
 
 
-Notify(key kID, string sMsg, integer iAlsoNotifyWearer){
+Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
+{
     while (llStringLength(sMsg) > 0){    //split messages over 1024 chars long over multiple messages
         integer index=1023;
         if (llStringLength(sMsg)<1024){
@@ -301,8 +355,9 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer){
     }
 }
 
-NotifyOwners(string sMsg){
-    //Debug("notifyowners");
+NotifyOwners(string sMsg)
+{
+    Debug("notifyowners");
     integer n;
     integer iStop = llGetListLength(g_lOwners);
     for (n = 0; n < iStop; n += 2)
@@ -312,19 +367,20 @@ NotifyOwners(string sMsg){
         vector vOwnerPos = (vector)llList2String(llGetObjectDetails(kAv, [OBJECT_POS]), 0);
         if (vOwnerPos == ZERO_VECTOR || llVecDist(vOwnerPos, llGetPos()) > 20.0)//vOwnerPos will be ZERO_VECTOR if not in sim
         {
-            //Debug("notifying " + (string)kAv);
+            Debug("notifying " + (string)kAv);
             Notify(kAv, sMsg,FALSE);
         }
         else
         {
             if (llSubStringIndex(sMsg, g_sOffMsg) != ERR_GENERIC && kAv != g_kWearer) Notify(kAv, sMsg, FALSE);
-            //Debug((string)kAv + " is right next to you! not notifying.");
+            Debug((string)kAv + " is right next to you! not notifying.");
         }
     }
 }
 
 
-SaveSetting(string sOption, string sValue){
+SaveSetting(string sOption, string sValue)
+{
     //Debug("Saving setting: " + sOption + "=" + sValue);
     llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);   //send value to settings script
 }
@@ -392,17 +448,22 @@ performSpyCommand (string sStr, key kID){
     }
 }
 
+
+//===============================================
 //===============================================
 //MAIN
+//===============================================
 //===============================================
 
 default
 {
-    on_rez(integer iNum){
+    on_rez(integer iNum)
+	{
         llResetScript();
     }
 
-    state_entry() {
+    state_entry()
+	{
         g_kWearer = llGetOwner();
         g_sSubName = llKey2Name(g_kWearer);
         g_sLoc=GetLocation();
@@ -411,8 +472,10 @@ default
         llSetTimerEvent(4.0);   //wait for data before we do anything else... see timer event.
     }
 
-    listen(integer channel, string sName, key kID, string sMessage) {
-        if(kID == g_kWearer && channel == 0) {
+    listen(integer channel, string sName, key kID, string sMessage)
+	{
+        if(kID == g_kWearer && channel == 0)
+		{
             //process emotes, replace with sub name
             if(llGetSubString(sMessage, 0, 3) == "/me ") sMessage=g_sSubName + llGetSubString(sMessage, 3, -1);
             else sMessage=g_sSubName + ": " + sMessage;
@@ -444,8 +507,13 @@ default
         }
     }
 
-    link_message(integer iSender, integer iNum, string sStr, key kID) {
+	//listen for linked messages from OC scripts
+    //-----------------------------------------------
+	
+    link_message(integer iSender, integer iNum, string sStr, key kID) 
+	{
         //Debug("link_message: Sender = "+ (string)iSender + ", iNum = "+ (string)iNum + ", string = " + (string)sStr +", ID = " + (string)kID);
+		
         if (iNum >= COMMAND_OWNER && iNum <= COMMAND_WEARER){   //user command, post auth
             //Debug("UserCommand: "+sStr);
             sStr = llToLower(sStr);
@@ -466,21 +534,27 @@ default
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
             {
                 g_lOwners = llParseString2List(sValue, [","], []);
-                //Debug("owners: " + sValue);
+                Debug("owners: " + sValue);
             }
-        } else if (iNum == LM_SETTING_RESPONSE) {
-            list lParams = llParseString2List(sStr, ["="], []);
-            string sToken = llList2String(lParams, 0);
-            string sValue = llList2String(lParams, 1);
-            integer i = llSubStringIndex(sToken, "_");
+        } 
+			else if (iNum == LM_SETTING_RESPONSE)
+			{
+				list lParams = llParseString2List(sStr, ["="], []);
+				string sToken = llList2String(lParams, 0);
+				string sValue = llList2String(lParams, 1);
+				integer i = llSubStringIndex(sToken, "_");
 
-            if(sToken == "auth_owner" && llStringLength(sValue) > 0){  //owners list
+			Debug("parse settings: "+sToken+" -- "+sValue);
+			
+            if(sToken == "auth_owner" && llStringLength(sValue) > 0)
+			{  //owners list
                 g_lOwners = llParseString2List(sValue, [","], []);
-                //Debug("owners: " + sValue);
+                Debug("owners: " + sValue);
                 g_iGotSettingOwners=TRUE;
-            } else if (llGetSubString(sToken, 0, i) == g_sScript) {    //subspy data
+            } else if (llGetSubString(sToken, 0, i) == g_sScript)
+			{    //subspy data
                 string sOption = llToLower(llGetSubString(sToken, i+1, -1));
-                //Debug("recieved settings: "+sOption+"="+sValue);
+                Debug("got settings from db: " + sOption + sValue);
 
                 if (sOption == "trace") {
                     g_iGotSettingTrace=TRUE;
@@ -502,10 +576,18 @@ default
                     g_iSensorRepeat=(integer)sValue;
                 }
             }
-        } else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu) llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
-        else if(iNum == COMMAND_SAFEWORD) TurnAllOff("safeword"); //we recieved a safeword sCommand, turn all off
-        else if (iNum == DIALOG_RESPONSE) {
-            if (kID == g_kDialogSpyID){  //settings change from main subspy
+        } else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
+		
+		{
+		llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
+			}
+        else if(iNum == COMMAND_SAFEWORD) { //we recieved a safeword sCommand, turn all off
+			TurnAllOff("safeword");
+		}
+        else if (iNum == DIALOG_RESPONSE) 
+		{
+            if (kID == g_kDialogSpyID)
+			{  //settings change from main subspy
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
                 key kAv = (key)llList2String(lMenuParams, 0);
                 string sMessage = llList2String(lMenuParams, 1);
@@ -571,9 +653,12 @@ default
         }
     }
 
-    sensor(integer iNum){
+    sensor(integer iNum)
+	{
         //Debug("Hit sensor event, "+(string)iNum);
-        if (g_iRadarEnabled) { //put nearby avs in list
+        if (g_iRadarEnabled) 
+		{ 
+			//put nearby avs in list
             list lAvBuffer;
             while (iNum) lAvBuffer += llDetectedName(--iNum);
             
@@ -589,21 +674,35 @@ default
         }
     }
 
-    no_sensor() {
+    no_sensor() 
+	{
         g_sCurrentAVs = "None";
         DoReports(FALSE);
     }
 
-    attach(key kID) {
-        if(kID != NULL_KEY) g_sLoc = GetLocation();
+    attach(key kID) 
+	{
+        if(kID != NULL_KEY) 
+		{
+			g_sLoc = GetLocation();
+		}
     }
 
-    changed(integer iChange) {
-        if((iChange & CHANGED_TELEPORT) || (iChange & CHANGED_REGION)) {
+    changed(integer iChange) 
+	{
+        if((iChange & CHANGED_TELEPORT) || (iChange & CHANGED_REGION))
+		{
             g_sOldAVBuffer="";
-            if(g_iTraceEnabled) g_sTPBuffer += "Teleport from " + g_sLoc + " to " +  GetLocation()+ " at " + GetTimestamp() + ".\n";
+            if(g_iTraceEnabled)
+			{
+				g_sTPBuffer += "Teleport from " + g_sLoc + " to " +  GetLocation()+ " at " + GetTimestamp() + ".\n";
+			}
             g_sLoc = GetLocation();
         }
-        if (iChange & CHANGED_OWNER)  llResetScript();
+		
+        if (iChange & CHANGED_OWNER)
+		{
+			llResetScript();
+		}
     }
 }
