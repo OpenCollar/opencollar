@@ -23,6 +23,7 @@
 
 //bug: heap collision on too much chat text
 
+//todo: add who changed a setting
 //todo: rework link_message{}
 //todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be
 //todo: rework listener reporting, currently much text is just discarded
@@ -647,7 +648,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
             }
             else if(sStr == "listen on")
             {
-                if (!g_iRadarEnabled) g_lAVBuffer += ["Listen turned on at " + GetTimestamp() + "."];
+                if (!g_iRadarEnabled) g_lChatBuffer += ["Listener turned on at " + GetTimestamp() + "."];
                 g_iListenEnabled=TRUE;
                 SaveSetting(sStr);
                 EnforceSettings();
@@ -793,7 +794,7 @@ default
                         if (!g_iListenEnabled) {
                             g_iListenEnabled=TRUE;
                             if (g_iTraceEnabled) g_lChatBuffer += ["Listener turned on at " + GetLocation() + " at " + GetTimestamp() + "."];
-                            else g_lChatBuffer += ["Listener turned on at " + GetTimestamp() + "."];
+                                else g_lChatBuffer += ["Listener turned on at " + GetTimestamp() + "."];
                         }
                     }
                     else g_iListenEnabled=FALSE;
@@ -900,10 +901,10 @@ default
         {
             g_sLoc = GetLocation();
             //record initial position if trace enabled
-                if (g_iTraceEnabled)
-                {
-                    g_lTPBuffer += ["Rezzed at " + GetLocation() + " at " + GetTimestamp() + "."];
-                }
+            if (g_iTraceEnabled)
+            {
+                g_lTPBuffer += ["Rezzed at " + g_sLoc + " at " + GetTimestamp() + "."];
+            }
         }
     }
 

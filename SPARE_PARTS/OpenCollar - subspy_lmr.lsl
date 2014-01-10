@@ -27,7 +27,9 @@
 //basic help:
 
 //bug: heap collision on too much chat text
+//bug/todo: check if Owner (close to collar) and Wearer get message on turning functions on via Notify() (was addition to other version of subspy)
 
+//todo: add who changed a setting
 //todo: rework link_message{}
 //todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be
 //todo: rework listener reporting, currently much text is just discarded
@@ -522,10 +524,11 @@ performSpyCommand (string sStr, key kID)
 
     if(sStr == "trace on")
     {
+        g_sLoc=GetLocation();
+        if (!g_iTraceEnabled) g_sTPBuffer += "Trace turned on at " + g_sLoc + " at " + GetTimestamp() + ".\n";
         g_iTraceEnabled=TRUE;
         SaveSetting("trace","on");
         Notify(kID, "Teleport tracing is now turned on.", TRUE);
-        g_sLoc=GetLocation();
     }
     else if(sStr == "trace off")
     {
@@ -535,6 +538,7 @@ performSpyCommand (string sStr, key kID)
     }
     else if(sStr == "radar on")
     {
+        //if (!g_iRadarEnabled) g_lAVBuffer += ["Radar turned on at " + GetTimestamp() + "."];
         g_sOldAVBuffer = "";
         g_iRadarEnabled=TRUE;
         SaveSetting("radar","on");
@@ -550,6 +554,7 @@ performSpyCommand (string sStr, key kID)
     }
     else if(sStr == "listen on")
     {
+        if (!g_iRadarEnabled) g_sChatBuffer += "Listener turned on at " + GetTimestamp() + ".\n";
         g_iListenEnabled=TRUE;
         SaveSetting("listen","on");
         UpdateListener();
@@ -691,15 +696,32 @@ default
 
                 if (sOption == "trace") {
                     g_iGotSettingTrace=TRUE;
-                    if (sValue=="on") g_iTraceEnabled=TRUE;
+                    if (sValue=="on") {
+                        if (!g_iTraceEnabled) {
+                            g_sLoc=GetLocation();
+                            g_iTraceEnabled=TRUE;
+                            g_sTPBuffer += "Trace turned on at " + g_sLoc + " at " + GetTimestamp() + ".\n";
+                        }
+                    }
                     else g_iTraceEnabled=FALSE;
                 } else if (sOption == "radar") {
                     g_iGotSettingRadar=TRUE;
-                    if (sValue=="on") g_iRadarEnabled=TRUE;
+                    if (sValue=="on") {
+                        if (!g_iRadarEnabled) {
+                            g_iRadarEnabled=TRUE;
+                            //if (g_iTraceEnabled) g_lAVBuffer += ["Radar turned on at " + GetLocation() + " at " + GetTimestamp() + "."];
+                            //    else g_lAVBuffer += ["Radar turned on at " + GetTimestamp() + "."];
+                        }
                     else g_iRadarEnabled=FALSE;
                 } else if (sOption == "listen") {
                     g_iGotSettingListen=TRUE;
-                    if (sValue=="on") g_iListenEnabled=TRUE;
+                    if (sValue=="on") {
+                        if (!g_iListenEnabled) {
+                            g_iListenEnabled=TRUE;
+                            if (g_iTraceEnabled) g_sChatBuffer += "Listener turned on at " + GetLocation() + " at " + GetTimestamp() + ".\n";
+                                else g_sChatBuffer += "Listener turned on at " + GetTimestamp() + ".\n";
+                        }
+                    }
                     else g_iListenEnabled=FALSE;
                 } else if (sOption == "meters") {
                     g_iGotSettingMeters=TRUE;
@@ -830,6 +852,11 @@ default
         if(kID != NULL_KEY)
         {
             g_sLoc = GetLocation();
+            //record initial position if trace enabled
+            if (g_iTraceEnabled)
+            {
+                g_sTPBuffer += "Rezzed at " + g_sLoc + " at " + GetTimestamp() + ".\n";
+            }
         }
     }
 
@@ -841,8 +868,8 @@ default
             if(g_iTraceEnabled)
             {
                 g_sTPBuffer += "Teleport from " + g_sLoc + " to " +  GetLocation()+ " at " + GetTimestamp() + ".\n";
+                g_sLoc = GetLocation();
             }
-            g_sLoc = GetLocation();
         }
 
         if (iChange & CHANGED_OWNER)
