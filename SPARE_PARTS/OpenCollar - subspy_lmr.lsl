@@ -167,19 +167,19 @@ string PeelToken(string in, integer slot)
 DoReports(integer iBufferFull)
 {
     Debug("doing reports, iBufferFull: "+(string)iBufferFull);
-	//build a report containing:
+    //build a report containing:
     //who is nearby (as listed in g_lAvBuffer)
     //where the sub has TPed (s stored in g_lTPBuffer)
     //what the sub has sakID (as stored in g_lChatBuffer)
     string sReport;
 
     if (g_iRadarEnabled && !iBufferFull)
-	{ //don't report radar if triggered by full chat buffer
+    { //don't report radar if triggered by full chat buffer
         if (g_sCurrentAVs != g_sOldAVBuffer) sReport += "Nearby avatars:\n" + g_sCurrentAVs + ".\n";  //if avis on radar are different from last time
     }
 
     if (g_iTraceEnabled && !iBufferFull)
-	{ //don't report trace if triggered by full chat buffer
+    { //don't report trace if triggered by full chat buffer
         if (llStringLength(g_sTPBuffer)) {
             sReport += g_sTPBuffer;
             g_sTPBuffer = "";
@@ -187,7 +187,7 @@ DoReports(integer iBufferFull)
     }
 
     if (g_iListenEnabled)
-	{
+    {
         if (llStringLength(g_sChatBuffer)>0){
             sReport += g_sChatBuffer;
             g_sChatBuffer = "";
@@ -195,13 +195,13 @@ DoReports(integer iBufferFull)
     }
 
     if (llStringLength(sReport))
-	{
+    {
         sReport = "Activity report for " + g_sSubName + " at " + GetTimestamp() + "\n" + sReport;
         NotifyOwners(sReport);
     }
 
     //flush buffers
-	////Debug("flush buffers");
+    ////Debug("flush buffers");
     ////if (!iBufferFull) g_lAvBuffer = [];
     ////g_lChatBuffer = [];
     ////if (!iBufferFull) g_lTPBuffer = [];
@@ -214,7 +214,7 @@ UpdateSensor()
     //since we use the repeating sensor as a timer, turn it on if any of the spy reports are turned on, not just radar
     //also, only start the sensor/timer if we're attached so there's no spam from collars left lying around
     if (llGetAttached() && (g_iTraceEnabled || g_iRadarEnabled || g_iListenEnabled) )
-	{
+    {
         Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
         //Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
         llSensorRepeat("" ,"" , AGENT, (float)g_iSensorRange, PI, (float)g_iSensorRepeat);
@@ -224,22 +224,22 @@ UpdateSensor()
 
 UpdateListener()
 {
-	Debug("updatelistener");
+    Debug("updatelistener");
     if (g_iListenEnabled && llGetAttached())
-	{ 
-		//turn on listener if not already on
+    {
+        //turn on listener if not already on
         if (!g_iListener)
-		{
+        {
             Debug("turning listener on");
             g_iListener = llListen(0, "", g_kWearer, "");
         }
-    } 
-	else 
-	{
-		//turn off listener if on
+    }
+    else
+    {
+        //turn off listener if on
         if (g_iListener)
-		{
-			Debug("turning listener off");
+        {
+            Debug("turning listener off");
             llListenRemove(g_iListener);
             g_iListener = 0;
         }
@@ -277,7 +277,7 @@ string GetTimestamp()  // Return a string of the date and time
 string PadNum(integer sValue)
 {
     if(sValue < 10)
-	{
+    {
         return "0" + (string)sValue;
     }
     return (string)sValue;
@@ -310,52 +310,52 @@ string GetLocation() {
 key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth)
 {
     key kID = llGenerateKey();
-    llMessageLinked(LINK_SET, DIALOG, (string)kRCPT + "|" + sPrompt + "|" + (string)iPage + "|" 
+    llMessageLinked(LINK_SET, DIALOG, (string)kRCPT + "|" + sPrompt + "|" + (string)iPage + "|"
     + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kID);
     return kID;
-} 
+}
 
 
 DialogSpy(key kID, integer iAuth)
 {
     string sPrompt;
     if (iAuth != COMMAND_OWNER)
-	{
+    {
         sPrompt = "\n\nACCESS DENIED: Primary Owners Only";
         g_kDialogSpyID = Dialog(kID, sPrompt, [], [UPMENU], 0, iAuth);
         return;
     }
-	string sTStatus;
-	string sRStatus;
-	string sLStatus;
-	sTStatus = sRStatus = sLStatus = "off";
+    string sTStatus;
+    string sRStatus;
+    string sLStatus;
+    sTStatus = sRStatus = sLStatus = "off";
     list lButtons ;
 
     if(g_iTraceEnabled)
-	{
+    {
         lButtons += ["Trace OFF"];
-		sTStatus = "on";
+        sTStatus = "on";
     }
-	else
-	{
+    else
+    {
         lButtons += ["Trace On"];
     }
     if(g_iRadarEnabled)
-	{
+    {
         lButtons += ["Radar OFF"];
-    	sRStatus = "on";
-	}
-	else
-	{
+        sRStatus = "on";
+    }
+    else
+    {
         lButtons += ["Radar On"];
     }
     if(g_iListenEnabled)
-	{
+    {
         lButtons += ["Listen OFF"];
-		sLStatus = "on";
-	}
-	else
-	{
+        sLStatus = "on";
+    }
+    else
+    {
         lButtons += ["Listen On"];
     }
     lButtons += ["RadarSettings"];
@@ -363,7 +363,7 @@ DialogSpy(key kID, integer iAuth)
     sPrompt += "\nTrace ("+sTStatus+") notifies if " + g_sSubName + " teleports.\n";
     sPrompt += "\nRadar ("+sRStatus+") and Listen ("+sLStatus+") sending reports every "+ (string)((integer)g_iSensorRepeat/60) + " minutes on who joined or left " + g_sSubName + " in a range of " + (string)((integer)g_iSensorRange) + " meters and on what " + g_sSubName + " wrote in Nearby Chat.\n";
     sPrompt += "\nListen transmits directly what " + g_sSubName + " says in Nearby Chat. Other nearby parties chat will NOT be transmitted!\n - Messages may get capped and not all text may get transmitted -";
-	
+
     g_kDialogSpyID = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);
 }
 
@@ -384,11 +384,11 @@ integer GetOwnerChannel(key kOwner, integer iOffset)
 {
     integer iChan = (integer)("0x"+llGetSubString((string)kOwner,2,7)) + iOffset;
     if (iChan>0)
-	{
+    {
         iChan=iChan*(-1);
     }
     if (iChan > -10000)
-	{
+    {
         iChan -= 30000;
     }
     return iChan;
@@ -450,35 +450,35 @@ NotifyOwners(string sMsg)
 SaveSetting(string sOption, string sValue)
 {
     //Debug("Saving setting: " + sOption + "=" + sValue);
-    llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);	//send value to settings script
+    llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);   //send value to settings script
 }
 
 
 EnforceSettings()
 {
-	
-	
-	
+
+
+
     Debug("enforce settings, length: "+ (string)iListLength);
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
@@ -497,61 +497,63 @@ TurnAllOff(string command)
     SaveSetting("radar","off");
     g_iListenEnabled = FALSE;
     SaveSetting("listen","off");
-    
+
     UpdateSensor();
     UpdateListener();
-    
+
     if ("safeword" == command) NotifyOwners(g_sOffMsg+" on "+g_sSubName);
     Notify(g_kWearer,g_sOffMsg,FALSE);
 }
 
 
-performSpyCommand (string sStr, key kID){
+performSpyCommand (string sStr, key kID)
+{
     //Debug("Performing subspy command: "+sStr);
+
     if(sStr == "trace on")
-	{
+    {
         g_iTraceEnabled=TRUE;
         SaveSetting("trace","on");
         Notify(kID, "Teleport tracing is now turned on.", TRUE);
         g_sLoc=GetLocation();
-    } 
-	else if(sStr == "trace off")
-	{
+    }
+    else if(sStr == "trace off")
+    {
         g_iTraceEnabled=FALSE;
         SaveSetting("trace","off");
         Notify(kID, "Teleport tracing is now turned off.", TRUE);
     }
-	else if(sStr == "radar on")
-	{
+    else if(sStr == "radar on")
+    {
         g_sOldAVBuffer = "";
         g_iRadarEnabled=TRUE;
         SaveSetting("radar","on");
         UpdateSensor();
         Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m for " + g_sSubName + " is now turned ON.", TRUE);
     }
-	else if(sStr == "radar off")
-	{
+    else if(sStr == "radar off")
+    {
         g_iRadarEnabled=FALSE;
         SaveSetting("radar","off");
         UpdateSensor();
         Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m for " + g_sSubName + " is now turned OFF.", TRUE);
     }
-	else if(sStr == "listen on")
-	{
+    else if(sStr == "listen on")
+    {
         g_iListenEnabled=TRUE;
         SaveSetting("listen","on");
         UpdateListener();
         Notify(kID, "Chat listener enabled.", TRUE);
     }
-	else if(sStr == "listen off")
-	{
+    else if(sStr == "listen off")
+    {
         g_iListenEnabled=FALSE;
         SaveSetting("listen","off");
         UpdateListener();
         Notify(kID, "Chat listener disabled.", TRUE);
     }
-	else if(llSubStringIndex(sStr,"meters")==0)
-	{
+    else if(llSubStringIndex(sStr,"meters")==0)
+    {
         //Debug("got meters command");
     } else if(llSubStringIndex(sStr,"minutes")==0) {
         //Debug("got minutes command");
@@ -570,26 +572,26 @@ performSpyCommand (string sStr, key kID){
 default
 {
     on_rez(integer iNum)
-	{
+    {
         llResetScript();
     }
 
     state_entry()
-	{
+    {
         g_kWearer = llGetOwner();
         g_sSubName = llKey2Name(g_kWearer);
         g_sLoc=GetLocation();
         g_lOwners = [g_kWearer, g_sSubName];  // initially self-owned until we hear a db message otherwise
 
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
-		
+
         llSetTimerEvent(4.0);   //wait for data before we do anything else... see timer event.
     }
 
     listen(integer channel, string sName, key kID, string sMessage)
-	{
+    {
         if(kID == g_kWearer && channel == 0)
-		{
+        {
             //process emotes, replace with sub name
             if(llGetSubString(sMessage, 0, 3) == "/me ") sMessage=g_sSubName + llGetSubString(sMessage, 3, -1);
             else sMessage=g_sSubName + ": " + sMessage;
@@ -602,7 +604,7 @@ default
                 DoReports(TRUE);
                 //Debug("Report has been run, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
             }
-        
+
             //if this line alone would overflow the buffer, trim it, and send it now
             while (iMessageLength > g_iListenCap) {  //if message longer than allowed buffer length, trim it and replace the last few bytes with warning string
                 string sFragment = llDeleteSubString(sMessage, 0, g_iListenCap);
@@ -621,17 +623,17 @@ default
         }
     }
 
-	//listen for linked messages from OC scripts
+    //listen for linked messages from OC scripts
     //-----------------------------------------------
 
     link_message(integer iSender, integer iNum, string sStr, key kID)
-	{
+    {
         //Debug("link_message: Sender = "+ (string)iSender + ", iNum = "+ (string)iNum + ", string = " + (string)sStr +", ID = " + (string)kID);
-		
+
         if (iNum >= COMMAND_OWNER && iNum <= COMMAND_WEARER){   //user command, post auth
             //Debug("UserCommand: "+sStr);
             sStr = llToLower(sStr);
-            if (iNum != COMMAND_OWNER) { 
+            if (iNum != COMMAND_OWNER) {
                 if(~llListFindList(g_lCmds, [sStr])) Notify(kID, "Sorry, only an owner can set spy settings.", FALSE);  //reject commands from anyone except owner
             } else { // COMMAND_OWNER
                 //Debug("UserCommand - COMMAND_OWNER");
@@ -650,27 +652,27 @@ default
                 g_lOwners = llParseString2List(sValue, [","], []);
                 Debug("owners: " + sValue);
             }
-        } 
-			else if (iNum == LM_SETTING_RESPONSE)
-			{
-				list lParams = llParseString2List(sStr, ["="], []);
-				string sToken = llList2String(lParams, 0);
-				string sValue = llList2String(lParams, 1);
-				integer i = llSubStringIndex(sToken, "_");
+        }
+            else if (iNum == LM_SETTING_RESPONSE)
+            {
+                list lParams = llParseString2List(sStr, ["="], []);
+                string sToken = llList2String(lParams, 0);
+                string sValue = llList2String(lParams, 1);
+                integer i = llSubStringIndex(sToken, "_");
 
-			Debug("parse settings: "+sToken+" -- "+sValue);
-			
+            Debug("parse settings: "+sToken+" -- "+sValue);
+
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
-			{ //owners list
+            { //owners list
                 g_lOwners = llParseString2List(sValue, [","], []);
                 Debug("owners: " + sValue);
                 g_iGotSettingOwners=TRUE;
             }
-			else if (llGetSubString(sToken, 0, i) == g_sScript)
-			{ //subspy data
+            else if (llGetSubString(sToken, 0, i) == g_sScript)
+            { //subspy data
                 string sOption = llToLower(llGetSubString(sToken, i+1, -1));
                 Debug("got settings from db: " + sOption + sValue);
-				
+
                 if (sOption == "trace") {
                     g_iGotSettingTrace=TRUE;
                     if (sValue=="on") g_iTraceEnabled=TRUE;
@@ -690,60 +692,60 @@ default
                     g_iGotSettingMinutes=TRUE;
                     g_iSensorRepeat=(integer)sValue;
                 }
-				
-				Debug("new g_lSettings: " + (string)g_lSettings);        
+
+                //Debug("new g_lSettings: " + (string)g_lSettings);
                 if("trace" == sOption || "radar" == sOption || "listen" == sOption) Notify(g_kWearer,"Spy add-on is ENABLED, using " + sOption + "!",FALSE);
             }
         }
-		else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
-		{
-			llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
-		}
+        else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
+        {
+            llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
+        }
         else if(iNum == COMMAND_SAFEWORD)
-		{ //we recieved a safeword sCommand, turn all off
-			TurnAllOff("safeword");
-		}
+        { //we recieved a safeword sCommand, turn all off
+            TurnAllOff("safeword");
+        }
         else if (iNum == DIALOG_RESPONSE)
-		{
+        {
             if (kID == g_kDialogSpyID)
-			{ //settings change from main subspy
+            { //settings change from main subspy
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
                 key kAv = (key)llList2String(lMenuParams, 0);
                 string sMessage = llList2String(lMenuParams, 1);
                 integer iPage = (integer)llList2String(lMenuParams, 2);
                 integer iAuth = (integer)llList2String(lMenuParams, 3);
-                
-				
+
+
                 if (sMessage == UPMENU) llMessageLinked(LINK_SET, iAuth, "menu " + g_sParentMenu, kAv);
                 else if (sMessage == "RadarSettings") DialogRadarSettings(kAv, iAuth);
                 else
-				{
+                {
                     performSpyCommand(llToLower(sMessage), kAv);
                     DialogSpy(kAv, iAuth);
                 }
-            } 
-			else if (kID == g_kDialogRadarSettingsID)
-			{ //settings change from subspy radar menu
+            }
+            else if (kID == g_kDialogRadarSettingsID)
+            { //settings change from subspy radar menu
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
                 key kAv = (key)llList2String(lMenuParams, 0);
                 string sMessage = llList2String(lMenuParams, 1);
                 integer iPage = (integer)llList2String(lMenuParams, 2);
                 integer iAuth = (integer)llList2String(lMenuParams, 3);
-                
+
                 if (sMessage == UPMENU) DialogSpy(kAv, iAuth);
                 else
-				{
+                {
                     list lTemp = llParseString2List(sMessage, [" "], []);
                     integer sValue = (integer)llList2String(lTemp,0);
                     string sOption = llList2String(lTemp,1);
                     if(sOption == "meters")
-					{
+                    {
                         g_iSensorRange = sValue;
                         SaveSetting(sOption,(string)g_iSensorRange);
                         Notify(kAv, "Radar range changed to " + (string)((integer)sValue) + " meters.", TRUE);
                     }
-					else if(sOption == "minutes")
-					{
+                    else if(sOption == "minutes")
+                    {
                         g_iSensorRepeat = sValue * 60;
                         SaveSetting(sOption,(string)g_iSensorRepeat);
                         Notify(kAv, "Radar and Listen report frequency changed to " + (string)((integer)sValue) + " minutes.", TRUE);
@@ -753,9 +755,9 @@ default
                 }
             }
         }
-        
+
     }
-    
+
     timer (){
         if (g_sState=="init"){  //timeout during init.  We waited long enough for a random send of our data.  Ask for any that's missing
             if (! g_iGotSettingOwners) llMessageLinked(LINK_THIS,LM_SETTING_REQUEST,"auth_owner",NULL_KEY);
@@ -769,26 +771,26 @@ default
         } else if (g_sState=="postInit") {  //postInit period complete, should have all of our data now
             Notify(g_kWearer,"\n\nATTENTION: This collar is running the Spy feature.\nYour primary owners will be able to track where you go, access your radar and read what you speak in the Nearby Chat. Only your own local chat will be relayed. IMs and the chat of 3rd parties cannot be spied on. Please use an updater to uninstall this feature if you do not consent to this kind of practice and remember that bondage, power exchange and S&M is of all things based on mutual trust.",FALSE);
             Notify(g_kWearer,"\nOpenCollar SPY add-on (trace, radar, listen) INSTALLED and AVAILABLE\n...checking for activated spy features...",FALSE);
-            
+
             if (g_iTraceEnabled) g_sTPBuffer = "Rezzed at " + GetLocation();
             //Debug("Running sensor from postInit");
             g_sState="initialScan";
             llSensor("" ,"" , AGENT, g_iSensorRange, PI);
-      
+
             llSetTimerEvent(0.0);
 
         }
     }
 
     sensor(integer iNum)
-	{
+    {
         //Debug("Hit sensor event, "+(string)iNum);
-        if (g_iRadarEnabled) 
-		{ 
-			//put nearby avs in list
+        if (g_iRadarEnabled)
+        {
+            //put nearby avs in list
             list lAvBuffer;
             while (iNum) lAvBuffer += llDetectedName(--iNum);
-            
+
             g_sOldAVBuffer = g_sCurrentAVs; //store last set of avis so we know if we need to include the list in the next report
             g_sCurrentAVs = llDumpList2String(llListSort(lAvBuffer, 1, TRUE), ", ");
             //Debug ("Complete avi list: "+g_sCurrentAVs);
@@ -802,34 +804,34 @@ default
     }
 
     no_sensor()
-	{
+    {
         g_sCurrentAVs = "None";
         DoReports(FALSE);
     }
 
     attach(key kID)
-	{
+    {
         if(kID != NULL_KEY)
-		{
-			g_sLoc = GetLocation();
-		}
+        {
+            g_sLoc = GetLocation();
+        }
     }
 
     changed(integer iChange)
-	{
+    {
         if((iChange & CHANGED_TELEPORT) || (iChange & CHANGED_REGION))
-		{
+        {
             g_sOldAVBuffer="";
             if(g_iTraceEnabled)
-			{
-				g_sTPBuffer += "Teleport from " + g_sLoc + " to " +  GetLocation()+ " at " + GetTimestamp() + ".\n";
-			}
+            {
+                g_sTPBuffer += "Teleport from " + g_sLoc + " to " +  GetLocation()+ " at " + GetTimestamp() + ".\n";
+            }
             g_sLoc = GetLocation();
         }
 
         if (iChange & CHANGED_OWNER)
-		{
-			llResetScript();
-		}
+        {
+            llResetScript();
+        }
     }
 }
