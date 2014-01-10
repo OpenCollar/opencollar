@@ -217,7 +217,7 @@ UpdateSensor()
 	{
         Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
         //Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
-        llSensorRepeat("" ,"" , AGENT, g_iSensorRange, PI, (float)g_iSensorRepeat);
+        llSensorRepeat("" ,"" , AGENT, (float)g_iSensorRange, PI, (float)g_iSensorRepeat);
     }
 }
 
@@ -325,11 +325,16 @@ DialogSpy(key kID, integer iAuth)
         g_kDialogSpyID = Dialog(kID, sPrompt, [], [UPMENU], 0, iAuth);
         return;
     }
+	string sTStatus;
+	string sRStatus;
+	string sLStatus;
+	sTStatus = sRStatus = sLStatus = "off";
     list lButtons ;
 
     if(g_iTraceEnabled)
 	{
-        lButtons += ["Trace Off"];
+        lButtons += ["Trace OFF"];
+		sTStatus = "on";
     }
 	else
 	{
@@ -337,24 +342,26 @@ DialogSpy(key kID, integer iAuth)
     }
     if(g_iRadarEnabled)
 	{
-        lButtons += ["Radar Off"];
-    }
+        lButtons += ["Radar OFF"];
+    	sRStatus = "on";
+	}
 	else
 	{
         lButtons += ["Radar On"];
     }
     if(g_iListenEnabled)
 	{
-        lButtons += ["Listen Off"];
-    }
+        lButtons += ["Listen OFF"];
+		sLStatus = "on";
+	}
 	else
 	{
         lButtons += ["Listen On"];
     }
     lButtons += ["RadarSettings"];
     sPrompt = "\n-Primary Owners Only Menu-\n";
-    sPrompt += "\nTrace notifies if " + g_sSubName + " teleports.\n";
-    sPrompt += "\nRadar and Listen sending reports every "+ (string)((integer)g_iSensorRepeat/60) + " minutes on who joined or left " + g_sSubName + " in a range of " + (string)((integer)g_iSensorRange) + " meters and on what " + g_sSubName + " wrote in Nearby Chat.\n";
+    sPrompt += "\nTrace ("+sTStatus+") notifies if " + g_sSubName + " teleports.\n";
+    sPrompt += "\nRadar ("+sRStatus+") and Listen ("+sLStatus+") sending reports every "+ (string)((integer)g_iSensorRepeat/60) + " minutes on who joined or left " + g_sSubName + " in a range of " + (string)((integer)g_iSensorRange) + " meters and on what " + g_sSubName + " wrote in Nearby Chat.\n";
     sPrompt += "\nListen transmits directly what " + g_sSubName + " says in Nearby Chat. Other nearby parties chat will NOT be transmitted!\n - Messages may get capped and not all text may get transmitted -";
 	
     g_kDialogSpyID = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);
@@ -443,8 +450,37 @@ NotifyOwners(string sMsg)
 SaveSetting(string sOption, string sValue)
 {
     //Debug("Saving setting: " + sOption + "=" + sValue);
-    llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);   //send value to settings script
+    llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);	//send value to settings script
 }
+
+
+EnforceSettings()
+{
+	
+	
+	
+    Debug("enforce settings, length: "+ (string)iListLength);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}
+
 
 TurnAllOff(string command)
 { // set all values to off and remove sensor and listener
@@ -468,6 +504,7 @@ TurnAllOff(string command)
     if ("safeword" == command) NotifyOwners(g_sOffMsg+" on "+g_sSubName);
     Notify(g_kWearer,g_sOffMsg,FALSE);
 }
+
 
 performSpyCommand (string sStr, key kID){
     //Debug("Performing subspy command: "+sStr);
@@ -530,8 +567,9 @@ default
         g_sSubName = llKey2Name(g_kWearer);
         g_sLoc=GetLocation();
         g_lOwners = [g_kWearer, g_sSubName];  // initially self-owned until we hear a db message otherwise
-		
+
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
+		
         llSetTimerEvent(4.0);   //wait for data before we do anything else... see timer event.
     }
 
@@ -572,8 +610,8 @@ default
 
 	//listen for linked messages from OC scripts
     //-----------------------------------------------
-	
-    link_message(integer iSender, integer iNum, string sStr, key kID) 
+
+    link_message(integer iSender, integer iNum, string sStr, key kID)
 	{
         //Debug("link_message: Sender = "+ (string)iSender + ", iNum = "+ (string)iNum + ", string = " + (string)sStr +", ID = " + (string)kID);
 		
@@ -610,7 +648,7 @@ default
 			Debug("parse settings: "+sToken+" -- "+sValue);
 			
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
-			{  //owners list
+			{ //owners list
                 g_lOwners = llParseString2List(sValue, [","], []);
                 Debug("owners: " + sValue);
                 g_iGotSettingOwners=TRUE;
@@ -643,9 +681,8 @@ default
         }
 		else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
 		{
-		llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
-		
-			}
+			llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
+		}
         else if(iNum == COMMAND_SAFEWORD)
 		{ //we recieved a safeword sCommand, turn all off
 			TurnAllOff("safeword");
@@ -653,13 +690,14 @@ default
         else if (iNum == DIALOG_RESPONSE)
 		{
             if (kID == g_kDialogSpyID)
-			{  //settings change from main subspy
+			{ //settings change from main subspy
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
                 key kAv = (key)llList2String(lMenuParams, 0);
                 string sMessage = llList2String(lMenuParams, 1);
                 integer iPage = (integer)llList2String(lMenuParams, 2);
                 integer iAuth = (integer)llList2String(lMenuParams, 3);
                 
+				
                 if (sMessage == UPMENU) llMessageLinked(LINK_SET, iAuth, "menu " + g_sParentMenu, kAv);
                 else if (sMessage == "RadarSettings") DialogRadarSettings(kAv, iAuth);
                 else
