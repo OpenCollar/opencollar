@@ -28,6 +28,7 @@
 
 //bug: heap collision on too much chat text
 //bug/todo: check if Owner (close to collar) and Wearer get message on turning functions on via Notify() (was addition to other version of subspy)
+//bug/todo: list of messages if features are on now out of order
 
 //todo: add who changed a setting
 //todo: rework link_message{}
@@ -263,7 +264,7 @@ integer Enabled(string sToken)
 {
 
     //Debug("enabled; Settings: "+(string)g_lSettings + " Token: "+ sToken + " -- Position: " + (string)iIndex);
-
+return 0;
 
 
 
@@ -471,7 +472,7 @@ EnforceSettings()
 
 
 
-    Debug("enforce settings, length: "+ (string)iListLength);
+    //Debug("enforce settings, length: "+ (string)iListLength);
 
 
 
@@ -712,7 +713,7 @@ default
                             //if (g_iTraceEnabled) g_lAVBuffer += ["Radar turned on at " + GetLocation() + " at " + GetTimestamp() + "."];
                             //    else g_lAVBuffer += ["Radar turned on at " + GetTimestamp() + "."];
                         }
-                    else g_iRadarEnabled=FALSE;
+                    } else g_iRadarEnabled=FALSE;
                 } else if (sOption == "listen") {
                     g_iGotSettingListen=TRUE;
                     if (sValue=="on") {
