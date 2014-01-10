@@ -30,6 +30,7 @@
 
 //todo: add who changed a setting
 //todo: rework link_message{}
+//todo: radar on/off does not give a message to owner- when setting loaded from notecard or collar
 //todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be
 //todo: rework listener reporting, currently much text is just discarded - done with that massive change?
 //todo: play with llListen and llGetFreeMemory
@@ -198,6 +199,7 @@ DoReports(integer iBufferFull)
     if (llStringLength(sReport))
     {
         sReport = "Activity report for " + g_sSubName + " at " + GetTimestamp() + "\n" + sReport;
+        Debug("report: " + sReport);
         NotifyOwners(sReport);
     }
 
@@ -744,7 +746,7 @@ default
                 }
 
                 //Debug("new g_lSettings: " + (string)g_lSettings);
-                if("trace" == sOption || "radar" == sOption || "listen" == sOption) Notify(g_kWearer,"Spy add-on is ENABLED, using " + sOption + "!",FALSE);
+                if(("trace" == sOption && g_iTraceEnabled) || ("radar" == sOption && g_iRadarEnabled) || ("listen" == sOption && g_iListenEnabled)) Notify(g_kWearer,"Spy add-on is ENABLED, using " + sOption + "!",FALSE);
             }
         }
         else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
@@ -820,7 +822,7 @@ default
             llSetTimerEvent(5.0);
         } else if (g_sState=="postInit") {  //postInit period complete, should have all of our data now
 
-            if (g_iTraceEnabled) g_sTPBuffer = "Rezzed at " + GetLocation();
+            if (g_iTraceEnabled) g_sTPBuffer = "Rezzed at " + GetLocation() + ".\n";
             //Debug("Running sensor from postInit");
             g_sState="initialScan";
             llSensor("" ,"" , AGENT, g_iSensorRange, PI);
