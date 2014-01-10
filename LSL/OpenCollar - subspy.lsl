@@ -72,7 +72,6 @@ integer g_iListener;
 string g_sOffMsg = "Spy add-on is now disabled";
 
 string g_sLoc;
-integer g_iFirstReport = TRUE;//if this is true when spy settings come in, then record current position in g_lTPBuffer and set to false
 integer g_iTraceEnabled=FALSE;
 integer g_iRadarEnabled=FALSE;
 integer g_iListenEnabled=FALSE;
@@ -615,11 +614,12 @@ integer UserCommand(integer iNum, string sStr, key kID)
         {
             if(sStr == "trace on")
             {
+                g_sLoc=GetLocation();
+                if (!g_iTraceEnabled) g_lTPBuffer += ["Trace turned on at " + g_sLoc + " at " + GetTimestamp() + "."];
                 g_iTraceEnabled=TRUE;
                 SaveSetting(sStr);
                 EnforceSettings();
                 Notify(kID, "Teleport tracing is now turned on.", TRUE);
-                g_sLoc=llGetRegionName();
             }
             else if(sStr == "trace off")
             {
@@ -630,6 +630,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
             }
             else if(sStr == "radar on")
             {
+                if (!g_iRadarEnabled) g_lAVBuffer += ["Radar turned on at " + GetTimestamp() + "."];
                 g_sOldAVBuffer = "";
                 g_iOldAVBufferCount = -1;
                 g_iRadarEnabled=TRUE;
@@ -646,6 +647,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
             }
             else if(sStr == "listen on")
             {
+                if (!g_iRadarEnabled) g_lAVBuffer += ["Listen turned on at " + GetTimestamp() + "."];
                 g_iListenEnabled=TRUE;
                 SaveSetting(sStr);
                 EnforceSettings();
@@ -681,7 +683,7 @@ default
     {
         g_kWearer = llGetOwner();
         g_sSubName = llKey2Name(g_kWearer);
-        g_sLoc=llGetRegionName();
+        g_sLoc=GetLocation();
         g_lOwners = [g_kWearer, g_sSubName];  // initially self-owned until we hear a db message otherwise
 
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
@@ -767,15 +769,33 @@ default
 
                 if (sOption == "trace") {
                     //g_iGotSettingTrace=TRUE;
-                    if (sValue=="on") g_iTraceEnabled=TRUE;
+                    if (sValue=="on") {
+                        if (!g_iTraceEnabled) {
+                            g_sLoc=GetLocation();
+                            g_iTraceEnabled=TRUE;
+                            g_lTPBuffer += ["Trace turned on at " + g_sLoc + " at " + GetTimestamp() + "."];
+                        }
+                    }
                     else g_iTraceEnabled=FALSE;
                 } else if (sOption == "radar") {
                     //g_iGotSettingRadar=TRUE;
-                    if (sValue=="on") g_iRadarEnabled=TRUE;
+                    if (sValue=="on") {
+                        if (!g_iRadarEnabled) {
+                            g_iRadarEnabled=TRUE;
+                            if (g_iTraceEnabled) g_lAVBuffer += ["Radar turned on at " + GetLocation() + " at " + GetTimestamp() + "."];
+                                else g_lAVBuffer += ["Radar turned on at " + GetTimestamp() + "."];
+                        }
+                    }
                     else g_iRadarEnabled=FALSE;
                 } else if (sOption == "listen") {
                     //g_iGotSettingListen=TRUE;
-                    if (sValue=="on") g_iListenEnabled=TRUE;
+                    if (sValue=="on") {
+                        if (!g_iListenEnabled) {
+                            g_iListenEnabled=TRUE;
+                            if (g_iTraceEnabled) g_lChatBuffer += ["Listener turned on at " + GetLocation() + " at " + GetTimestamp() + "."];
+                            else g_lChatBuffer += ["Listener turned on at " + GetTimestamp() + "."];
+                        }
+                    }
                     else g_iListenEnabled=FALSE;
                 } //else if (sOption == "meters") {
                     //g_iGotSettingMeters=TRUE;
@@ -788,17 +808,6 @@ default
                 //Debug("new g_lSettings: " + (string)g_lSettings);
                 if("trace" == sOption || "radar" == sOption || "listen" == sOption) Notify(g_kWearer,"Spy add-on is ENABLED, using " + sOption + "!",FALSE);
                 EnforceSettings();
-
-                if (g_iFirstReport)
-                {
-                    //record initial position if trace enabled
-                    if (Enabled("trace"))
-                    {
-                        g_lTPBuffer += ["Rezzed at " + GetLocation()];
-                    }
-                    g_iFirstReport = FALSE;
-                }
-
             }
         }
         else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
@@ -889,7 +898,12 @@ default
     {
         if(kID != NULL_KEY)
         {
-            g_sLoc = llGetRegionName();
+            g_sLoc = GetLocation();
+            //record initial position if trace enabled
+                if (g_iTraceEnabled)
+                {
+                    g_lTPBuffer += ["Rezzed at " + GetLocation() + " at " + GetTimestamp() + "."];
+                }
         }
     }
 
@@ -901,8 +915,8 @@ default
             if(g_iTraceEnabled)
             {
                 g_lTPBuffer += ["Teleport from " + g_sLoc + " to " +  GetLocation()+ " at " + GetTimestamp() + "."];
+                g_sLoc = GetLocation();
             }
-            g_sLoc = llGetRegionName();
         }
 
         if (iChange & CHANGED_OWNER)
