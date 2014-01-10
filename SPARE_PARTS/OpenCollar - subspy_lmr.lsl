@@ -508,37 +508,50 @@ TurnAllOff(string command)
 
 performSpyCommand (string sStr, key kID){
     //Debug("Performing subspy command: "+sStr);
-    if(sStr == "trace on"){
+    if(sStr == "trace on")
+	{
         g_iTraceEnabled=TRUE;
         SaveSetting("trace","on");
         Notify(kID, "Teleport tracing is now turned on.", TRUE);
         g_sLoc=GetLocation();
-    } else if(sStr == "trace off") {
+    } 
+	else if(sStr == "trace off")
+	{
         g_iTraceEnabled=FALSE;
         SaveSetting("trace","off");
         Notify(kID, "Teleport tracing is now turned off.", TRUE);
-    } else if(sStr == "radar on") {
+    }
+	else if(sStr == "radar on")
+	{
         g_sOldAVBuffer = "";
         g_iRadarEnabled=TRUE;
         SaveSetting("radar","on");
         UpdateSensor();
         Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m for " + g_sSubName + " is now turned ON.", TRUE);
-    } else if(sStr == "radar off") {
+    }
+	else if(sStr == "radar off")
+	{
         g_iRadarEnabled=FALSE;
         SaveSetting("radar","off");
         UpdateSensor();
         Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m for " + g_sSubName + " is now turned OFF.", TRUE);
-    } else if(sStr == "listen on") {
+    }
+	else if(sStr == "listen on")
+	{
         g_iListenEnabled=TRUE;
         SaveSetting("listen","on");
         UpdateListener();
         Notify(kID, "Chat listener enabled.", TRUE);
-    } else if(sStr == "listen off") {
-        g_iListenEnabled=TRUE;
+    }
+	else if(sStr == "listen off")
+	{
+        g_iListenEnabled=FALSE;
         SaveSetting("listen","off");
         UpdateListener();
         Notify(kID, "Chat listener disabled.", TRUE);
-    } else if(llSubStringIndex(sStr,"meters")==0) {
+    }
+	else if(llSubStringIndex(sStr,"meters")==0)
+	{
         //Debug("got meters command");
     } else if(llSubStringIndex(sStr,"minutes")==0) {
         //Debug("got minutes command");
@@ -657,7 +670,7 @@ default
 			{ //subspy data
                 string sOption = llToLower(llGetSubString(sToken, i+1, -1));
                 Debug("got settings from db: " + sOption + sValue);
-
+				
                 if (sOption == "trace") {
                     g_iGotSettingTrace=TRUE;
                     if (sValue=="on") g_iTraceEnabled=TRUE;
@@ -677,6 +690,9 @@ default
                     g_iGotSettingMinutes=TRUE;
                     g_iSensorRepeat=(integer)sValue;
                 }
+				
+				Debug("new g_lSettings: " + (string)g_lSettings);        
+                if("trace" == sOption || "radar" == sOption || "listen" == sOption) Notify(g_kWearer,"Spy add-on is ENABLED, using " + sOption + "!",FALSE);
             }
         }
 		else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
