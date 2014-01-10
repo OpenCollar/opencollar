@@ -225,24 +225,34 @@ UpdateSensor()
 UpdateListener()
 {
     Debug("updatelistener");
-    if (g_iListenEnabled && llGetAttached())
+    if (llGetAttached())
     {
-        //turn on listener if not already on
-        if (!g_iListener)
+        if (g_iListenEnabled)
         {
-            Debug("turning listener on");
-            g_iListener = llListen(0, "", g_kWearer, "");
+            //turn on listener if not already on
+            if (!g_iListener)
+            {
+                Debug("turning listener on");
+                g_iListener = llListen(0, "", g_kWearer, "");
+            }
+        }
+        else
+        {
+            //turn off listener if on
+            if (g_iListener)
+            {
+                Debug("turning listener off");
+                llListenRemove(g_iListener);
+                g_iListener = 0;
+            }
         }
     }
     else
     {
-        //turn off listener if on
-        if (g_iListener)
-        {
-            Debug("turning listener off");
-            llListenRemove(g_iListener);
-            g_iListener = 0;
-        }
+        //we're not attached.  close listener
+        Debug("turning listener off");
+        llListenRemove(g_iListener);
+        g_iListener = 0;
     }
 }
 
