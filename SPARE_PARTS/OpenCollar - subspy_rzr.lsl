@@ -435,6 +435,15 @@ integer GetOwnerChannel(key kOwner, integer iOffset)
 
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
+
+
+
+
+
+
+
+
+    //Debug
     if (kID == g_kWearer)
     {
         llOwnerSay(sMsg);
