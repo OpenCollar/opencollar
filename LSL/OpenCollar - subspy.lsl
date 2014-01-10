@@ -48,7 +48,7 @@
 //debug variables
 //-----------------------------------------------
 
-integer g_iDebugMode=FALSE; // set to TRUE to enable Debug messages
+integer g_iDebugMode=TRUE; // set to TRUE to enable Debug messages
 
 
 //internal variables
@@ -239,8 +239,9 @@ UpdateSensor()
     //also, only start the sensor/timer if we're attached so there's no spam from collars left lying around
     if (llGetAttached() && Enabled("trace") || Enabled("radar") || Enabled("listen"))
     {
-        Debug("enabling sensor");
-        llSensorRepeat("" ,"" , AGENT, g_iSensorRange, PI, g_iSensorRepeat);
+        Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
+        //Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
+        llSensorRepeat("" ,"" , AGENT, (float)g_iSensorRange, PI, (float)g_iSensorRepeat);
     }
 }
 
@@ -334,9 +335,9 @@ string GetPSTDate()
 
 
 string GetLocation() {
-    vector g_vPos = llGetPos();
+    vector vPos = llGetPos();
     return llList2String(llGetParcelDetails(llGetPos(), [PARCEL_DETAILS_NAME]),0) + " (" + llGetRegionName() + " <" +
-        (string)((integer)g_vPos.x)+","+(string)((integer)g_vPos.y)+","+(string)((integer)g_vPos.z)+">)";
+        (string)((integer)vPos.x)+","+(string)((integer)vPos.y)+","+(string)((integer)vPos.z)+">)";
 }
 
 
@@ -500,6 +501,7 @@ NotifyOwners(string sMsg)
 
 SaveSetting(string sStr)
 {
+    //Debug("Saving setting: " + sOption + "=" + sValue);
     list lTemp = llParseString2List(sStr, [" "], []);
     string sOption = llList2String(lTemp, 0);
     string sValue = llList2String(lTemp, 1);
@@ -513,7 +515,7 @@ SaveSetting(string sStr)
     {
         g_lSettings = llListReplaceList(g_lSettings, [sValue], iIndex + 1, iIndex + 1);
     }
-    llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);
+    llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);	//send value to settings script
     //radar, listen, trace, meters, minutes
 }
 
@@ -669,7 +671,7 @@ default
         g_sSubName = llKey2Name(g_kWearer);
         g_sLoc=llGetRegionName();
         g_lOwners = [g_kWearer, g_sSubName];  // initially self-owned until we hear a db message otherwise
-        
+
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
         
         llSleep(4.0);
@@ -711,7 +713,7 @@ default
 
     //listen for linked messages from OC scripts
     //-----------------------------------------------
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID)
     {
         //Debug("link_message: Sender = "+ (string)iSender + ", iNum = "+ (string)iNum + ", string = " + (string)sStr +", ID = " + (string)kID);
@@ -738,12 +740,12 @@ default
             Debug("parse settings: "+sToken+" -- "+sValue);
             
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
-            {
+			{ //owners list
                 g_lOwners = llParseString2List(sValue, [","], []);
                 Debug("owners: " + sValue);
             }
             else if (llGetSubString(sToken, 0, i) == g_sScript)
-            {
+			{ //subspy data
                 string sOption = llToLower(llGetSubString(sToken, i+1, -1));
                 Debug("got settings from db: " + sOption + sValue);
                 integer iIndex = llListFindList(g_lSettings, [sOption]);
@@ -770,13 +772,13 @@ default
             llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
         }
         else if(iNum == COMMAND_SAFEWORD)
-        {//we recieved a safeword sCommand, turn all off
+        { //we recieved a safeword sCommand, turn all off
             TurnAllOff("safeword");
         }
         else if (iNum == DIALOG_RESPONSE)
         {
             if (kID == g_kDialogSpyID || kID == g_kDialogRadarSettingsID)
-            {
+            { //settings change from main subspy
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
                 key kAv = (key)llList2String(lMenuParams, 0);
                 string sMessage = llList2String(lMenuParams, 1);
@@ -793,7 +795,7 @@ default
                     }
                 }
                 else if (kID == g_kDialogRadarSettingsID)
-                {
+                { //settings change from subspy radar menu
                     if (sMessage == UPMENU) DialogSpy(kAv, iAuth);
                     else
                     {
@@ -825,6 +827,7 @@ default
 
     sensor(integer iNum)
     {
+        //Debug("Hit sensor event, "+(string)iNum);
         if (Enabled("radar"))
         {
             //put nearby avs in list
