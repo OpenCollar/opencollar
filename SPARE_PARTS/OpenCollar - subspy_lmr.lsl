@@ -213,7 +213,7 @@ UpdateSensor()
     llSensorRemove();
     //since we use the repeating sensor as a timer, turn it on if any of the spy reports are turned on, not just radar
     //also, only start the sensor/timer if we're attached so there's no spam from collars left lying around
-    if (llGetAttached() && (g_iTraceEnabled || g_iRadarEnabled || g_iListenEnabled) )
+    if (llGetAttached() && (g_iTraceEnabled || g_iRadarEnabled || g_iListenEnabled))
     {
         Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
         //Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
@@ -250,7 +250,7 @@ UpdateListener()
 integer Enabled(string sToken)
 {
 
-    Debug("enabled; Settings: "+(string)g_lSettings + " Token: "+ sToken + " -- Position: " + (string)iIndex);
+    //Debug("enabled; Settings: "+(string)g_lSettings + " Token: "+ sToken + " -- Position: " + (string)iIndex);
 
 
 
@@ -266,7 +266,7 @@ integer Enabled(string sToken)
 }
 
 
-string GetTimestamp()  // Return a string of the date and time
+string GetTimestamp() // Return a string of the date and time
 {
     integer t = (integer)llGetWallclock(); // seconds since midnight
 
@@ -529,14 +529,14 @@ performSpyCommand (string sStr, key kID)
         g_iRadarEnabled=TRUE;
         SaveSetting("radar","on");
         UpdateSensor();
-        Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m for " + g_sSubName + " is now turned ON.", TRUE);
+        Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m around " + g_sSubName + " is now turned ON.", TRUE);
     }
     else if(sStr == "radar off")
     {
         g_iRadarEnabled=FALSE;
         SaveSetting("radar","off");
         UpdateSensor();
-        Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m for " + g_sSubName + " is now turned OFF.", TRUE);
+        Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m around " + g_sSubName + " is now turned OFF.", TRUE);
     }
     else if(sStr == "listen on")
     {
@@ -633,14 +633,20 @@ default
         if (iNum >= COMMAND_OWNER && iNum <= COMMAND_WEARER){   //user command, post auth
             //Debug("UserCommand: "+sStr);
             sStr = llToLower(sStr);
-            if (iNum != COMMAND_OWNER) {
-                if(~llListFindList(g_lCmds, [sStr])) Notify(kID, "Sorry, only an owner can set spy settings.", FALSE);  //reject commands from anyone except owner
-            } else { // COMMAND_OWNER
-                //Debug("UserCommand - COMMAND_OWNER");
+            if (iNum != COMMAND_OWNER)
+            {
+                if(~llListFindList(g_lCmds, [sStr]))
+                    Notify(kID, "Sorry, only a primary owner can set spy settings.", FALSE);  //reject commands from anyone except owner
+            }
+            else // COMMAND_OWNER
+            {
+                Debug("UserCommand - COMMAND_OWNER, kID: "+(string)kID);
                 if (sStr == "subspy" || sStr == "menu " + llToLower(g_sSubMenu)) DialogSpy(kID, iNum);
-                else if (sStr == "radarsettings") DialogRadarSettings(kID, iNum); //request for the radar settings menu
-                else if ("runaway" == sStr) TurnAllOff(sStr);                //runaway command
-                else if (~llListFindList(g_lCmds, [sStr]))performSpyCommand(sStr, kID);//received an actual spy command
+                else if (sStr == "radarsettings")
+                {
+                    DialogRadarSettings(kID, iNum); //request for the radar settings menu
+                } else if ("runaway" == sStr) TurnAllOff(sStr); //runaway command
+                else if (~llListFindList(g_lCmds, [sStr]))performSpyCommand(sStr, kID); //received an actual spy command
                 //else //Debug("Didn't recognise command");
             }
         } else if (iNum == LM_SETTING_SAVE) {

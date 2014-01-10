@@ -287,7 +287,7 @@ UpdateListener()
 integer Enabled(string sToken)
 {
     integer iIndex = llListFindList(g_lSettings, [sToken]);
-    Debug("enabled; Settings: "+(string)g_lSettings + " Token: "+ sToken + " -- Position: " + (string)iIndex);
+    //Debug("enabled; Settings: "+(string)g_lSettings + " Token: "+ sToken + " -- Position: " + (string)iIndex);
     if(iIndex == -1)
     {
         return FALSE;
@@ -607,11 +607,11 @@ integer UserCommand(integer iNum, string sStr, key kID)
     else // COMMAND_OWNER
     {
         Debug("UserCommand - COMMAND_OWNER, kID: "+(string)kID);
-        if (sStr == "radarsettings")//request for the radar settings menu
+        if (sStr == "radarsettings")
         {
-            DialogRadarSettings(kID, iNum);
-        } else if ("runaway" == sStr) TurnAllOff(sStr);
-        else if (~llListFindList(g_lCmds, [sStr]))//received an actual spy command
+            DialogRadarSettings(kID, iNum); //request for the radar settings menu
+        } else if ("runaway" == sStr) TurnAllOff(sStr); //runaway command
+        else if (~llListFindList(g_lCmds, [sStr])) //received an actual spy command
         {
             if(sStr == "trace on")
             {
@@ -862,7 +862,7 @@ default
     sensor(integer iNum)
     {
         //Debug("Hit sensor event, "+(string)iNum);
-        if (Enabled("radar"))
+        if (g_iRadarEnabled)
         {
             //put nearby avs in list
             integer n;
