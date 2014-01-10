@@ -26,14 +26,12 @@
 //Notecard format: ---
 //basic help:
 
-//bug: heap collision on too much chat text
-//bug/todo: check if Owner (close to collar) and Wearer get message on turning functions on via Notify() (was addition to other version of subspy)
-//bug/todo: list of messages if features are on now out of order
+//bug: heap collision on too much chat text? - fixed?
 
 //todo: add who changed a setting
 //todo: rework link_message{}
 //todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be
-//todo: rework listener reporting, currently much text is just discarded
+//todo: rework listener reporting, currently much text is just discarded - done with that massive change?
 //todo: play with llListen and llGetFreeMemory
 //todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Script_Memory_Limits
 //todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Text_Storage
@@ -56,7 +54,7 @@
 //debug variables
 //-----------------------------------------------
 
-integer g_iDebugMode=TRUE; // set to TRUE to enable Debug messages
+integer g_iDebugMode=FALSE; // set to TRUE to enable Debug messages
 
 
 //internal variables
@@ -420,14 +418,25 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
             }
         }
         //Debug("using index="+(string)index);
-        if (kID == g_kWearer){      //notfy the wearer
+        if (kID == g_kWearer)
+        {      //notfy the wearer
             llOwnerSay( llGetSubString(sMsg,0,index));
-        } else if (llGetAgentSize(kID) == ZERO_VECTOR){     //notify avi not in same sim
+        }
+        else if (llGetAgentSize(kID) == ZERO_VECTOR)
+        {     //notify avi not in same sim
             llInstantMessage(kID, llGetSubString(sMsg,0,index));
-            if (iAlsoNotifyWearer){
+            if (iAlsoNotifyWearer)
+            {
                 llOwnerSay( llGetSubString(sMsg,0,index));
             }
-        } else { // notify avi in same sim
+        }
+        else // remote request
+        { // notify avi in same sim
+            if (iAlsoNotifyWearer) //workaround for message on settings change by primary owner
+            {
+                llOwnerSay( llGetSubString(sMsg,0,index));
+            }
+            llRegionSayTo(kID, PUBLIC_CHANNEL, llGetSubString(sMsg,0,index));   //workaround for message on settings change by primary owner
             llRegionSayTo(kID, GetOwnerChannel(g_kWearer, 1111), llGetSubString(sMsg,0,index));
         }
         if (index >=llStringLength(sMsg)-1 ) return;
@@ -601,6 +610,8 @@ default
 
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
 
+        Notify(g_kWearer,"\n\nATTENTION: This collar is running the Spy feature.\nYour primary owners will be able to track where you go, access your radar and read what you speak in the Nearby Chat. Only your own local chat will be relayed. IMs and the chat of 3rd parties cannot be spied on. Please use an updater to uninstall this feature if you do not consent to this kind of practice and remember that bondage, power exchange and S&M is of all things based on mutual trust.",FALSE);
+        Notify(g_kWearer,"\nOpenCollar SPY add-on (trace, radar, listen) INSTALLED and AVAILABLE\n...checking for activated spy features...",FALSE);
         llSetTimerEvent(4.0);   //wait for data before we do anything else... see timer event.
     }
 
@@ -808,8 +819,6 @@ default
             g_sState="postInit";
             llSetTimerEvent(5.0);
         } else if (g_sState=="postInit") {  //postInit period complete, should have all of our data now
-            Notify(g_kWearer,"\n\nATTENTION: This collar is running the Spy feature.\nYour primary owners will be able to track where you go, access your radar and read what you speak in the Nearby Chat. Only your own local chat will be relayed. IMs and the chat of 3rd parties cannot be spied on. Please use an updater to uninstall this feature if you do not consent to this kind of practice and remember that bondage, power exchange and S&M is of all things based on mutual trust.",FALSE);
-            Notify(g_kWearer,"\nOpenCollar SPY add-on (trace, radar, listen) INSTALLED and AVAILABLE\n...checking for activated spy features...",FALSE);
 
             if (g_iTraceEnabled) g_sTPBuffer = "Rezzed at " + GetLocation();
             //Debug("Running sensor from postInit");

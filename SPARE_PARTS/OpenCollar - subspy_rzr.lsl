@@ -49,7 +49,7 @@
 //debug variables
 //-----------------------------------------------
 
-integer g_iDebugMode=TRUE; // set to TRUE to enable Debug messages
+integer g_iDebugMode=FALSE; // set to TRUE to enable Debug messages
 
 
 //internal variables
