@@ -638,8 +638,8 @@ default
         }
     }
 
-    //listen for linked messages from OC scripts
-    //-----------------------------------------------
+//listen for linked messages from OC scripts
+//-----------------------------------------------
 
     link_message(integer iSender, integer iNum, string sStr, key kID)
     {
@@ -877,4 +877,8 @@ default
             llResetScript();
         }
     }
+
+//-----------------------------------------------
+//END STATE: default
+//-----------------------------------------------
 }
