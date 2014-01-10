@@ -1,15 +1,108 @@
+////////////////////////////////////////////////////////////////////////////////////
+// ------------------------------------------------------------------------------ //
+//                              OpenCollar - xxx                               //
+//                                 version xxx                                  //
+// ------------------------------------------------------------------------------ //
+// Licensed under the GPLv2 with additional requirements specific to Second Life® //
+// and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
+// ------------------------------------------------------------------------------ //
+// ©   2008 - 2013  Individual Contributors and OpenCollar - submission set free™ //
+// ------------------------------------------------------------------------------ //
+////////////////////////////////////////////////////////////////////////////////////
+
+//by: North Glenwalker
+//modified by: Zopf Resident - Ray Zopf (Raz)
+//Additions: formatting
+//10. Jan. 2914
+//
+//Files:
+//Offline restriction removel.lsl
+//
+//Prequisites: OC
+//Notecard format: ---
+//basic help:
+
+//bug:
+
+//todo:
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//===============================================
+//GLOBAL VARIABLES
+//===============================================
+
+//debug variables
+//-----------------------------------------------
+
+integer g_iDebugMode=FALSE; // set to TRUE to enable Debug messages
+
+
+//internal variables
+//-----------------------------------------------
 key Owner_key;//Our Key
 list Owners; //list of full collar Owners
 key g_kWearer;//my UUID
+
 string status;//store for on-line status
 string on; //if we have an online owner when we poll them
 string off; //if we have an offline owner
-integer COMMAND_NOAUTH = 0; //lets grab the owners list when it's sent during reset
 integer n = 0;//our point in the owners list during polling
 integer T; //the polling time based on number of full Collar Owners
 
+string g_sScript;
+
 list rlvcmd=["fly=y","sendchat=y","chatnormal=y","chatwhisper=y","recvchat=y","emote=y","sendim=y","startim=y","recvim=y","tplm=y","tploc=y","tplure=y","showinv=y","viewnote=y","viewscript=y","viewtexture=y","edit=y","rez=y","touchfar=y","touchall=y","touchworld=y","touchattach=y","showworldmap=y","showminimap=y","showloc=y","setgroup=y"];
 
+//OC MESSAGE MAP
+integer COMMAND_NOAUTH = 0; //lets grab the owners list when it's sent during reset
+
+
+//===============================================
+//PREDEFINED FUNCTIONS
+//===============================================
+
+
+//===============================================================================
+//= parameters   :    string    sMsg    message string received
+//=
+//= return        :    none
+//=
+//= description  :    output debug messages
+//=
+//===============================================================================
+
+Debug(string sMsg)
+{
+    if (!g_iDebugMode) return;
+    Notify(g_kWearer,llGetScriptName() + ": " + sMsg,TRUE);
+}
+
+
+//===============================================================================
+//= parameters   :    key       kID                key of the avatar that receives the message
+//=                   string    sMsg               message to send
+//=                   integer   iAlsoNotifyWearer  if TRUE, a copy of the message is sent to the wearer
+//=
+//= return        :    none
+//=
+//= description  :    notify targeted id and maybe the wearer
+//=
+//===============================================================================
+
+Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
+{
+    if (kID == g_kWearer) llOwnerSay(sMsg);
+    else {
+        llInstantMessage(kID,sMsg);
+        if (iAlsoNotifyWearer) llOwnerSay(sMsg);
+    }
+}
+
+
+//most important function
+//-----------------------------------------------
 setrestrictions()
 {
     if ((on == "on") && (status != "online")) //if we have an owner online AND they have not been maked as Online from last pass
@@ -44,13 +137,24 @@ setrestrictions()
     }
 }
 
+
+//===============================================
+//===============================================
+//MAIN
+//===============================================
+//===============================================
+
 default
 {
     state_entry()
     {
+        g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
         g_kWearer = llGetOwner();
         llSetTimerEvent(2);//How often we will poll the owners
     }
+    
+//listen for linked messages from OC scripts
+//-----------------------------------------------
      link_message(integer sender, integer num, string str, key id)
     {
         string str1;
@@ -107,4 +211,8 @@ default
             off = "off";
         }
     }
+
+//-----------------------------------------------
+//END STATE: default
+//-----------------------------------------------
 }
