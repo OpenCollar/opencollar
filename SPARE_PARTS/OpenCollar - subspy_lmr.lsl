@@ -17,7 +17,7 @@
 //refactored link message handling
 //modified by: Zopf Resident - Ray Zopf (Raz)
 //Additions: changes on save settings, small bugfixes, added reset on runaway, warning on startup; better handling of para rp
-//27. Dec 2013
+//11. Jan 2014
 //
 //Files:
 //OpenCollar - subspy.lsl
@@ -30,8 +30,8 @@
 
 //todo: add who changed a setting
 //todo: rework link_message{}
-//todo: radar on/off does not give a message to owner- when setting loaded from notecard or collar
-//todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be
+//todo: radar on/off does not give a message to owner (report) - when setting loaded/changed from notecard or collar
+//todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be (solve with message in reports, see above)
 //todo: rework listener reporting, currently much text is just discarded - done with that massive change?
 //todo: play with llListen and llGetFreeMemory
 //todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Script_Memory_Limits
