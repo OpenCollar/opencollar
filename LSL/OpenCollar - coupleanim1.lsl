@@ -477,7 +477,7 @@ state ready
                     else
                     {
                         g_kPartner = g_kCmdGiver;
-                        g_sPartnerName = llGetDisplayName(g_kPartner);
+                        g_sPartnerName = llKey2Name(g_kPartner);
                         //added to stop eventual still going animations
                         StopAnims();
                         llMessageLinked(LINK_SET, CPLANIM_PERMREQUEST, sCommand, g_kPartner);
@@ -615,7 +615,7 @@ state ready
         string text = llList2String(g_lAnimSettings, g_iCmdIndex * 4 + 3);
         if (text != "")
         {
-            text = StrReplace(text, "_SELF_", FirstName(llGetDisplayName(g_kWearer)));
+            text = StrReplace(text, "_SELF_", FirstName(llKey2Name(g_kWearer)));
             text = StrReplace(text, "_PARTNER_", FirstName(g_sPartnerName));
             PrettySay(text);
         }
@@ -651,7 +651,7 @@ state ready
                 if (StartsWith(llToLower(sName), llToLower(g_sTmpName)) || llToLower(sName) == llToLower(g_sTmpName))
                 {
                     g_kPartner = llDetectedKey(n);
-                    g_sPartnerName = llGetDisplayName(g_kPartner);
+                    g_sPartnerName = sName;
                     string sCommand = llList2String(g_lAnimCmds, g_iCmdIndex);
                     //added to stop eventual still going animations
                     StopAnims();

@@ -70,7 +70,7 @@ default
         {
             g_kPartner = kID;
             llRequestPermissions(g_kPartner, PERMISSION_TRIGGER_ANIMATION);
-            llInstantMessage(g_kPartner, FirstName(llGetDisplayName(llGetOwner())) + " would like to give you a " + sStr + ". Click [Yes] to accept." );            
+            llInstantMessage(g_kPartner, FirstName(llKey2Name(llGetOwner())) + " would like give you a " + sStr + ". Click [Yes] to accept." );            
             llSetTimerEvent(g_fTimeOut);
         }
         else if (iNum == CPLANIM_START)
@@ -82,7 +82,7 @@ default
         }
         else if (iNum == CPLANIM_STOP)
         {//only when the partner is in the same sim else we get an error
-            if (llGetDisplayName(g_kPartner) != "")
+            if (llKey2Name(g_kPartner) != "")
             {
                 llStopAnimation(sStr);
             }  
