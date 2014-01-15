@@ -16,8 +16,8 @@
 //updated settings storage to improve speed and memory use
 //refactored link message handling
 //modified by: Zopf Resident - Ray Zopf (Raz)
-//Additions: changes on save settings, small bugfixes, added reset on runaway, warning on startup; better handling of para rp
-//11. Jan 2014
+//Additions: small bugfixes, added reset on runaway, warning on startup
+//15. Jan 2014
 //
 //Files:
 //OpenCollar - subspy.lsl
@@ -28,8 +28,9 @@
 
 //bug: heap collision on too much chat text? - fixed?
 
-//todo: add who changed a setting
-//todo: rework link_message{}
+//todo: add who/which owner changed a setting
+//todo: rework link_message{} - done?
+//todo: work on listen{}, as the capping of sMessage in while{} is redundant/wrong
 //todo: radar on/off does not give a message to owner (report) - when setting loaded/changed from notecard or collar
 //todo: on settings change, only wearer and current menu user gets notified - not all primary users as it should be (solve with message in reports, see above)
 //todo: rework listener reporting, currently much text is just discarded - done with that massive change?
@@ -38,14 +39,6 @@
 //todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Text_Storage
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-//===============================================
-//FIRESTORM SPECIFIC DEBUG STUFF
-//===============================================
-
-//#define FSDEBUG
-//#include "fs_debug.lsl"
 
 
 //===============================================
@@ -68,7 +61,7 @@ string g_sTPBuffer;    //if this has anything in it at end of interval, then tel
 string g_sState="init";
 
 list g_lCmds = ["trace on","trace off", "radar on", "radar off", "listen on", "listen off"];
-integer g_iListenCap = 1000;//throw away old chat lines once we reach this many chars, to prevent stack/heap collisions
+integer g_iListenCap = 1000; //throw away parts of chat once we reach this many chars
 integer g_iListener;
 string g_sOffMsg = "Spy add-on is now disabled";
 
@@ -168,11 +161,11 @@ string PeelToken(string in, integer slot)
 
 DoReports(integer iBufferFull)
 {
-    Debug("doing reports, iBufferFull: "+(string)iBufferFull);
+    //Debug("doing reports, iBufferFull: "+(string)iBufferFull);
     //build a report containing:
-    //who is nearby (as listed in g_lAvBuffer)
-    //where the sub has TPed (s stored in g_lTPBuffer)
-    //what the sub has sakID (as stored in g_lChatBuffer)
+    //who is nearby (as listed in g_sCurrentAVs)
+    //where the sub has TPed (as stored in g_sTPBuffer)
+    //what the sub has sakID (as stored in g_sChatBuffer)
     string sReport;
 
     if (g_iRadarEnabled && !iBufferFull)
@@ -199,15 +192,9 @@ DoReports(integer iBufferFull)
     if (llStringLength(sReport))
     {
         sReport = "Activity report for " + g_sSubName + " at " + GetTimestamp() + "\n" + sReport;
-        Debug("report: " + sReport);
+        //Debug("report: " + sReport);
         NotifyOwners(sReport);
     }
-
-    //flush buffers
-    ////Debug("flush buffers");
-    ////if (!iBufferFull) g_lAvBuffer = [];
-    ////g_lChatBuffer = [];
-    ////if (!iBufferFull) g_lTPBuffer = [];
 }
 
 
@@ -218,7 +205,7 @@ UpdateSensor()
     //also, only start the sensor/timer if we're attached so there's no spam from collars left lying around
     if (llGetAttached() && (g_iTraceEnabled || g_iRadarEnabled || g_iListenEnabled))
     {
-        Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
+        //Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
         //Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
         llSensorRepeat("" ,"" , AGENT, (float)g_iSensorRange, PI, (float)g_iSensorRepeat);
     }
@@ -227,7 +214,7 @@ UpdateSensor()
 
 UpdateListener()
 {
-    Debug("updatelistener");
+    //Debug("updatelistener");
     if (llGetAttached())
     {
         if (g_iListenEnabled)
@@ -235,7 +222,7 @@ UpdateListener()
             //turn on listener if not already on
             if (!g_iListener)
             {
-                Debug("turning listener on");
+                //Debug("turning listener on");
                 g_iListener = llListen(0, "", g_kWearer, "");
             }
         }
@@ -244,7 +231,7 @@ UpdateListener()
             //turn off listener if on
             if (g_iListener)
             {
-                Debug("turning listener off");
+                //Debug("turning listener off");
                 llListenRemove(g_iListener);
                 g_iListener = 0;
             }
@@ -253,29 +240,10 @@ UpdateListener()
     else
     {
         //we're not attached.  close listener
-        Debug("turning listener off");
+        //Debug("turning listener off");
         llListenRemove(g_iListener);
         g_iListener = 0;
     }
-}
-
-
-integer Enabled(string sToken)
-{
-
-    //Debug("enabled; Settings: "+(string)g_lSettings + " Token: "+ sToken + " -- Position: " + (string)iIndex);
-return 0;
-
-
-
-
-
-
-
-
-
-
-
 }
 
 
@@ -421,7 +389,7 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
         }
         //Debug("using index="+(string)index);
         if (kID == g_kWearer)
-        {      //notfy the wearer
+        {      //notify the wearer
             llOwnerSay( llGetSubString(sMsg,0,index));
         }
         else if (llGetAgentSize(kID) == ZERO_VECTOR)
@@ -439,7 +407,7 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
                 llOwnerSay( llGetSubString(sMsg,0,index));
             }
             llRegionSayTo(kID, PUBLIC_CHANNEL, llGetSubString(sMsg,0,index));   //workaround for message on settings change by primary owner
-            llRegionSayTo(kID, GetOwnerChannel(g_kWearer, 1111), llGetSubString(sMsg,0,index));
+            llRegionSayTo(kID, GetOwnerChannel(g_kWearer, 1111), llGetSubString(sMsg,0,index)); //check if this is correct
         }
         if (index >=llStringLength(sMsg)-1 ) return;
         sMsg= llGetSubString(sMsg,index,-1);
@@ -449,7 +417,7 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 
 NotifyOwners(string sMsg)
 {
-    Debug("notifyowners");
+    //Debug("notifyowners");
     integer n;
     integer iStop = llGetListLength(g_lOwners);
     for (n = 0; n < iStop; n += 2)
@@ -459,13 +427,13 @@ NotifyOwners(string sMsg)
         vector vOwnerPos = (vector)llList2String(llGetObjectDetails(kAv, [OBJECT_POS]), 0);
         if (vOwnerPos == ZERO_VECTOR || llVecDist(vOwnerPos, llGetPos()) > 20.0)//vOwnerPos will be ZERO_VECTOR if not in sim
         {
-            Debug("notifying " + (string)kAv);
+            //Debug("notifying " + (string)kAv);
             Notify(kAv, sMsg,FALSE);
         }
         else
         {
             if (llSubStringIndex(sMsg, g_sOffMsg) != ERR_GENERIC && kAv != g_kWearer) Notify(kAv, sMsg, FALSE);
-            Debug((string)kAv + " is right next to you! not notifying.");
+            //Debug((string)kAv + " is right next to you! not notifying.");
         }
     }
 }
@@ -478,37 +446,9 @@ SaveSetting(string sOption, string sValue)
 }
 
 
-EnforceSettings()
-{
-
-
-
-    //Debug("enforce settings, length: "+ (string)iListLength);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}
-
-
 TurnAllOff(string command)
 { // set all values to off and remove sensor and listener
-    Debug("Turn all off: " + command);
+    //Debug("Turn all off: " + command);
     if ("runaway" == command) {
         g_iSensorRange = 4;
         SaveSetting("meters",(string)g_iSensorRange);
@@ -586,6 +526,7 @@ performSpyCommand (string sStr, key kID)
         //Debug("got minutes command");
     } else {
         //Debug("Got unhandled command: "+sStr);
+        return;
     }
 }
 
@@ -608,7 +549,7 @@ default
         g_kWearer = llGetOwner();
         g_sSubName = llKey2Name(g_kWearer);
         g_sLoc=GetLocation();
-        g_lOwners = [g_kWearer, g_sSubName];  // initially self-owned until we hear a db message otherwise
+        g_lOwners = [g_kWearer, g_sSubName];  // initially self-owned until we hear a settings message otherwise
 
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
 
@@ -627,24 +568,24 @@ default
             integer iMessageLength=llStringLength(sMessage);
             //Debug("New line is "+(string)iMessageLength+" characters");
 
-            //if this line would overfloww the buffer, send a report before adding it
-            if(iMessageLength + llStringLength(g_sChatBuffer) > g_iListenCap) {
-                //Debug("This line would overflow the buffer... flushing buffer by running report now");
-                DoReports(TRUE);
-                //Debug("Report has been run, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
-            }
-
-            //if this line alone would overflow the buffer, trim it, and send it now
+            //if this line alone would overflow the buffer, trim it, and send it now -- seems to be useless now
             while (iMessageLength > g_iListenCap) {  //if message longer than allowed buffer length, trim it and replace the last few bytes with warning string
                 string sFragment = llDeleteSubString(sMessage, 0, g_iListenCap);
-                sMessage = llDeleteSubString(sMessage, g_iListenCap, -1);
+                //sMessage = llDeleteSubString(sMessage, g_iListenCap, -1);
                 //Debug("was too much text: " + (string)llStringLength(sMessage));
                 iMessageLength=llStringLength(sFragment);
                 g_sChatBuffer += sFragment;
                 //Debug("Running report, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
                 //Debug("Still "+(string)llStringLength(sMessage)+" characters to process");
+                //DoReports(TRUE);
+                //iMessageLength=llStringLength(sMessage);
+            }
+
+            //if this line would overflow the buffer, send a report before adding it
+            if(iMessageLength + llStringLength(g_sChatBuffer) > 10*g_iListenCap) {
+                //Debug("This line would overflow the buffer... flushing buffer by running report now");
                 DoReports(TRUE);
-                iMessageLength=llStringLength(sMessage);
+                //Debug("Report has been run, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
             }
 
             g_sChatBuffer += sMessage+"\n";
@@ -669,7 +610,7 @@ default
             }
             else // COMMAND_OWNER
             {
-                Debug("UserCommand - COMMAND_OWNER, kID: "+(string)kID);
+                //Debug("UserCommand - COMMAND_OWNER, kID: "+(string)kID);
                 if (sStr == "subspy" || sStr == "menu " + llToLower(g_sSubMenu)) DialogSpy(kID, iNum);
                 else if (sStr == "radarsettings")
                 {
@@ -685,7 +626,7 @@ default
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
             {
                 g_lOwners = llParseString2List(sValue, [","], []);
-                Debug("owners: " + sValue);
+                //Debug("owners: " + sValue);
             }
         }
             else if (iNum == LM_SETTING_RESPONSE)
@@ -695,18 +636,18 @@ default
                 string sValue = llList2String(lParams, 1);
                 integer i = llSubStringIndex(sToken, "_");
 
-            Debug("parse settings: "+sToken+" -- "+sValue);
+            //Debug("parse settings: "+sToken+" -- "+sValue);
 
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
             { //owners list
                 g_lOwners = llParseString2List(sValue, [","], []);
-                Debug("owners: " + sValue);
+                //Debug("owners: " + sValue);
                 g_iGotSettingOwners=TRUE;
             }
             else if (llGetSubString(sToken, 0, i) == g_sScript)
             { //subspy data
                 string sOption = llToLower(llGetSubString(sToken, i+1, -1));
-                Debug("got settings from db: " + sOption + sValue);
+                //Debug("got settings from db: " + sOption + sValue);
 
                 if (sOption == "trace") {
                     g_iGotSettingTrace=TRUE;
