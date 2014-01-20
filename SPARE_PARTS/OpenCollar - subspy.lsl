@@ -191,6 +191,7 @@ DoReports(integer iBufferFull)
 
     if (llStringLength(sReport))
     {
+        //Debug("Sending activity report to owner");
         sReport = "Activity report for " + g_sSubName + " at " + GetTimestamp() + "\n" + sReport;
         //Debug("report: " + sReport);
         NotifyOwners(sReport);
