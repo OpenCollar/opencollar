@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
 //                              OpenCollar - subspy                               //
-//                                 version 3.941                                  //
+//                                 version 3.942                                  //
 // ------------------------------------------------------------------------------ //
 // Licensed under the GPLv2 with additional requirements specific to Second Life® //
 // and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
@@ -16,8 +16,8 @@
 //updated settings storage to improve speed and memory use
 //refactored link message handling
 //modified by: Zopf Resident - Ray Zopf (Raz)
-//Additions: small bugfixes, added reset on runaway, warning on startup
-//15. Jan 2014
+//Additions: small bugfixes, added reset on runaway, warning on startup; resync with littlemousy and Wendy stuff again
+//21. Jan 2014
 //
 //Files:
 //OpenCollar - subspy.lsl
@@ -314,30 +314,30 @@ DialogSpy(key kID, integer iAuth)
 
     if(g_iTraceEnabled)
     {
-        lButtons += ["Trace OFF"];
+        lButtons += ["☒ Trace"];
         sTStatus = "on";
     }
     else
     {
-        lButtons += ["Trace On"];
+        lButtons += ["☐ Trace"];
     }
     if(g_iRadarEnabled)
     {
-        lButtons += ["Radar OFF"];
+        lButtons += ["☒ Radar"];
         sRStatus = "on";
     }
     else
     {
-        lButtons += ["Radar On"];
+        lButtons += ["☐ Radar"];
     }
     if(g_iListenEnabled)
     {
-        lButtons += ["Listen OFF"];
+        lButtons += ["☒ Listen"];
         sLStatus = "on";
     }
     else
     {
-        lButtons += ["Listen On"];
+        lButtons += ["☐ Listen"];
     }
     lButtons += ["RadarSettings"];
     sPrompt = "\n-Primary Owners Only Menu-\n";
@@ -349,14 +349,32 @@ DialogSpy(key kID, integer iAuth)
 }
 
 
+list CheckboxButtons(list lValues, string sButtonText, string sControlValue){
+    list lNewButtons=[];
+    integer iNumButtons=llGetListLength(lValues);
+    integer i;
+    for (i=0;i<iNumButtons;i++){
+        string sButtonValue=llList2String(lValues,i);
+        llOwnerSay("processing button "+sButtonValue);
+        if (sButtonValue==sControlValue){
+            lNewButtons += "☒ "+sButtonValue+sButtonText;
+        } else {
+            lNewButtons += "☐ "+sButtonValue+sButtonText;
+        }
+    }
+    return lNewButtons;
+}
+
 DialogRadarSettings(key kID, integer iAuth)
 {
     list lButtons;
     string sPromt = "\n\nSetup for the Radar Repeats, Sensors and Report Frequency:\n";
     sPromt += "\nRadar Range is set to: " + (string)((integer)g_iSensorRange) + " meters.\n";
     sPromt += "\nRadar and Listen report frequency is set to: " + (string)((integer)g_iSensorRepeat/60) + " minutes.\n";
-    lButtons += ["4 meters", "8 meters", "18 meters"];
-    lButtons += ["5 minutes", "9 minutes", "15 minutes", "21 minutes"];
+    //list newButtons=+= ["4 meters", "8 meters", "18 meters"];
+    lButtons += CheckboxButtons(["4","8","18"]," meters",(string)g_iSensorRange);
+    lButtons += CheckboxButtons(["5","9","15"]," minutes",(string)((integer)g_iSensorRepeat/60));
+
     g_kDialogRadarSettingsID = Dialog(kID, sPromt, lButtons, [UPMENU], 0, iAuth);
 }
 
@@ -474,7 +492,7 @@ performSpyCommand (string sStr, key kID)
 {
     //Debug("Performing subspy command: "+sStr);
 
-    if(sStr == "trace on")
+    if(sStr == "☐ trace")
     {
         g_sLoc=GetLocation();
         if (!g_iTraceEnabled) g_sTPBuffer += "Trace turned on at " + g_sLoc + " at " + GetTimestamp() + ".\n";
@@ -482,13 +500,13 @@ performSpyCommand (string sStr, key kID)
         SaveSetting("trace","on");
         Notify(kID, "Teleport tracing is now turned on.", TRUE);
     }
-    else if(sStr == "trace off")
+    else if(sStr == "☒ trace")
     {
         g_iTraceEnabled=FALSE;
         SaveSetting("trace","off");
         Notify(kID, "Teleport tracing is now turned off.", TRUE);
     }
-    else if(sStr == "radar on")
+    else if(sStr == "☐ radar")
     {
         //if (!g_iRadarEnabled) g_lAVBuffer += ["Radar turned on at " + GetTimestamp() + "."];
         g_sOldAVBuffer = "";
@@ -497,14 +515,14 @@ performSpyCommand (string sStr, key kID)
         UpdateSensor();
         Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m around " + g_sSubName + " is now turned ON.", TRUE);
     }
-    else if(sStr == "radar off")
+    else if(sStr == "☒ radar")
     {
         g_iRadarEnabled=FALSE;
         SaveSetting("radar","off");
         UpdateSensor();
         Notify(kID, "Avatar radar with range of " + (string)((integer)g_iSensorRange) + "m around " + g_sSubName + " is now turned OFF.", TRUE);
     }
-    else if(sStr == "listen on")
+    else if(sStr == "☐ listen")
     {
         if (!g_iRadarEnabled) g_sChatBuffer += "Listener turned on at " + GetTimestamp() + ".\n";
         g_iListenEnabled=TRUE;
@@ -512,7 +530,7 @@ performSpyCommand (string sStr, key kID)
         UpdateListener();
         Notify(kID, "Chat listener enabled.", TRUE);
     }
-    else if(sStr == "listen off")
+    else if(sStr == "☒ listen")
     {
         g_iListenEnabled=FALSE;
         SaveSetting("listen","off");
@@ -728,6 +746,7 @@ default
                 if (sMessage == UPMENU) DialogSpy(kAv, iAuth);
                 else
                 {
+                    sMessage = llGetSubString(sMessage,2,-1);
                     list lTemp = llParseString2List(sMessage, [" "], []);
                     integer sValue = (integer)llList2String(lTemp,0);
                     string sOption = llList2String(lTemp,1);
@@ -796,6 +815,7 @@ default
 
     no_sensor()
     {
+        g_sOldAVBuffer = g_sCurrentAVs; //store last set of avis so we know if we need to include the list in the next report
         g_sCurrentAVs = "None";
         DoReports(FALSE);
     }
@@ -822,6 +842,7 @@ default
             {
                 g_sTPBuffer += "Teleport from " + g_sLoc + " to " +  GetLocation()+ " at " + GetTimestamp() + ".\n";
                 g_sLoc = GetLocation();
+                UpdateSensor(); //if we don't update sensor here, we will not get any reports as the sensor runs the timer, and sensorRepeat stops on tp
             }
         }
 
