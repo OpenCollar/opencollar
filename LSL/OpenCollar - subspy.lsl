@@ -37,6 +37,7 @@
 //todo: play with llListen and llGetFreeMemory
 //todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Script_Memory_Limits
 //todo: http://wiki.secondlife.com/wiki/User:Becky_Pippen/Text_Storage
+//todo: http://wiki.secondlife.com/wiki/Limits
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
