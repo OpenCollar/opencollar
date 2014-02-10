@@ -102,9 +102,10 @@ key g_kWearer;
 //===============================================
 
 
-//Debug(string sMsg){
-//    llOwnerSay("["+llGetScriptName()+"]" + sMsg);
-//}
+Debug(string sStr)
+{
+    //llOwnerSay(llGetScriptName() + ": " + sStr);
+}
 
 string GetScriptID()
 {
@@ -124,7 +125,7 @@ string PeelToken(string in, integer slot)
 
 DoReports(integer iBufferFull)
 {
-    //Debug("doing reports, iBufferFull: "+(string)iBufferFull);
+    Debug("doing reports, iBufferFull: "+(string)iBufferFull);
     string sReport;
 
     if (g_iRadarEnabled && !iBufferFull)
@@ -150,7 +151,7 @@ DoReports(integer iBufferFull)
 
     if (llStringLength(sReport))
     {
-        //Debug("Sending activity report to owner");
+        Debug("Sending activity report to owner");
         sReport = "Activity report for " + g_sSubName + " at " + GetTimestamp() + "\n" + sReport;
         NotifyOwners(sReport);
     }
@@ -164,8 +165,8 @@ UpdateSensor()
     //also, only start the sensor/timer if we're attached so there's no spam from collars left lying around
     if (llGetAttached() && (g_iTraceEnabled || g_iRadarEnabled || g_iListenEnabled))
     {
-        //Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
-        //Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
+        Debug("Enabling sensor every "+(string)g_iSensorRepeat+" seconds");
+        Debug("range:"+(string)g_iSensorRange+" repeat: "+(string)g_iSensorRepeat);
         llSensorRepeat("" ,"" , AGENT, (float)g_iSensorRange, PI, (float)g_iSensorRepeat);
     }
 }
@@ -175,7 +176,7 @@ UpdateListener()
 {
     if (g_iListenEnabled && llGetAttached()){ //turn on listener if not already on
         if (g_iListener == 0){
-            //Debug("Enabling listener");
+            Debug("Enabling listener");
             g_iListener = llListen(0, "", g_kWearer, "");
         }
     }
@@ -184,7 +185,7 @@ UpdateListener()
         //turn off listener if on
         if (g_iListener != 0)
         {
-            //Debug("Disabling listener");
+            Debug("Disabling listener");
             llListenRemove(g_iListener);
             g_iListener = 0;
         }
@@ -300,7 +301,7 @@ list CheckboxButtons(list lValues, string sButtonText, string sControlValue){
     integer i;
     for (i=0;i<iNumButtons;i++){
         string sButtonValue=llList2String(lValues,i);
-        llOwnerSay("processing button "+sButtonValue);
+        Debug("processing button "+sButtonValue);
         if (sButtonValue==sControlValue){
             lNewButtons += "☒ "+sButtonValue+sButtonText;
         } else {
@@ -350,7 +351,7 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
                 index--;
             }
         }
-        //Debug("using index="+(string)index);
+        Debug("using index="+(string)index);
         if (kID == g_kWearer)
         {      //notify the wearer
             llOwnerSay( llGetSubString(sMsg,0,index));
@@ -380,7 +381,7 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 
 NotifyOwners(string sMsg)
 {
-    //Debug("notifyowners");
+    Debug("notifyowners");
     integer n;
     integer iStop = llGetListLength(g_lOwners);
     for (n = 0; n < iStop; n += 2)
@@ -390,13 +391,13 @@ NotifyOwners(string sMsg)
         vector vOwnerPos = (vector)llList2String(llGetObjectDetails(kAv, [OBJECT_POS]), 0);
         if (vOwnerPos == ZERO_VECTOR || llVecDist(vOwnerPos, llGetPos()) > 20.0)//vOwnerPos will be ZERO_VECTOR if not in sim
         {
-            //Debug("notifying " + (string)kAv);
+            Debug("notifying " + (string)kAv);
             Notify(kAv, sMsg,FALSE);
         }
         else
         {
             if (llSubStringIndex(sMsg, g_sOffMsg) != ERR_GENERIC && kAv != g_kWearer) Notify(kAv, sMsg, FALSE);
-            //Debug((string)kAv + " is right next to you! not notifying.");
+            Debug((string)kAv + " is right next to you! not notifying.");
         }
     }
 }
@@ -404,14 +405,14 @@ NotifyOwners(string sMsg)
 
 SaveSetting(string sOption, string sValue)
 {
-    //Debug("Saving setting: " + sOption + "=" + sValue);
+    Debug("Saving setting: " + sOption + "=" + sValue);
     llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOption + "=" + sValue, NULL_KEY);   //send value to settings script
 }
 
 
 TurnAllOff(string command)
 { // set all values to off and remove sensor and listener
-    //Debug("Turn all off: " + command);
+    Debug("Turn all off: " + command);
     if ("runaway" == command) {
         g_iSensorRange = 4;
         SaveSetting("meters",(string)g_iSensorRange);
@@ -435,7 +436,7 @@ TurnAllOff(string command)
 
 performSpyCommand (string sStr, key kID)
 {
-    //Debug("Performing subspy command: "+sStr);
+    Debug("Performing subspy command: "+sStr);
 
     if(sStr == "☐ trace")
     {
@@ -484,11 +485,11 @@ performSpyCommand (string sStr, key kID)
     }
     else if(llSubStringIndex(sStr,"meters")==0)
     {
-        //Debug("got meters command");
+        Debug("got meters command");
     } else if(llSubStringIndex(sStr,"minutes")==0) {
-        //Debug("got minutes command");
+        Debug("got minutes command");
     } else {
-        //Debug("Got unhandled command: "+sStr);
+        Debug("Got unhandled command: "+sStr);
     }
 }
 
@@ -528,40 +529,40 @@ default
             if(llGetSubString(sMessage, 0, 3) == "/me ") sMessage=g_sSubName + llGetSubString(sMessage, 3, -1);
             else sMessage=g_sSubName + ": " + sMessage;
             integer iMessageLength=llStringLength(sMessage);
-            //Debug("New line is "+(string)iMessageLength+" characters");
+            Debug("New line is "+(string)iMessageLength+" characters");
 
             //if this line would overfloww the buffer, send a report before adding it
             if(iMessageLength + llStringLength(g_sChatBuffer) > g_iListenCap)
             {
-                //Debug("This line would overflow the buffer... flushing buffer by running report now");
+                Debug("This line would overflow the buffer... flushing buffer by running report now");
                 DoReports(TRUE);
-                //Debug("Report has been run, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
+                Debug("Report has been run, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
             }
         
             //if this line alone would overflow the buffer, trim it, and send it now
             while (iMessageLength > g_iListenCap) {  //if message longer than allowed buffer length, trim it and replace the last few bytes with warning string
                 string sFragment = llDeleteSubString(sMessage, 0, g_iListenCap);
                 sMessage = llDeleteSubString(sMessage, g_iListenCap, -1);
-                //Debug("was too much text: " + (string)llStringLength(sMessage));
+                Debug("was too much text: " + (string)llStringLength(sMessage));
                 iMessageLength=llStringLength(sFragment);
                 g_sChatBuffer += sFragment;
-                //Debug("Running report, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
-                //Debug("Still "+(string)llStringLength(sMessage)+" characters to process");
+                Debug("Running report, Currently "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
+                Debug("Still "+(string)llStringLength(sMessage)+" characters to process");
                 DoReports(TRUE);
                 iMessageLength=llStringLength(sMessage);
             }
 
             g_sChatBuffer += sMessage+"\n";
-            //Debug("Now "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
+            Debug("Now "+(string)llStringLength(g_sChatBuffer)+" characters in the buffer");
         }
     }
 
     link_message(integer iSender, integer iNum, string sStr, key kID)
     {
-        //Debug("link_message: Sender = "+ (string)iSender + ", iNum = "+ (string)iNum + ", string = " + (string)sStr +", ID = " + (string)kID);
+        Debug("link_message: Sender = "+ (string)iSender + ", iNum = "+ (string)iNum + ", string = " + (string)sStr +", ID = " + (string)kID);
 
         if (iNum >= COMMAND_OWNER && iNum <= COMMAND_WEARER){   //user command, post auth
-            //Debug("UserCommand: "+sStr);
+            Debug("UserCommand: "+sStr);
             sStr = llToLower(sStr);
             if (iNum != COMMAND_OWNER)
             {
@@ -570,14 +571,14 @@ default
             }
             else // COMMAND_OWNER
             {
-                //Debug("UserCommand - COMMAND_OWNER");
+                Debug("UserCommand - COMMAND_OWNER");
                 if (sStr == "subspy" || sStr == "menu " + llToLower(g_sSubMenu)) DialogSpy(kID, iNum);
                 else if (sStr == "radarsettings")
                 {
                     DialogRadarSettings(kID, iNum); //request for the radar settings menu
                 } else if ("runaway" == sStr) TurnAllOff(sStr); //runaway command
                 else if (~llListFindList(g_lCmds, [sStr]))performSpyCommand(sStr, kID); //received an actual spy command
-                //else //Debug("Didn't recognise command");
+                //else Debug("Didn't recognise command");
             }
         } else if (iNum == LM_SETTING_SAVE) {
             list lParams = llParseString2List(sStr, ["="], []);
@@ -586,7 +587,7 @@ default
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
             {
                 g_lOwners = llParseString2List(sValue, [","], []);
-                //Debug("owners: " + sValue);
+                Debug("owners: " + sValue);
             }
         }
         else if (iNum == LM_SETTING_RESPONSE)
@@ -600,13 +601,13 @@ default
             if(sToken == "auth_owner" && llStringLength(sValue) > 0)
             { //owners list
                 g_lOwners = llParseString2List(sValue, [","], []);
-                //Debug("owners: " + sValue);
+                Debug("owners: " + sValue);
                 g_iGotSettingOwners=TRUE;
             }
             else if (llGetSubString(sToken, 0, i) == g_sScript)
             { //subspy data
                 string sOption = llToLower(llGetSubString(sToken, i+1, -1));
-                //Debug("recieved settings: "+sOption+"="+sValue);
+                Debug("recieved settings: "+sOption+"="+sValue);
 
                 if (sOption == "trace") {
                     g_iGotSettingTrace=TRUE;
@@ -724,7 +725,7 @@ default
         } else if (g_sState=="postInit") {  //postInit period complete, should have all of our data now
 
             if (g_iTraceEnabled) g_sTPBuffer = "Rezzed at " + GetLocation() + ".\n";
-            //Debug("Running sensor from postInit");
+            Debug("Running sensor from postInit");
             g_sState="initialScan";
             llSensor("" ,"" , AGENT, g_iSensorRange, PI);
 
@@ -735,7 +736,7 @@ default
 
     sensor(integer iNum)
     {
-        //Debug("Hit sensor event, "+(string)iNum);
+        Debug("Hit sensor event, "+(string)iNum);
         if (g_iRadarEnabled)
         {
             //put nearby avs in list
@@ -744,7 +745,7 @@ default
 
             g_sOldAVBuffer = g_sCurrentAVs; //store last set of avis so we know if we need to include the list in the next report
             g_sCurrentAVs = llDumpList2String(llListSort(lAvBuffer, 1, TRUE), ", ");
-            //Debug ("Complete avi list: "+g_sCurrentAVs);
+            Debug ("Complete avi list: "+g_sCurrentAVs);
         }
         DoReports(FALSE);
         if (g_sState=="initialScan"){
