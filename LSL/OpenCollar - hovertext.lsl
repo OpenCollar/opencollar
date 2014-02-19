@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
 //                            OpenCollar - hovertext                              //
-//                                 version 3.952                                  //
+//                                 version 3.953                                  //
 // ------------------------------------------------------------------------------ //
 // Licensed under the GPLv2 with additional requirements specific to Second Life® //
 // and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
@@ -302,7 +302,7 @@ default
                 integer iAuth = (integer)llList2String(lMenuParams, 3);
                 if (sMessage == SET)
                 {
-                    g_kTBoxId = Dialog(kAv, "\n- Submit the new title in the field below.\n- Submit a blank field to go back to " + g_sParentMenu + ".", [], [], 0, iAuth);                    
+                    g_kTBoxId = Dialog(kAv, "\n- Submit the new title in the field below.\n- Submit a blank field to go back to " + g_sFeatureName + ".", [], [], 0, iAuth);                    
                 }
                 if (sMessage == UPMENU)
                 {
