@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
 //                               OpenCollar - menu                                //
-//                                 version 3.951                                  //
+//                                 version 3.954                                  //
 // ------------------------------------------------------------------------------ //
 // Licensed under the GPLv2 with additional requirements specific to Second Life® //
 // and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
@@ -263,6 +263,7 @@ default
     state_entry()
     {
         llSleep(1.0);//delay sending this message until we're fairly sure that other scripts have reset too, just in case
+        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, "collarversion", NULL_KEY);
         g_iScriptCount = llGetInventoryNumber(INVENTORY_SCRIPT);
         MenuInit();      
     }
