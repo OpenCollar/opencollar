@@ -351,8 +351,13 @@ default
                     
                    // g_kMenuID = Dialog(wearer, prompt, [BTN_GET_UPDATE], ["Cancel"], 0, COMMAND_WEARER);
                    llMessageLinked(LINK_THIS,LM_SETTING_RESPONSE,"collarversion="+(string)my_version+"=0","");
+                   llMessageLinked(LINK_THIS,LM_SETTING_SAVE,"collarversion="+(string)my_version+"=0","");
                 }
-                else llMessageLinked(LINK_THIS,LM_SETTING_RESPONSE,"collarversion="+(string)my_version+"=1","");
+                else
+                {
+                    llMessageLinked(LINK_THIS,LM_SETTING_RESPONSE,"collarversion="+(string)my_version+"=1","");
+                    llMessageLinked(LINK_THIS,LM_SETTING_SAVE,"collarversion="+(string)my_version+"=1","");
+                }
             }
            // else if (id == appengine_delivery_request)
           //  {
