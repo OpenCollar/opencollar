@@ -290,9 +290,11 @@ StartAnim(string sAnim)
 
             //add anim to list
             g_lAnims = [sAnim] + g_lAnims;//this way, g_lAnims[0] is always the currently playing anim
-            llStartAnimation(sAnim);
+            // at first - do AO_OFF !!!
             llWhisper(g_iInterfaceChannel, "CollarComand|" + (string)EXT_COMMAND_COLLAR + "|" + AO_OFF);
             llWhisper(g_iAOChannel, AO_OFF);
+            // and second - do start animation!!!
+            llStartAnimation(sAnim);
         }
         else
         {
