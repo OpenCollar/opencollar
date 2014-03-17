@@ -788,10 +788,10 @@ default
     {
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
         // sleep a second to allow all scripts to be initialized
-        llSleep(1.0);
+        //llSleep(1.0);
         // send request to main menu and ask other menus if they want to register with us
         //        llMessageLinked(LINK_THIS, MENUNAME_REQUEST, g_szSubmenu, NULL_KEY);
-        llMessageLinked(LINK_THIS, MENUNAME_RESPONSE, g_szParentmenu + "|" + g_szSubmenu, NULL_KEY);
+        //llMessageLinked(LINK_THIS, MENUNAME_RESPONSE, g_szParentmenu + "|" + g_szSubmenu, NULL_KEY);
         g_kWearer=llGetOwner();
         updateVisible();
 
