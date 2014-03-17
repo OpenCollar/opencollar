@@ -379,12 +379,7 @@ integer UserCommand(integer iNum, string sStr, key kID) // here iNum: auth value
 {
     if (iNum > COMMAND_WEARER || iNum < COMMAND_OWNER) return FALSE; // sanity check
     string test=llToLower(sStr);
-    if (sStr == "refreshmenu")
-    {
-        //g_lButtons = [];
-        //llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sSubMenu, NULL_KEY);
-    }
-    else if (sStr == "menu " + g_sSubMenu || sStr == g_sBellChatPrefix)
+    if (sStr == "menu " + g_sSubMenu || sStr == g_sBellChatPrefix)
     {// the command prefix + bell without any extentsion is used in chat
         //give this plugin's menu to kID
         DoMenu(kID, iNum);
