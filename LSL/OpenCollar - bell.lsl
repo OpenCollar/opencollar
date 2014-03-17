@@ -75,7 +75,7 @@ key g_kWearer; // key of the current wearer to reset only on owner changes
 
 integer g_iHasControl=FALSE; // dow we have control over the keyboard?
 
-list g_lButtons; // submenu buttons
+list g_lButtons;
 integer g_iHide ; // global hide
 
 //MESSAGE MAP
