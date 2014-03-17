@@ -184,7 +184,7 @@ DoMenu(key kID, integer iAuth)
 {
     string sPrompt = "\n\n";
     // sPrompt += "(Menu will time out in " + (string)g_iTimeOut + " seconds.)\n";
-    list lMyButtons = g_lLocalButtons ; // + g_lButtons;
+    list lMyButtons = g_lLocalButtons + g_lButtons;
 
     //fill in your button list here
 
