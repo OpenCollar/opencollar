@@ -68,7 +68,7 @@ integer DIALOG_TIMEOUT = -9002;
 //5000 block is reserved for IM slaves
 
 string UPMENU = "BACK";
-//string MORE = ">";
+string EXIT = "EXIT";
 string GIVECARD = "Quick Guide";
 string HELPCARD = "OpenCollar Guide";
 //string REFRESH_MENU = "Fix Menus";
@@ -115,6 +115,7 @@ Menu(string sName, key kID, integer iAuth)
         {
             lUtility = [UPMENU];
         }
+        else lUtility = [EXIT];
         
         key kMenuID = Dialog(kID, sPrompt, lItems, lUtility, 0, iAuth);
         
@@ -316,8 +317,11 @@ default
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                
                 
                 //process response
-                
-                if (sMessage == UPMENU)
+                if (sMessage == EXIT)
+                {
+                    return;
+                }
+                else if (sMessage == UPMENU)
                 {
                     Menu("Main", kAv, iAuth);
                 }
