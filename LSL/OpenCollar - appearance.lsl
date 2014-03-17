@@ -454,11 +454,11 @@ default
                 }
                 else DoMenu(kID, iNum);
             }
-            else if (sStr == "refreshmenu")
+            /*else if (sStr == "refreshmenu")
             {
                 g_lButtons = [];
                 llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sSubMenu, NULL_KEY);
-            }
+            }*/
             else if (sStr == "appearance")
             {
                 if (kID!=g_kWearer && iNum!=COMMAND_OWNER)
