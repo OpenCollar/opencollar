@@ -75,7 +75,7 @@ key g_kWearer; // key of the current wearer to reset only on owner changes
 
 integer g_iHasControl=FALSE; // dow we have control over the keyboard?
 
-//list g_lButtons;
+list g_lButtons; // submenu buttons
 integer g_iHide ; // global hide
 
 //MESSAGE MAP
@@ -533,8 +533,10 @@ default
         {
             // the menu structure is to be build again, so make sure we get recognized
             llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
+            g_lButtons = []; // flush submenu buttons
+            llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sSubMenu, NULL_KEY);
         }
-       /* else if (iNum == MENUNAME_RESPONSE)
+        else if (iNum == MENUNAME_RESPONSE)
         {
             list lParts = llParseString2List(sStr, ["|"], []);
             if (llList2String(lParts, 0) == g_sSubMenu)
@@ -545,7 +547,20 @@ default
                     g_lButtons = llListSort(g_lButtons + [button], 1, TRUE);
                 }
             }
-        } */
+        }
+        else if (iNum == MENUNAME_REMOVE)
+        {
+            list lParts = llParseString2List(sStr, ["|"], []);
+            if (llList2String(lParts, 0) == g_sSubMenu)
+            {
+		        string button = llList2String(lParts, 1);
+                integer iIndex = llListFindList(g_lButtons , [button]);
+                if (iIndex != -1)
+                {
+                    g_lButtons = llDeleteSubList(g_lButtons , iIndex, iIndex);
+                }
+            }
+        }
         else if (iNum == LM_SETTING_RESPONSE)
         {
             // some responses from the DB are coming in, check if it is about bell values
@@ -702,12 +717,12 @@ default
                     SetBellElementAlpha();
                     SaveBellSettings();
                 }
-                /*else if (~llListFindList(g_lButtons, [sMessage]))
+                else if (~llListFindList(g_lButtons, [sMessage]))
                 {
                     //we got a submenu selection
-                    UserCommand(iAuth, "menu "+sMessage, kAV);
+                    llMessageLinked(LINK_SET, iAuth, "menu " + sMessage, kAv);
                     return; // no main menu
-                }*/
+                }
                 // do we want to see the menu again?
                 DoMenu(kAV, iAuth);
 
