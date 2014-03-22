@@ -379,12 +379,7 @@ integer UserCommand(integer iNum, string sStr, key kID) // here iNum: auth value
 {
     if (iNum > COMMAND_WEARER || iNum < COMMAND_OWNER) return FALSE; // sanity check
     string test=llToLower(sStr);
-    if (sStr == "refreshmenu")
-    {
-        g_lButtons = [];
-        llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sSubMenu, NULL_KEY);
-    }
-    else if (sStr == "menu " + g_sSubMenu || sStr == g_sBellChatPrefix)
+    if (sStr == "menu " + g_sSubMenu || sStr == g_sBellChatPrefix)
     {// the command prefix + bell without any extentsion is used in chat
         //give this plugin's menu to kID
         DoMenu(kID, iNum);
@@ -533,6 +528,8 @@ default
         {
             // the menu structure is to be build again, so make sure we get recognized
             llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, NULL_KEY);
+            g_lButtons = []; // flush submenu buttons
+            llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sSubMenu, NULL_KEY);
         }
         else if (iNum == MENUNAME_RESPONSE)
         {
@@ -543,6 +540,19 @@ default
                 if (llListFindList(g_lButtons, [button]) == -1)
                 {
                     g_lButtons = llListSort(g_lButtons + [button], 1, TRUE);
+                }
+            }
+        }
+        else if (iNum == MENUNAME_REMOVE)
+        {
+            list lParts = llParseString2List(sStr, ["|"], []);
+            if (llList2String(lParts, 0) == g_sSubMenu)
+            {
+		        string button = llList2String(lParts, 1);
+                integer iIndex = llListFindList(g_lButtons , [button]);
+                if (iIndex != -1)
+                {
+                    g_lButtons = llDeleteSubList(g_lButtons , iIndex, iIndex);
                 }
             }
         }
@@ -705,7 +715,7 @@ default
                 else if (~llListFindList(g_lButtons, [sMessage]))
                 {
                     //we got a submenu selection
-                    UserCommand(iAuth, "menu "+sMessage, kAV);
+                    llMessageLinked(LINK_SET, iAuth, "menu " + sMessage, kAv);
                     return; // no main menu
                 }
                 // do we want to see the menu again?
