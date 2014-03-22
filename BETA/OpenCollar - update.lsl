@@ -227,6 +227,7 @@ Init()
     //llMessageLinked(LINK_SET, MENUNAME_RESPONSE, PARENT_MENU + "|" + BTN_DO_UPDATE, NULL_KEY);
     //llMessageLinked(LINK_SET, MENUNAME_RESPONSE, PARENT_MENU + "|" + BTN_GET_UPDATE, NULL_KEY);
     //llMessageLinked(LINK_SET, MENUNAME_RESPONSE, PARENT_MENU + "|" + BTN_GET_VERSION, NULL_KEY);    
+    llMessageLinked(LINK_SET, LM_SETTING_DELETE, "collarversion", NULL_KEY); // delete old version saved in db
 }
 
 // returns TRUE if eligible (AUTHED link message number)
