@@ -238,7 +238,7 @@ default
         //        llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + LOCK, "");
         
         BuildLockElementList();//EB
-        SetLockElementAlpha(); //EB
+        //SetLockElementAlpha(); // isn't necessary.
         llSetMemoryLimit(llGetUsedMemory()+6000); //should be plenty, but let's keep an eye on this.
 
     }
@@ -412,19 +412,21 @@ default
             }
         }
     }
-/*
+
     on_rez(integer start_param)
     {
+        BuildLockElementList(); // is necessary if changed "Lock" prim links 
+        
         // stop IMs going wild
-        if (g_kWearer != llGetOwner())
-        {
-            llResetScript();
-        }
+        //if (g_kWearer != llGetOwner())
+        //{
+        //    llResetScript();
+        //}
         
         //This part isn't necessary cos the setting will get pushed on rez from saved settings. I've included it here cos I'm commenting out the entire on_rez section as we reset the script on changed owner so the above doesn't seem necessary, and Iwant the below here cos if at some point we tidy up on the settings on rez business, it would be a good idea to have this check here.
 
-        if((key)g_sLocksound==NULL_KEY && llGetInventoryType(g_sLocksound)!=INVENTORY_SOUND) g_sLockSound=g_sDefaultLockSound;
-        if((key)g_sUnLocksound==NULL_KEY && llGetInventoryType(g_sUnLocksound)!=INVENTORY_SOUND) g_sLockSound=g_sDefaultUnLockSound;
+        //if((key)g_sLocksound==NULL_KEY && llGetInventoryType(g_sLocksound)!=INVENTORY_SOUND) g_sLockSound=g_sDefaultLockSound;
+        //if((key)g_sUnLocksound==NULL_KEY && llGetInventoryType(g_sUnLocksound)!=INVENTORY_SOUND) g_sLockSound=g_sDefaultUnLockSound;
     }
-    */
+    
 }
