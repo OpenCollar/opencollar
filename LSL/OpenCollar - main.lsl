@@ -102,8 +102,8 @@ string g_sClosedLockPrimName="ClosedLock"; // Prim description of elements that 
 list g_lClosedLockElements; //to store the locks prim to hide or show //EB
 list g_lOpenLockElements; //to store the locks prim to hide or show //EB
 
-string LOCK = " LOCK";
-string UNLOCK = " UNLOCK";
+string LOCK = "LOCK";
+string UNLOCK = "UNLOCK";
 string CTYPE="collar";
 string g_sDefaultLockSound="caa78697-8493-ead3-4737-76dcc926df30";
 string g_sDefaultUnlockSound="ff09cab4-3358-326e-6426-ec8d3cd3b98e";
@@ -155,12 +155,11 @@ Menu(string sName, key kID, integer iAuth)
             kMenuID = Dialog(kID, sPrompt, lItems, lUtility, 0, iAuth);
         } else {    //it's the main menu, show the right lock button
             if (g_iLocked){
-                kMenuID = Dialog(kID, sPrompt, " UNLOCK"+lItems, lUtility, 0, iAuth);
+                kMenuID = Dialog(kID, sPrompt, UNLOCK+lItems, lUtility, 0, iAuth);
             } else {
-                kMenuID = Dialog(kID, sPrompt, " LOCK"+lItems, lUtility, 0, iAuth);
+                kMenuID = Dialog(kID, sPrompt, LOCK+lItems, lUtility, 0, iAuth);
             }
         }
-        
         
         integer iIndex = llListFindList(g_lMenuIDs, [kID]);
         if (~iIndex)
@@ -211,32 +210,23 @@ HandleMenuResponse(string entry)
     //entry will be in form of "parent|menuname"
     list lParams = llParseString2List(entry, ["|"], []);
     string sName = llList2String(lParams, 0);
+    string sSubMenu = llList2String(lParams, 1);
+    integer index = -1;
     
-    if (sName=="AddOns" || sName=="Apps"){  //we only accept buttons for apps nemu
-        //Debug("we handle " + sName);
-        string sSubMenu = llList2String(lParams, 1);
-        list lGuts = llParseString2List(llList2String(g_lMenus, 1), ["|"], []);
-        if (llListFindList(lGuts, [sSubMenu]) == -1)
-        {
+    if (sName == "Main") index = 0;
+    else if (sName=="AddOns" || sName=="Apps") index = 1 ;
+    
+    if (index != -1) {
+        //Debug("we handle " + sName);    
+        list lGuts = llParseString2List(llList2String(g_lMenus, index), ["|"], []);
+        if (llListFindList(lGuts, [sSubMenu]) == -1) {
             lGuts += [sSubMenu];
             lGuts = llListSort(lGuts, 1, TRUE);
-            g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], 1, 1);
+            g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], index, index);        
         }
-    } else if (sName=="Main"){  //fixme: temp allow lock/unlock button in main, delete this once lock is merged with menu
-        //Debug("we handle " + sName);
-        string sSubMenu = llList2String(lParams, 1);
-        if (sSubMenu == " LOCK" || sSubMenu == " UNLOCK") {
-            list lGuts = llParseString2List(llList2String(g_lMenus, 0), ["|"], []);
-            if (llListFindList(lGuts, [sSubMenu]) == -1)
-            {
-                lGuts += [sSubMenu];
-                lGuts = llListSort(lGuts, 1, TRUE);
-                g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], 0, 0);
-            }
-        } else {
-            //Debug("Not making button: "+sSubMenu);
+    } else {
+        //Debug("Not making button: "+sSubMenu);
         }
-    }
 }
 
 integer UserCommand(integer iNum, string sStr, key kID)
@@ -281,7 +271,6 @@ integer UserCommand(integer iNum, string sStr, key kID)
     else if (sCmd == "lock" || (!g_iLocked && sStr == "togglelock"))
     {
         //Debug("User command:"+sCmd);
-
         if (iNum == COMMAND_OWNER || kID == g_kWearer )
         {   //primary owners and wearer can lock and unlock. no one else
             Lock();
@@ -301,8 +290,6 @@ integer UserCommand(integer iNum, string sStr, key kID)
         }
         else Notify(kID, "Sorry, only primary owners can unlock the " + CTYPE + ".", FALSE);
     }
-    
-    
     
     return TRUE;
 }
@@ -497,7 +484,7 @@ default
                 //process response
                 if (sMenu=="Main"){
                     //Debug("Main menu response: '"+sMessage+"'");
-                    if (sMessage == " LOCK" || sMessage==" UNLOCK"){
+                    if (sMessage == LOCK || sMessage == UNLOCK){
                         //Debug("doing usercommand for '"+sMessage+"' from "+sMenu+" menu");
                         UserCommand(iAuth, sMessage, kAv);
                         Menu("Main", kAv, iAuth);
