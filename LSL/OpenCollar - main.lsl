@@ -210,32 +210,23 @@ HandleMenuResponse(string entry)
     //entry will be in form of "parent|menuname"
     list lParams = llParseString2List(entry, ["|"], []);
     string sName = llList2String(lParams, 0);
+    string sSubMenu = llList2String(lParams, 1);
+    integer index = -1;
     
-    if (sName=="AddOns" || sName=="Apps"){  //we only accept buttons for apps nemu
-        //Debug("we handle " + sName);
-        string sSubMenu = llList2String(lParams, 1);
-        list lGuts = llParseString2List(llList2String(g_lMenus, 1), ["|"], []);
-        if (llListFindList(lGuts, [sSubMenu]) == -1)
-        {
+    if (sName == "Main") index = 0;
+    else if (sName=="AddOns" || sName=="Apps") index = 1 ;
+    
+    if (index != -1) {
+        //Debug("we handle " + sName);    
+        list lGuts = llParseString2List(llList2String(g_lMenus, index), ["|"], []);
+        if (llListFindList(lGuts, [sSubMenu]) == -1) {
             lGuts += [sSubMenu];
             lGuts = llListSort(lGuts, 1, TRUE);
-            g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], 1, 1);
+            g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], index, index);        
         }
-    } else if (sName=="Main"){  //fixme: temp allow lock/unlock button in main, delete this once lock is merged with menu
-        //Debug("we handle " + sName);
-        string sSubMenu = llList2String(lParams, 1);
-        //if (sSubMenu == LOCK || sSubMenu == UNLOCK) {
-            list lGuts = llParseString2List(llList2String(g_lMenus, 0), ["|"], []);
-            if (llListFindList(lGuts, [sSubMenu]) == -1)
-            {
-                lGuts += [sSubMenu];
-                lGuts = llListSort(lGuts, 1, TRUE);
-                g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], 0, 0);
-            }
-        } else {
-            //Debug("Not making button: "+sSubMenu);
+    } else {
+        //Debug("Not making button: "+sSubMenu);
         }
-    //}
 }
 
 integer UserCommand(integer iNum, string sStr, key kID)
