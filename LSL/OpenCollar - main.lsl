@@ -97,8 +97,8 @@ string g_sClosedLockPrimName="ClosedLock"; // Prim description of elements that 
 list g_lClosedLockElements; //to store the locks prim to hide or show //EB
 list g_lOpenLockElements; //to store the locks prim to hide or show //EB
 
-string LOCK = " LOCK";
-string UNLOCK = " UNLOCK";
+string LOCK = "LOCK";
+string UNLOCK = "UNLOCK";
 string CTYPE="collar";
 string g_sDefaultLockSound="caa78697-8493-ead3-4737-76dcc926df30";
 string g_sDefaultUnlockSound="ff09cab4-3358-326e-6426-ec8d3cd3b98e";
@@ -150,9 +150,9 @@ Menu(string sName, key kID, integer iAuth)
             kMenuID = Dialog(kID, sPrompt, lItems, lUtility, 0, iAuth);
         } else {    //it's the main menu, show the right lock button
             if (g_iLocked){
-                kMenuID = Dialog(kID, sPrompt, " UNLOCK"+lItems, lUtility, 0, iAuth);
+                kMenuID = Dialog(kID, sPrompt, UNLOCK+lItems, lUtility, 0, iAuth);
             } else {
-                kMenuID = Dialog(kID, sPrompt, " LOCK"+lItems, lUtility, 0, iAuth);
+                kMenuID = Dialog(kID, sPrompt, LOCK+lItems, lUtility, 0, iAuth);
             }
         }
         
@@ -198,7 +198,7 @@ MenuInit()
     llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Main", ""); 
     llMessageLinked(LINK_SET, MENUNAME_REQUEST, "AddOns", "");
     llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Apps", "");
-    llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Help/About", ""); 
+    //llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Help/About", ""); 
 }
 
 HandleMenuResponse(string entry)
@@ -220,6 +220,26 @@ HandleMenuResponse(string entry)
     }
 }
 
+HandleMenuRemove(string entry)
+{
+    //entry will be in form of "parent|menuname"
+    list lParams = llParseString2List(entry, ["|"], []);
+    string sName = llList2String(lParams, 0);
+    
+    if (sName=="AddOns" || sName=="Apps"){  //we only accept buttons for apps nemu
+        
+        string sSubMenu = llList2String(lParams, 1);
+        list lGuts = llParseString2List(llList2String(g_lMenus, 1), ["|"], []);
+        integer gutiIndex = llListFindList(lGuts, [sSubMenu]);
+        //only remove if it's there
+        if (gutiIndex != -1)        
+        {
+            lGuts = llDeleteSubList(lGuts, gutiIndex, gutiIndex);
+            g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], 1, 1);
+        }        
+    }
+}
+
 integer UserCommand(integer iNum, string sStr, key kID)
 {
     if (iNum == COMMAND_EVERYONE) return TRUE;  // No command for people with no privilege in this plugin.
@@ -237,6 +257,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
     else if (sCmd == "menu")
     {
         string sSubmenu = llGetSubString(sStr, 5, -1);
+        if (sSubmenu == "AddOns") sSubmenu = "Apps";  // for compatible old AddOns menu, remove in future.
         if (llListFindList(g_lMenuNames, [sSubmenu]) != -1);
         Menu(sSubmenu, kID, iNum);
     }
@@ -440,22 +461,7 @@ default
         }
         else if (iNum == MENUNAME_REMOVE)
         {
-            //sStr should be in form of parentmenu|childmenu
-            list lParams = llParseString2List(sStr, ["|"], []);
-            string parent = llList2String(lParams, 0);
-            string child = llList2String(lParams, 1);
-            integer iMenuIndex = llListFindList(g_lMenuNames, [parent]);
-            if (iMenuIndex != -1)
-            {
-                list lGuts = llParseString2List(llList2String(g_lMenus, iMenuIndex), ["|"], []);
-                integer gutiIndex = llListFindList(lGuts, [child]);
-                //only remove if it's there
-                if (gutiIndex != -1)        
-                {
-                    lGuts = llDeleteSubList(lGuts, gutiIndex, gutiIndex);
-                    g_lMenus = llListReplaceList(g_lMenus, [llDumpList2String(lGuts, "|")], iMenuIndex, iMenuIndex);                    
-                }        
-            }
+            HandleMenuRemove(sStr);
         }
         else if (iNum == DIALOG_RESPONSE)
         {
@@ -478,7 +484,7 @@ default
                 //process response
                 if (sMenu=="Main"){
                     //Debug("Main menu response: '"+sMessage+"'");
-                    if (sMessage == " LOCK" || sMessage==" UNLOCK"){
+                    if (sMessage == LOCK || sMessage == UNLOCK){
                         //Debug("doing usercommand for '"+sMessage+"' from "+sMenu+" menu");
                         UserCommand(iAuth, sMessage, kAv);
                         Menu("Main", kAv, iAuth);
@@ -537,6 +543,10 @@ default
                     else if (sMessage == "Update")
                     {
                         llMessageLinked(LINK_SET, iAuth, "menu Update", kAv);
+                    }
+                    else if (sMessage == "Get Updater")
+                    {
+                        llMessageLinked(LINK_SET, iAuth, "menu Get Updater", kAv);
                     }
                 } else {
                     //Debug("Foreign menu response");
