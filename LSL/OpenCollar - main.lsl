@@ -100,8 +100,8 @@ string g_sClosedLockPrimName="ClosedLock"; // Prim description of elements that 
 list g_lClosedLockElements; //to store the locks prim to hide or show //EB
 list g_lOpenLockElements; //to store the locks prim to hide or show //EB
 
-string LOCK = " LOCK";
-string UNLOCK = " UNLOCK";
+string LOCK = "LOCK";
+string UNLOCK = "UNLOCK";
 string CTYPE="collar";
 string g_sDefaultLockSound="caa78697-8493-ead3-4737-76dcc926df30";
 string g_sDefaultUnlockSound="ff09cab4-3358-326e-6426-ec8d3cd3b98e";
@@ -404,7 +404,7 @@ default
                 //process response
                 if (sMenu=="Main"){
                     //Debug("Main menu response: '"+sMessage+"'");
-                    if (sMessage == " LOCK" || sMessage==" UNLOCK"){
+                    if (sMessage == LOCK || sMessage== UNLOCK){
                         //Debug("doing usercommand for '"+sMessage+"' from "+sMenu+" menu");
                         UserCommand(iAuth, sMessage, kAv, TRUE);
                         MainMenu(kAv, iAuth);
