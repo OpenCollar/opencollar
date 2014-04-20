@@ -453,7 +453,11 @@ integer UserCommand(integer iNum, string sStr, key kID)
     else if (C == llToLower(LOADCARD))
     {
         defaultsline = 0;
-        defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+        if (llGetInventoryType(defaultscard) == INVENTORY_NOTECARD) // testing the existence of card.
+        {
+            defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+        }
+        else Notify(kID, defaultscard+" notecard not found!",TRUE);
     }
     else if (C == llToLower(REFRESH_MENU))
     {
@@ -479,14 +483,18 @@ default
         INTERFACE_CHANNEL = (integer)("0x"+llGetSubString((string)g_kWearer,2,7)) + 1111;
         if (INTERFACE_CHANNEL > 0) INTERFACE_CHANNEL *= -1;
         if (INTERFACE_CHANNEL > -10000) INTERFACE_CHANNEL -= 30000;
-        defaultsline = 0;
-        defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
-        card_key = llGetInventoryKey(defaultscard);
         DESIGN_ID = llGetObjectDesc();
         integer i = llSubStringIndex(DESIGN_ID, "~");
         DESIGN_ID = llGetSubString(DESIGN_ID, i + 1, -1);
         i = llSubStringIndex(DESIGN_ID, "~");
         DESIGN_ID = llGetSubString(DESIGN_ID, i + 1, -1);
+        defaultsline = 0;
+        if (llGetInventoryType(defaultscard) == INVENTORY_NOTECARD) // testing the existence of card.
+        {
+            defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+        }
+        else llOwnerSay(defaultscard + " notecard not found!");
+        card_key = llGetInventoryKey(defaultscard);
     }
 
     on_rez(integer iParam)
@@ -687,15 +695,19 @@ default
         if (change & CHANGED_OWNER) llResetScript();
         if (change & CHANGED_INVENTORY)
         {
-            if (llGetInventoryKey(defaultscard) != card_key)
+            if (llGetInventoryType(defaultscard) == INVENTORY_NOTECARD) // testing the existence of card.
             {
-                // the defaultsettings card changed.  Re-read it.
-                defaultsline = 0;
-                defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
-                card_key = llGetInventoryKey(defaultscard);
+                if (llGetInventoryKey(defaultscard) != card_key)
+                {
+                    // the defaultsettings card changed.  Re-read it.
+                    defaultsline = 0;
+                    defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+                    card_key = llGetInventoryKey(defaultscard);
+                }
+                llSleep(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
+                SendValues();
             }
-            llSleep(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
-            SendValues();
+            else llOwnerSay(defaultscard + " notecard not found!");
         }
     }
 }
