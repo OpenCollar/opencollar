@@ -704,8 +704,8 @@ default
                     defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
                     card_key = llGetInventoryKey(defaultscard);
                 }
-                llSleep(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
-                SendValues();
+                //llSleep(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
+                //SendValues();  // it is not necessary, because it makes after 'notecard EOF'
             }
             else llOwnerSay(defaultscard + " notecard not found!");
         }
