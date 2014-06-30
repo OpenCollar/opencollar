@@ -52,6 +52,7 @@ string split_line; // to parse lines that were split due to lsl constraints
 integer defaultsline = 0;
 key defaultslineid;
 key card_key;
+integer script_count ;
 
 // Message Map
 integer COMMAND_NOAUTH = 0;
@@ -495,6 +496,7 @@ default
         }
         else llOwnerSay(defaultscard + " notecard not found!");
         card_key = llGetInventoryKey(defaultscard);
+        script_count = llGetInventoryNumber(INVENTORY_SCRIPT); // save scripts number
     }
 
     on_rez(integer iParam)
@@ -695,19 +697,24 @@ default
         if (change & CHANGED_OWNER) llResetScript();
         if (change & CHANGED_INVENTORY)
         {
-            if (llGetInventoryType(defaultscard) == INVENTORY_NOTECARD) // testing the existence of card.
-            {
-                if (llGetInventoryKey(defaultscard) != card_key)
-                {
-                    // the defaultsettings card changed.  Re-read it.
+            if (llGetInventoryKey(defaultscard) != card_key)       
+            { // the defaultsettings card changed.  Re-read it.    
+                if (llGetInventoryType(defaultscard) == INVENTORY_NOTECARD) // testing the existence of card.
+                {                    
                     defaultsline = 0;
                     defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
                     card_key = llGetInventoryKey(defaultscard);
                 }
-                //llSleep(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
-                //SendValues();  // it is not necessary, because it makes after 'notecard EOF'
+                else llOwnerSay(defaultscard + " notecard not found!");
             }
-            else llOwnerSay(defaultscard + " notecard not found!");
+            
+            if (llGetInventoryNumber(INVENTORY_SCRIPT) != script_count)
+            {  // scripts number changed, resend values!               
+                llSleep(2.0);
+                //pause, then send values if inventory changes, in case script was edited and needs its settings again
+                SendValues();
+                script_count = llGetInventoryNumber(INVENTORY_SCRIPT);
+             }
         }
     }
 }
