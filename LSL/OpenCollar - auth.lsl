@@ -20,7 +20,7 @@ integer g_iGroupEnabled = FALSE;
 list g_lSecOwners;//strided list in the form key,name
 list g_lBlackList;//list of blacklisted UUID
 
-string  g_sWikiURL = "http://www.opencollar.at/manual.html";
+string  g_sWikiURL = "http://www.opencollar.at/user-guide.html";
 string g_sParentMenu = "Main";
 string g_sSubMenu = "Access";
 
@@ -130,6 +130,23 @@ integer g_iDialogerAuth; //auth of the person using the dialog
 key REQUEST_KEY;
 
 string g_sScript;
+
+//** Additional variables for the capture collar
+integer g_iCaptured = FALSE; //** determines whether the wearer is currently captured in which case we need to check for release timer (FALSE when free or owner added)
+integer g_iReleaseTime; //** timer variable for capture feature release (runs off Unix time)
+integer g_iCaptureLength = 0; //** length of capture timer (0 means not capturable, -1 means permanent)
+string g_sCapture = "CAPTURE ME!"; //** menu choice to capture wearer
+//** menu choices for wearer to setup their capture conditions
+string g_sCaptureMenu = "Capture Menu"; //**
+key g_kCaptureMenuID;//**
+string g_sHourPlus = "+1 Hour"; //**
+string g_sDayPlus = "+1 Day"; //**
+string g_sWeekPlus = "+1 Week"; //**
+string g_sHourMinus = "-1 Hour"; //**
+string g_sDayMinus = "-1 Day"; //**
+string g_sWeekMinus = "-1 Week"; //**
+string g_sCaptureOff = "Switch Off"; //**
+string g_sPermanent = "Permanent"; //**
 
 //Debug(string sStr){llOwnerSay(llGetScriptName() + ": " + sStr);}
 
@@ -253,8 +270,17 @@ FetchAvi(integer auth, string type, string name, key user)
 AuthMenu(key kAv, integer iAuth)
 {
     string sPrompt = "\n✓: add someone\n✗: remove someone\n\nwww.opencollar.at/access";
-    list lButtons = [g_sSetOwner, g_sSetSecOwner, g_sSetBlackList, g_sRemOwner, g_sRemSecOwner, g_sRemBlackList];
-
+    //** Changes to Menu for Capture variant
+    list lButtons; //** need to declare list in advance now due to scope
+    if ((kAv == llGetOwner())&&(llGetListLength(g_lOwners)==0)){ //** setup menu for the wearer if no current owners 
+        lButtons = [g_sSetOwner, g_sSetSecOwner, g_sSetBlackList, g_sCaptureMenu, g_sRemSecOwner, g_sRemBlackList]; //** g_sRemOwner replaced by g_sCaptureMenu
+    }//**
+    else if ((g_iCaptureLength != 0) && (llGetListLength(g_lOwners)==0)) {//** setup menu for the other users if no current owners and wearer is capturable
+        lButtons = [g_sCapture, g_sSetSecOwner, g_sSetBlackList, g_sRemOwner, g_sRemSecOwner, g_sRemBlackList]; //** g_sSetOwner replaced by g_sCapture
+    }//**
+    else {//** this conditional not needed in original script
+        lButtons = [g_sSetOwner, g_sSetSecOwner, g_sSetBlackList, g_sRemOwner, g_sRemSecOwner, g_sRemBlackList];
+    }//**
     if (g_kGroup=="") lButtons += [g_sSetGroup];    //set group
     else lButtons += [g_sUnsetGroup];    //unset group
 
@@ -294,6 +320,32 @@ RemPersonMenu(key kID, list lPeople, string sType, integer iAuth)
 
     g_kSensorMenuID = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);
 }
+
+//** Function to create Capture menu
+CaptureSettingsMenu(key kID, integer iAuth)//** 
+{//**
+    string sPrompt;
+    list lButtons;
+    if (g_iCaptureLength == -1)//**
+    {//**
+        sPrompt = "\nCurrently set to PERMANENT capture\n";//**
+        lButtons = [g_sCaptureOff, g_sPermanent];//**
+    }//**
+    else//**
+    {//**
+        sPrompt = "\nCapture settings (May be modified only by unowned wearer):\n";//** 
+        if (g_iCaptureLength == 0)//**
+        {
+            sPrompt += "\nCurrently capture feature is OFF\n";//** 
+        }
+        else
+        {
+            sPrompt += "\nCurrently if captured you will be owned by your captor for " + (string) g_iCaptureLength + " seconds";//** 
+        }
+        lButtons = [g_sHourPlus, g_sDayPlus, g_sWeekPlus, g_sHourMinus, g_sDayMinus, g_sWeekMinus , g_sCaptureOff, g_sPermanent];//** 
+    }//**
+    g_kCaptureMenuID = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);//** 
+}//**
 
 integer in_range(key kID) {
     if (g_iLimitRange) {
@@ -368,6 +420,15 @@ integer Auth(string kObjID, integer attachment)
     }
     return iNum;
 }
+
+DoEscape()//**
+{//**
+    g_lOwners = [];//** empty the owner list - note that do escape will not trigger 
+    g_iReleaseTime = 0; //** set to 0 to indicate not currently captured
+    g_iCaptureLength = 0; //** set to 0 to prevent undesirable immediate recapture
+    llOwnerSay ("You are currently unowned. Capture status set to OFF.");//** let the wearer know they are free
+    llSetTimerEvent (0.0);//** switch off the timer - no longer needed
+}//**
 
 list RemovePerson(list lPeople, string sName, string sToken, key kCmdr)
 {
@@ -558,7 +619,15 @@ integer UserCommand(integer iNum, string sStr, key kID) // here iNum: auth value
                 g_lOwners = [];
                 llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + g_sOwnersToken, "");
                 Notify(kID, "Everybody was removed from the owner list!",TRUE);
-            } else g_lOwners = RemovePerson(g_lOwners, sTmpName, g_sOwnersToken, kID);
+            } 
+            else 
+            {
+                g_lOwners = RemovePerson(g_lOwners, sTmpName, g_sOwnersToken, kID);
+            }
+            if (g_lOwners == [])//**
+            {//**
+                DoEscape(); //** if the owner list is emptied reset the capture settings
+            }//**
         } else if (sCommand == "secowner") { //set a new secowner
             g_sRequestType = "secowner";
             //pop the command off the param list, leaving only first and last name
@@ -719,14 +788,14 @@ default
 {
     state_entry()
     {   //until set otherwise, wearer is owner
-        //llOwnerSay("Auth: free memory="+(string)llGetFreeMemory());
+        //Debug("Auth: free memory="+(string)llGetFreeMemory());
         g_sScript = "auth_";
         g_kWearer = llGetOwner();
         SetPrefix("auto");
         //added for attachment auth
         g_iInterfaceChannel = (integer)("0x" + llGetSubString(g_kWearer,30,-1));
         if (g_iInterfaceChannel > 0) g_iInterfaceChannel = -g_iInterfaceChannel;
-
+        
         // Request owner list.  Be careful about doing this in all scripts,
         // because we can easily flood the 64 event limit in LSL's event queue
         // if all the scripts send a ton of link messages at the same time on
@@ -735,6 +804,16 @@ default
         //llMessageLinked(LINK_SET, LM_SETTING_REQUEST, g_sScript + g_sSecOwnersToken, "");
         //llMessageLinked(LINK_SET, LM_SETTING_REQUEST, g_sScript + g_sBlackListToken, "");
     }
+    
+    //** timer for checking for release from capture
+    timer()//**
+    {//**
+        if (g_iCaptureLength >= 1 && g_iReleaseTime != 0){//** check not a permanent capture (g_iCaptureLength == -1) or genuine submission (giReleaseTime == 0)
+            if (llGetUnixTime() >= g_iReleaseTime){ //** check if the wearer should be released yet
+                DoEscape();//**
+            }//**
+        }//**
+    }//**
 
     link_message(integer iSender, integer iNum, string sStr, key kID)
     {  //authenticate messages on COMMAND_NOAUTH
@@ -901,7 +980,7 @@ default
         }
         else if (iNum == DIALOG_RESPONSE)
         {
-            if (llListFindList([g_kAuthMenuID, g_kSensorMenuID], [kID]) != -1)
+            if (llListFindList([g_kAuthMenuID, g_kSensorMenuID, g_kCaptureMenuID], [kID]) != -1)//** added g_kCaptureMenuID
             {
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
                 key kAv = (key)llList2String(lMenuParams, 0);
@@ -945,7 +1024,6 @@ default
                     {
                         if (OwnerCheck(kAv))
                         {
-
                             RemPersonMenu(kAv, g_lOwners, "remowners", iAuth);
                             return;
                         }
@@ -980,6 +1058,29 @@ default
                         UserCommand(iAuth, "unsetlimitrange", kAv);
                     else if (sMessage == g_sListOwners)
                         UserCommand(iAuth, "listowners", kAv);
+                    //** implement capture button
+                    else if (sMessage == g_sCapture && g_iCaptureLength != 0)//** check capture is permitted
+                    {//** 
+                        NewPerson(kAv, llKey2Name(kAv), "owner");//** add the person who clicked capture as an owner
+                        llRegionSayTo (kAv, 0, "You have captured " + llKey2Name (llGetOwner()));//**
+                        llOwnerSay ("You have been captured by " + llKey2Name (kAv));//**
+                        if (g_iCaptureLength != -1){//** check for permanent capture
+                            g_iReleaseTime = llGetUnixTime()+g_iCaptureLength; //** set the release time
+                            llSetTimerEvent(300.00);//** start the timer to ensure that wearer will be released every five minutes should be suitable granularity
+                            llRegionSayTo (kAv, 0, "You will own them for the next " + (string) g_iCaptureLength + " seconds");//**
+                            llOwnerSay ("You will be owned by them for the next " + (string) g_iCaptureLength + " seconds");//**
+                            return;//** exit the listen
+                        }//**
+                    }//**
+                    //** implement Capture Settings Menu button
+                    else if (sMessage == g_sCaptureMenu && kAv == llGetOwner() && g_iReleaseTime == 0)//** check capture menu has been requested by wearer while allowed
+                    {//** 
+                        if (OwnerCheck(kAv))//** check the wearer currently owns themself
+                        {//** 
+                            CaptureSettingsMenu(kAv, iAuth); //** call the Capture menu 
+                            return;//** exit the listen
+                        }//** 
+                    }//**
                     else if (sMessage == g_sReset)
                     { // separate routine
                         llMessageLinked(LINK_SET, COMMAND_NOAUTH, "runaway", kAv);
@@ -987,6 +1088,55 @@ default
                     }
                     AuthMenu(kAv, iAuth);
                 }
+                else if (kID == g_kCaptureMenuID)//** Handle capture menu settings here
+                {//**
+                if (kAv == llGetOwner() && g_iReleaseTime == 0)//** check capture menu setting variation has been requested by wearer while allowed
+                    if (sMessage == g_sHourPlus)//**
+                    {//** 
+                        g_iCaptureLength += 60*60; //** add 1 hour 
+                    }//**
+                    else if (sMessage == g_sDayPlus)//**
+                    {//** 
+                        g_iCaptureLength += 24*60*60; //** add 1 day 
+                    }//**
+                    else if (sMessage == g_sWeekPlus)//** 
+                    {//** 
+                        g_iCaptureLength += 7*24*60*60; //** add 1 week 
+                    }//**
+                    else if (sMessage == g_sHourMinus)//** 
+                    {//** 
+                        g_iCaptureLength -= 60*60; //** subtract 1 hour 
+                    }//**
+                    else if (sMessage == g_sDayMinus)//** 
+                    {//** 
+                        g_iCaptureLength -= 24*60*60; //** subtract 1 day 
+                    }//**
+                    else if (sMessage == g_sWeekMinus)//**
+                    {//** 
+                        g_iCaptureLength -= 7*24*60*60; //** subtract 1 week 
+                    }//**
+                    else if (sMessage == g_sCaptureOff)//**
+                    {//** 
+                        g_iCaptureLength = 0; //** add 1 day 
+                    }//**
+                    else if (sMessage == g_sPermanent)//**
+                    {//** 
+                        g_iCaptureLength = -1; //** add 1 day 
+                    }//**
+                    if (g_iCaptureLength <= -2) //** check the timer has not gone negative. if so set to zero (ie turn timer off)
+                    {//**
+                        g_iCaptureLength = 0;//**
+                    }//**
+                    if (sMessage != UPMENU)
+                    {
+                        CaptureSettingsMenu(kAv, iAuth); //** restart the capture menu   
+                        return;//**                      
+                    }
+                    else
+                    {
+                        AuthMenu(kAv, iAuth);
+                    }
+                }//**
                 else if (kID == g_kSensorMenuID)
                 {
                     if (sMessage != UPMENU)
