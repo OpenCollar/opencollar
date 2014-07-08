@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
 //                               OpenCollar - main                                //
-//                                 version 3.962                                  //
+//                                 version 3.963                                  //
 // ------------------------------------------------------------------------------ //
 // Licensed under the GPLv2 with additional requirements specific to Second Life® //
 // and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
@@ -140,22 +140,22 @@ HelpMenu(key kID, integer iAuth) {
 MainMenu(key kID, integer iAuth) {
     string sPrompt="\nOpenCollar Version "+g_sCollarVersion+"\nwww.opencollar.at/main-menu";
     list lStaticButtons=["Apps"];
-    if (g_iAnimsMenu){
+//    if (g_iAnimsMenu){
         lStaticButtons+="Animations";
-    } else {
-        lStaticButtons+=" ";
-    }
-    if (g_iAppearanceMenu){
-        lStaticButtons+="Appearance";
-    } else {
-        lStaticButtons+=" ";
-    }
+//    } else {
+//        lStaticButtons+=" ";
+//    }
+//    if (g_iAppearanceMenu){
+        lStaticButtons+="Customize";
+//    } else {
+//        lStaticButtons+=" ";
+//    }
     lStaticButtons+=["Leash"];
-    if (g_iRlvMenu){
+//    if (g_iRlvMenu){
         lStaticButtons+="RLV";
-    } else {
-        lStaticButtons+=" ";
-    }
+//    } else {
+//        lStaticButtons+=" ";
+//    }
     lStaticButtons+=["Access","Options","Help/About"];
     
     if (g_iLocked) Dialog(kID, sPrompt, UNLOCK+lStaticButtons, [], 0, iAuth, "Main");
@@ -425,6 +425,27 @@ default
                         HelpMenu(kAv, iAuth);
                     } else if (sMessage == "Apps"){
                         AppsMenu(kAv, iAuth);
+                    } else if (sMessage == "Animations"){
+                        if (g_iAnimsMenu){
+                            llMessageLinked(LINK_SET, iAuth, "menu "+sMessage, kAv);
+                        } else {
+                            Notify(kAv,sMessage+ " script is not installed",FALSE);
+                            MainMenu(kAv, iAuth);
+                        }
+                    } else if (sMessage == "Customize"){
+                        if (g_iAppearanceMenu){
+                            llMessageLinked(LINK_SET, iAuth, "menu Appearance", kAv);
+                        } else {
+                            Notify(kAv,sMessage+ " script is not installed",FALSE);
+                            MainMenu(kAv, iAuth);
+                        }
+                    } else if (sMessage == "RLV"){
+                        if (g_iRlvMenu){
+                            llMessageLinked(LINK_SET, iAuth, "menu "+sMessage, kAv);
+                        } else {
+                            Notify(kAv,sMessage+ " script is not installed",FALSE);
+                            MainMenu(kAv, iAuth);
+                        }
                     } else {
                         //Debug("doing link message for 'menu "+sMessage+"' button from Apps menu");
                         llMessageLinked(LINK_SET, iAuth, "menu "+sMessage, kAv);
