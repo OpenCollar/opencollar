@@ -181,19 +181,31 @@ integer UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
     if (sStr == "menu") MainMenu(kID, iNum);
     else if (sCmd == "trace") {
         //Debug("Doing trace command");
-        if (iNum == COMMAND_OWNER){
+        if (kID == g_kWearer){
             string sValue = llList2String(lParams, 1); 
             if (sValue == "on"){
                 g_iTraceOn=TRUE;
                 Notify(kID,"Trace on",TRUE);
+                // notify all owners about the collar wearer enabling trace                
+                integer i_OwnerCount=llGetListLength(g_lOwners);
+                integer i;
+                for(i=0; i < i_OwnerCount; i+=2) {
+                    Notify(llList2Key(g_lOwners,i), llKey2Name(g_kWearer)+ " turned on the tracer functionality of their collar", FALSE);
+                }
                 llMessageLinked(LINK_SET, LM_SETTING_SAVE, "Global_trace=1", "");
             } else {
                 g_iTraceOn=FALSE;
                 Notify(kID,"Trace off",TRUE);
+                // notify all owners about the collar wearer disabling trace
+                integer i_OwnerCount=llGetListLength(g_lOwners);
+                integer i;
+                for(i=0; i < i_OwnerCount; i+=2) {
+                    Notify(llList2Key(g_lOwners,i), llKey2Name(g_kWearer)+ " turned off the tracer functionality of their collar", FALSE);
+                }
                 llMessageLinked(LINK_SET, LM_SETTING_SAVE, "Global_trace=0", "");
             }
         }
-        else Notify(kID, "Sorry, only primary owners can change trace settings.", FALSE);
+        else Notify(kID, "Sorry, only the wearer can change trace settings.", FALSE);
     } else if (sCmd == "menu") {
         string sSubmenu = llGetSubString(sStr, 5, -1);
         if (sSubmenu == "Main"){
