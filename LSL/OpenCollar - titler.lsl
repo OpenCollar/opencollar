@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
 //                              OpenCollar - titler                               //
-//                                 version 3.967                                  //
+//                                 version 3.968                                  //
 // ------------------------------------------------------------------------------ //
 // Licensed under the GPLv2 with additional requirements specific to Second Life® //
 // and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
@@ -12,7 +12,7 @@
 // ------------------------------------------------------------------------------ //
 ////////////////////////////////////////////////////////////////////////////////////
 
-// Nandana Singh, Satomi Ahn, Romka Swallowtail, littlemousy, Wendy Starfall
+// Miguael Liamano, Nandana Singh, Satomi Ahn, Romka Swallowtail, littlemousy, Wendy Starfall
 
 string g_sParentMenu = "Apps";
 string g_sFeatureName = "Titler";
@@ -126,6 +126,10 @@ integer UserCommand(integer iAuth, string sStr, key kAv){
             else ON_OFF = OFF ;
             g_kDialogID = Dialog(kAv, sPrompt, [SET,UP,DN,ON_OFF,"Color"], [UPMENU],0, iAuth);
         }
+    } else if (sCommand=="titlervector") {
+        string sVector= llDumpList2String(llDeleteSubList(lParams,0,0)," ");
+        g_vColor = (vector)sVector;
+        ShowHideText();
     } else if (sStr=="menu titlercolor" || sStr=="titlercolor") {
         list lColourNames;
         integer numColours=llGetListLength(g_lColours)/2;
