@@ -119,6 +119,11 @@ string HEIGHTFIX = "HeightFix";
 string g_sHeightFixToken = "HFix";
 integer g_iHeightFix = TRUE;
 
+// KP MOD: sets timer rate to check if we're playing an anim, if so stop anim to walk/etc (so we dont slide)
+float fTimerRate = 0.2;
+integer g_iOnce = FALSE; // used to prevent constant start/stop of anim in timer
+// END KP MOD
+
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
     if (kID == g_kWearer)
@@ -341,7 +346,12 @@ StartAnim(string sAnim)
                     }
                     llStartAnimation("~" + (string)g_iAdjustment);
                 }
-            }                        
+            }
+            // KP MOD: stop the animation when walking so we dont slide and look stupid
+            // start a timer to determine if we're walking/etc
+            llSetTimerEvent(fTimerRate);
+            g_iOnce = FALSE; // initialize g_iOnce to FALSE when starting a new anim
+            // END KP MOD                        
         }
         else
         {
@@ -409,6 +419,9 @@ StopAnim(string sAnim)
                 llWhisper(g_iInterfaceChannel, "CollarComand|" + (string)EXT_COMMAND_COLLAR + "|" + AO_ON);
                 llWhisper(g_iAOChannel, AO_ON);
             }
+            // KP MOD: stop the timer since we're not playing an anim anymore
+            llSetTimerEvent(0.0);
+            // END KP MOD
         }
         else
         {
@@ -418,6 +431,19 @@ StopAnim(string sAnim)
     else
     {
         Notify(g_kWearer, "Error: Somehow I lost permission to animate you.  Try taking me off and re-attaching me.", FALSE);
+    }
+}
+
+// KP MOD: stops us from sliding and looking stupid when we walk/etc
+pauseAnim(string sAnim) {
+    if (llGetPermissions() & PERMISSION_TRIGGER_ANIMATION)
+    {
+        if (llGetInventoryType(sAnim) == INVENTORY_ANIMATION)
+        {
+            g_iOnce = TRUE;
+            llStopAnimation(sAnim);
+            if (g_iAdjustment)  llStopAnimation("~" + (string)g_iAdjustment);
+        }
     }
 }
 
@@ -923,6 +949,29 @@ default
                     PoseMenu(kAv, iPage, iAuth);
                 }
             }
+        }
+    }
+}
+
+// KP MOD: stops us from sliding and looking stupid when we walk/run/fly/hover/sit on objects(poseballs)/add groundsit if desired
+timer() {
+    integer test = llGetAgentInfo(g_kWearer);
+
+    if(test & (AGENT_WALKING | AGENT_ON_OBJECT | AGENT_FLYING | AGENT_ALWAYS_RUN | AGENT_IN_AIR)) // | AGENT_SITTING))  add to stop groundsit
+    {
+        if(!g_iOnce)
+        {
+            pauseAnim(llList2String(g_lAnims, 0));
+            return;
+        }
+
+    }
+    else
+    {
+        if(g_iOnce) 
+        {
+            g_iOnce = FALSE;
+            RefreshAnim();
         }
     }
 }
