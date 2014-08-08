@@ -67,13 +67,14 @@ Debug(string _m)
     llOwnerSay(llGetScriptName() + ": " + _m);
 }
 
-Notify(key _k, string _m, integer NotifyWearer)
+Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
-    if (_k == gkWear) llOwnerSay(_m);
+    if (kID == gkWear) llOwnerSay(sMsg);
     else
     {
-        if (llGetAgentSize(_k) != ZERO_VECTOR) llInstantMessage(_k, _m);
-        if (NotifyWearer) llOwnerSay(_m);
+        if (llGetAgentSize(kID) != ZERO_VECTOR) llRegionSayTo(kID,0,sMsg);
+        else llInstantMessage(kID, sMsg);
+        if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
 
