@@ -45,7 +45,7 @@ string UPMENU = "BACK";
 key g_kMenuID;
 key g_kWearer;
 string g_sScript;
-string g_sMenuScript="OpenCollar - main"; //for fixmenus
+//string g_sMenuScript="OpenCollar - main"; //for fixmenus, no more use
 
 string defaultscard = "defaultsettings";
 string split_line; // to parse lines that were split due to lsl constraints
@@ -97,19 +97,14 @@ Debug (string str)
     llOwnerSay(llGetScriptName() + ": " + str);
 }
 */
-Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
+Notify(key kAv, string sMsg, integer iAlsoNotifyWearer)
 {
-    if (kID == g_kWearer)
-    {
-        llOwnerSay(sMsg);
-    }
+    if (kAv == g_kWearer) llOwnerSay(sMsg);
     else
     {
-        llInstantMessage(kID, sMsg);
-        if (iAlsoNotifyWearer)
-        {
-            llOwnerSay(sMsg);
-        }
+        if (llGetAgentSize(kAv) != ZERO_VECTOR) llRegionSayTo(kAv,0,sMsg); // if avatar in same region
+        else llInstantMessage(kAv, sMsg);
+        if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
 key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth)
@@ -602,12 +597,7 @@ default
                     llMessageLinked(LINK_THIS, iAuth, "menu "+ PARENT_MENU, kAv);
                     return;
                 }
-               // if (sMessage == WIKI) //moved to menu script
-               // {
-                //    llSleep(0.2);
-                //    llLoadURL(kAv, "Read the online guide, check release notes and learn how to get involved on our website.", WIKI_URL);
-                //    return;
-               // }
+                
                 if(sMessage == SETTINGSHELP)
                 {
                     llSleep(0.2);
@@ -627,40 +617,6 @@ default
                     else if(UserCommand(iAuth,llGetSubString(g_sScript,0,-2)+" "+sMessage,kAv)==FALSE) return;
                 }
                 else Notify(kAv,"Sorry, only Owners & Wearers may acces this feature.",FALSE);
-                
-                //if (sMessage == PREFDESI)
-                //{
-                //    USER_PREF = FALSE;
-                //    USER_SETTINGS = SetSetting(USER_SETTINGS, g_sScript + "Pref", "Designer");
-                //}
-                //else if (sMessage == PREFUSER)
-                //{
-                //    USER_PREF = TRUE;
-                //    USER_SETTINGS = SetSetting(USER_SETTINGS, g_sScript + "Pref", "User");
-                //}
-                //else if (sMessage == DUMPCACHE)
-                //{
-                //    if (iAuth == COMMAND_OWNER || iAuth == COMMAND_WEARER) DumpCache(kAv);
-                //    else Notify(kAv, "Only Owners & Wearer may access this feature.", FALSE);
-                //}
-                //else if (sMessage == LOADCARD)
-                //{
-                //    if(kAv==g_kWearer)
-                //    {
-                //        defaultsline = 0;
-                //        defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
-                //    }
-                //    else Notify(kAv,"Only the collar wearer may reload defaults.",FALSE);
-                //}
-                // else if (sMessage == REFRESH_MENU)
-                //{
-                //     if(iAuth==COMMAND_OWNER||iAuth==COMMAND_WEARER)
-                //   {
-                //       llDialog(kAv, "\n\nRebuilding menu.\n\nThis may take several seconds.", [], -341321); 
-                //        llResetOtherScript(g_sMenuScript);
-                //    }
-                //    else Notify(kAv,"Only the collar wearer and owners may refresh menus.",FALSE);
-                //}
                 
                 DoMenu(kAv, iAuth);
             }
