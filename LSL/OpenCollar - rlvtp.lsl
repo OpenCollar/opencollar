@@ -107,17 +107,12 @@ string g_sScript;
 
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
-    if (kID == g_kWearer)
-    {
-        llOwnerSay(sMsg);
-    }
+    if (kID == g_kWearer) llOwnerSay(sMsg);
     else
     {
-        llInstantMessage(kID, sMsg);
-        if (iAlsoNotifyWearer)
-        {
-            llOwnerSay(sMsg);
-        }
+        if (llGetAgentSize(kID) != ZERO_VECTOR) llRegionSayTo(kID,0,sMsg);
+        else llInstantMessage(kID, sMsg);
+        if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
 
