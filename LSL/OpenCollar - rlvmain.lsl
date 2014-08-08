@@ -92,10 +92,11 @@ integer CMD_REMSRC = 12;
 
 //Debug(string sStr){llOwnerSay(llGetScriptName() + " DEBUG: " + sStr);}
 
-Notify(key kID, string sMsg, integer iAlsoNotifyWearer){
+Notify(key kID, string sMsg, integer iAlsoNotifyWearer) {
     if (kID == g_kWearer) llOwnerSay(sMsg);
     else {
-        llInstantMessage(kID, sMsg);
+        if (llGetAgentSize(kID) != ZERO_VECTOR) llRegionSayTo(kID,0,sMsg);
+        else llInstantMessage(kID, sMsg);
         if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
