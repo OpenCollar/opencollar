@@ -116,21 +116,16 @@ integer GetOwnerChannel(key kOwner, integer iOffset)
 }
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
-    if (kID == g_kWearer)
+    if (kID == g_kWearer) llOwnerSay(sMsg);
+    else
     {
-        llOwnerSay(sMsg);
-    }
-    else if (llGetAgentSize(kID) != ZERO_VECTOR)
-    {
-        llInstantMessage(kID,sMsg);
-        if (iAlsoNotifyWearer)
+        if (llGetAgentSize(kID) != ZERO_VECTOR)
         {
-            llOwnerSay(sMsg);
+            llRegionSayTo(kID,0,sMsg);
+            llRegionSayTo(kID, GetOwnerChannel(g_kWearer, 1111), sMsg);
         }
-    }
-    else // remote request
-    {
-        llRegionSayTo(kID, GetOwnerChannel(g_kWearer, 1111), sMsg);
+        else llInstantMessage(kID, sMsg);
+        if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
 
