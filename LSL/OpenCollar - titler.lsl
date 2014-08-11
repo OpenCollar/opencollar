@@ -82,10 +82,11 @@ list g_lColours=[
 
 //Debug(string sMsg) {llOwnerSay(llGetScriptName() + " (debug): " + sMsg);}
 
-Notify(key kID, string sMsg, integer iAlsoNotifyWearer){
+Notify(key kID, string sMsg, integer iAlsoNotifyWearer) {
     if (kID == g_kWearer) llOwnerSay(sMsg);
     else {
-        llInstantMessage(kID, sMsg);
+        if (llGetAgentSize(kID) != ZERO_VECTOR) llRegionSayTo(kID,0,sMsg);
+        else llInstantMessage(kID, sMsg);
         if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
