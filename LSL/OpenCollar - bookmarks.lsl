@@ -9,7 +9,7 @@
 // ©   2008 - 2014  Individual Contributors and OpenCollar - submission set free™ //
 // ------------------------------------------------------------------------------ //
 //                    github.com/OpenCollar/OpenCollarUpdater                     //
-// ------------------------------------------------------------------------------ //
+// ------------------------------------------------------------------------------ // 
 //////////////////////////////////////////////////////////////////////////////////// 
 
 
@@ -231,13 +231,19 @@ integer UserCommand(integer iNum, string sStr, key kID) {
             else {
                 string slurl = GetSLUrl();
                 addDestination(sAdd,slurl,kID);
+//                  convertSlurl(sAdd,kID,iNum);
             
             }
             
         }
         else {
             // Notify that they need to give a description of the saved destination ie. <prefix>bookmarks save description
-            g_kTBoxIdSave = Dialog(kID, "\n- Enter a name for the destination below.\n- Submit a blank field to cancel and return.", [], [], 0, iNum);
+            g_kTBoxIdSave = Dialog(kID,
+"Enter a name for the destination below. Submit a blank field to cancel and return.             
+You can enter: 
+1) A friendly name to save your current location to your favorites
+2) A new location or SLurl
+                ", [], [], 0, iNum);
         }
     }
     
@@ -420,7 +426,10 @@ integer validatePlace(string sStr,key kAv, integer iAuth) {
     
     if (sFriendlyName == "") { 
         g_tempLoc = sRegionName+sAssembledLoc; //assign a global for use in response menu
-        g_kTBoxIdLocationOnly = Dialog(kAv, "\n- Enter a name for the destination " + sRegionName + sAssembledLoc + " below.\n- Submit a blank field to cancel and return.", [], [], 0, iAuth);
+        g_kTBoxIdLocationOnly = Dialog(kAv, 
+"\nEnter a name for the destination " + sRegionName + sAssembledLoc + " 
+            below.\n- Submit a blank field to cancel and return.
+        ", [], [], 0, iAuth);
 
     }
     else {
@@ -690,14 +699,9 @@ default {
                 integer iAuth = (integer)llList2String(lMenuParams, 3); // auth level of avatar
                 // request to switch to parent menu
 
-                if (sMessage == UPMENU) {
-
-                    //give av the parent menu
-                    llMessageLinked(LINK_THIS, iAuth, "menu "+COLLAR_PARENT_MENU, kAv);
-                }
                 
                 
-                else if (kID == g_kTBoxIdLocationOnly) {
+                if (kID == g_kTBoxIdLocationOnly) {
                         list lMenuParams = llParseStringKeepNulls(sStr, ["|"], []);
                         key kAv = (key)llList2String(lMenuParams, 0);
                         string sMessage = llList2String(lMenuParams, 1);
@@ -734,7 +738,11 @@ default {
                         integer iPage = (integer)llList2String(lMenuParams, 2);
                         integer iAuth = (integer)llList2String(lMenuParams, 3);
                  //       Debug("|"+sMessage+"|");
-                        if ((sMessage != UPMENU) && (sMessage != "")) {
+                        if (sMessage == UPMENU) {
+                            UserCommand(iAuth, "bookmarks", kAv);
+                            return;
+                        }
+                        if (sMessage != "") { 
                             list lParams =  llParseStringKeepNulls(sStr, ["|"], []);
                             //got a menu response meant for us. pull out values
                             UserCommand(iAuth, "bookmarks remove " + sMessage, kAv);
@@ -742,6 +750,12 @@ default {
                          }
                         else UserCommand(iAuth, "bookmarks", kAv);
                         
+                }
+
+                else if (sMessage == UPMENU) {
+
+                    //give av the parent menu
+                    llMessageLinked(LINK_THIS, iAuth, "menu "+COLLAR_PARENT_MENU, kAv);
                 }
                 else if (~llListFindList(PLUGIN_BUTTONS, [sMessage])) {
                     //we got a response for something we handle locally
