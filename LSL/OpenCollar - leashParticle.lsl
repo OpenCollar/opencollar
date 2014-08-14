@@ -203,7 +203,7 @@ Particles(integer iLink, key kParticleTarget)
     //float fMinSpeed = 3.0;          // Min speed each particle is spit out at
     //these values do nothing when particles go to a target, the speed is determined by the particle age then
     //integer iFlags = PSYS_PART_INTERP_COLOR_MASK | PSYS_PART_INTERP_SCALE_MASK | PSYS_PART_FOLLOW_VELOCITY_MASK | PSYS_PART_TARGET_POS_MASK;
-    integer iFlags = PSYS_PART_FOLLOW_VELOCITY_MASK | PSYS_PART_TARGET_POS_MASK|PSYS_PART_FOLLOW_SRC_MASK;
+    integer iFlags = PSYS_PART_FOLLOW_VELOCITY_MASK | PSYS_PART_TARGET_POS_MASK | PSYS_PART_FOLLOW_SRC_MASK | PSYS_PART_RIBBON_MASK;
 
     if (g_bParticleGlow) iFlags = iFlags | PSYS_PART_EMISSIVE_MASK;
 
@@ -365,9 +365,9 @@ SetTexture(string sIn, key kIn)
 {
     g_sParticleTexture = sIn;
     if (sIn=="chain"){
-        g_sParticleTextureID="4cde01ac-4279-2742-71e1-47ff81cc3529";
+        g_sParticleTextureID="06ffe23a-4819-12b4-dd9b-b4a845d16a57";
     } else if (sIn=="rope"){
-        g_sParticleTextureID="9a342cda-d62a-ae1f-fc32-a77a24a85d73";
+        g_sParticleTextureID="c63b0ed0-948a-6ec5-8119-a66aef9ab5b9";
     } else if (sIn=="totallytransparent"){
         g_sParticleTextureID="bd7d7770-39c2-d4c8-e371-0342ecf20921";
     } else {
