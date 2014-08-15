@@ -17,7 +17,7 @@
 //on menu request, give dialog, with alphabetized list of submenus
 //on listen, send submenu link message
 
-string g_sCollarVersion="3.96.1";
+string g_sCollarVersion="3.980";
 integer g_iLatestVersion=TRUE;
 
 list g_lOwners;
@@ -95,6 +95,7 @@ integer g_iAnimsMenu=FALSE;
 integer g_iRlvMenu=FALSE;
 integer g_iAppearanceMenu=FALSE;
 integer g_iCustomizeMenu=FALSE;
+integer g_iPaintMenu=FALSE;
 
 integer g_iUpdateChan = -7483214;
 integer g_iUpdateHandle;
@@ -113,7 +114,7 @@ integer g_iUpdateAuth;
 integer g_iWillingUpdaters = 0;
 
 
-Debug(string text){llOwnerSay(llGetScriptName() + ": " + text);}
+//Debug(string text){llOwnerSay(llGetScriptName() + ": " + text);}
 
 integer compareVersions(string v1, string v2){ //compares two symantic version strings, true if v1 >= v2
     //Debug("compare "+v1+" with "+v2);
@@ -178,7 +179,7 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer) {
 
 AppsMenu(key kID, integer iAuth) {
     string sPrompt="\nBrowse apps, extras and custom features.\n\nwww.opencollar.at/apps";
-    Debug("max memory used: "+(string)llGetSPMaxMemory());
+    //Debug("max memory used: "+(string)llGetSPMaxMemory());
     Dialog(kID, sPrompt, g_lAppsButtons, [UPMENU], 0, iAuth, "Apps");
 }
 HelpMenu(key kID, integer iAuth) {
@@ -186,31 +187,31 @@ HelpMenu(key kID, integer iAuth) {
     if(!g_iLatestVersion) sPrompt+="Update available!";
     sPrompt+= "\n\nThe OpenCollar stock software bundle in this item is licensed under the GPLv2 with additional requirements specific to Second Life®.\n\n© 2008 - 2014 Individual Contributors and\nOpenCollar - submission set free™\n\nwww.opencollar.at/helpabout";
     
-    Debug("max memory used: "+(string)llGetSPMaxMemory());
+    //Debug("max memory used: "+(string)llGetSPMaxMemory());
     list lUtility = [UPMENU];
     
     string sNewsButton="☐ News";
     if (g_iNews){
         sNewsButton="☒ News";
     }
-    list lStaticButtons=[GIVECARD,CONTACT,LICENSE,sNewsButton,"Update","Settings"];
+    list lStaticButtons=[GIVECARD,CONTACT,LICENSE,sNewsButton,"Update"];
     Dialog(kID, sPrompt, lStaticButtons, lUtility, 0, iAuth, "Help/About");
 }
 MainMenu(key kID, integer iAuth) {
     string sPrompt="\nOpenCollar Version "+g_sCollarVersion;
     if(!g_iLatestVersion) sPrompt+="\nUpdate available!";
     sPrompt += "\n\nwww.opencollar.at/main-menu";
-    Debug("max memory used: "+(string)llGetSPMaxMemory());
+    //Debug("max memory used: "+(string)llGetSPMaxMemory());
     list lStaticButtons=["Apps"];
     if (g_iAnimsMenu){
         lStaticButtons+="Animations";
     } else {
         lStaticButtons+=" ";
     }
-    if (g_iCustomizeMenu){
+    if (g_iPaintMenu){
         lStaticButtons+="Paint";
     } else if (g_iCustomizeMenu){
-        lStaticButtons+="Paint";
+        lStaticButtons+="Customize";
     } else if (g_iAppearanceMenu){
         lStaticButtons+="Appearance";
     } else {
@@ -222,7 +223,7 @@ MainMenu(key kID, integer iAuth) {
     } else {
         lStaticButtons+=" ";
     }
-    lStaticButtons+=["Access","Extras","Help/About"];
+    lStaticButtons+=["Access","Options","Help/About"];
     
     if (g_iLocked) Dialog(kID, sPrompt, "UNLOCK"+lStaticButtons, [], 0, iAuth, "Main");
     else Dialog(kID, sPrompt, "LOCK"+lStaticButtons, [], 0, iAuth, "Main");
@@ -232,7 +233,7 @@ ConfirmUpdate(key kID, integer iAuth)
 {
     string sPrompt = "\n3 Golden Rules for Updates:\n\n1.Create a Backup\n2.Rezzed is safer than Worn\n3.Low Lag regions make happy Updates\n\n(These rules apply to any kind of scripted item, not just collars or bondage and kink items!)\n\nATTENTION: Do not rez any other collars till the update has started.\n\nReady?";
 
-    Debug("max memory used: "+(string)llGetSPMaxMemory());
+    //Debug("max memory used: "+(string)llGetSPMaxMemory());
 
     Dialog(kID, sPrompt, ["Yes", "No"], [], 0, iAuth, "ConfirmUpdate");
 }
@@ -468,9 +469,9 @@ default
         
         if (g_iNews) news_request = llHTTPRequest(news_url, [HTTP_METHOD, "GET"], "");
         github_version_request = llHTTPRequest(version_check_url, [HTTP_METHOD, "GET"], "");
-        llScriptProfiler(PROFILE_SCRIPT_MEMORY);
+        //llScriptProfiler(PROFILE_SCRIPT_MEMORY);
         
-        Debug("Starting, max memory used: "+(string)llGetSPMaxMemory());
+        //Debug("Starting, max memory used: "+(string)llGetSPMaxMemory());
     }
     
     link_message(integer iSender, integer iNum, string sStr, key kID) {
@@ -494,8 +495,10 @@ default
                 g_iRlvMenu=TRUE;
             } else if (sStr=="Main|Appearance"){
                 g_iAppearanceMenu=TRUE;
-            } else if (sStr=="Main|Paint"){
+            } else if (sStr=="Main|Customize"){
                 g_iCustomizeMenu=TRUE;
+            } else if (sStr=="Main|Paint"){
+                g_iPaintMenu=TRUE;
             }
         } else if (iNum == MENUNAME_REMOVE) {
             //sStr should be in form of parentmenu|childmenu
