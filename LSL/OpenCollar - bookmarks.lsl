@@ -1,3 +1,4 @@
+
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
 //                            OpenCollar - bookmarks                              //
@@ -293,10 +294,52 @@ You can enter:
             TeleportTo(llList2String(g_lVolatile_Slurls,iIndex));
             
         }
-        else if (llListFindList(g_lDestinations,[sCmd]) >= 0) {
+        else if (llListFindList(g_lDestinations,[sCmd]) >= 0) { //Found exact match, TP over
             integer iIndex = llListFindList(g_lDestinations,[sCmd]);
             TeleportTo(llList2String(g_lDestinations_Slurls,iIndex));
         }
+        else if (llStringLength(sCmd) > 0) { // We didn't get a case sensitive match, so lets loop through what we know and try find what we need
+    
+            integer i=0;
+            integer x=llGetListLength(g_lDestinations);
+            string s;
+            integer found=0;
+            list matchedBookmarks;
+            for (i=0;i<x;i++) { //First check OC locations
+                s=llList2String(g_lDestinations,i);
+                if (llSubStringIndex(llToLower(s),llToLower(sCmd))>=0)
+                {
+                    //store it, if we only find one, we'll go there
+                    //Notify(kID,"Matched bookmark '"+s+"'",FALSE);
+                    found+=1;
+                    matchedBookmarks+=s;
+                }
+            }
+            i=0;
+            x=llGetListLength(g_lVolatile_Destinations);
+            for (i=0;i<x;i++) { //Then check volatile destinations
+                s=llList2String(g_lVolatile_Destinations,i);
+                if (llSubStringIndex(llToLower(s),llToLower(sCmd))>=0)
+                {
+                    //store it, if we only find one, we'll go there
+                    //Notify(kID,"Matched bookmark '"+s+"'",FALSE);
+                    found+=1;
+                    matchedBookmarks+=s;
+                }
+            }
+            if (found==0)
+            {
+                Notify(kID,"The bookmark '"+sCmd+"' has not been found in the " + CTYPE + " of "+llKey2Name(g_kWearer)+".",FALSE);
+            } else if (found>1) {
+            //    Notify(kID,"More than one matching landmark was found in the " + CTYPE + " of "+llKey2Name(g_kWearer)+".",FALSE);
+                g_kMenuID = Dialog(kID, "More than one matching landmark was found in the " + CTYPE + " of "+llKey2Name(g_kWearer)+".\nChoose a bookmark to teleport to.", matchedBookmarks, [UPMENU], 0, iNum);
+            } else { //exactly one matching LM found, so use it
+                UserCommand(iNum, "bookmarks "+llList2String(matchedBookmarks,0), g_kCommander); //Push matched result to command for processing
+            }
+        
+        }
+
+        //Can't find in list, lets try find substring matches
         else {
             Notify(kID,"I didn't understand your command.",FALSE);
         }
@@ -612,7 +655,6 @@ default {
         // send request to main menu and ask other menus if they want to register with us
         llMessageLinked(LINK_THIS, MENUNAME_REQUEST, SUBMENU_BUTTON, "");
         llMessageLinked(LINK_THIS, MENUNAME_RESPONSE, COLLAR_PARENT_MENU + "|" + SUBMENU_BUTTON, "");
-        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, RLV_STRING, "");
     }
 
     // Reset the script if wearer changes. By only reseting on owner change we can keep most of our
