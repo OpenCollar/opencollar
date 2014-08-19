@@ -569,6 +569,10 @@ default
                 llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + llList2String(g_lChildren,i), "");
             }
         }
+        else if (iNum == RLV_CLEAR)
+        {
+            g_lFolderLocks = [];
+        }
         else if (UserCommand(iNum, sStr, kID)) return;
         else if (iNum == DIALOG_RESPONSE)
         {
