@@ -1,7 +1,8 @@
+
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
-//                              OpenCollar - bookmarks                            //
-//                                 version 3.971                                 //
+//                            OpenCollar - bookmarks                              //
+//                                 version 3.980                                  //
 // ------------------------------------------------------------------------------ //
 // Licensed under the GPLv2 with additional requirements specific to Second Life® //
 // and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
@@ -89,9 +90,9 @@ integer DIALOG_TIMEOUT             = -9002;
 integer RLV_RELAY_CHANNEL          = -1812221819;
 
 // menu option to go one step back in menustructure
-string  UPMENU                     = "^"; // when your menu hears this, give the parent menu
+string  UPMENU                     = "BACK"; // when your menu hears this, give the parent menu
 
-
+key g_kCommander;
 
 //===============================================================================
 //= parameters   :    string    sMsg    message string received
@@ -287,14 +288,58 @@ You can enter:
     else if (llGetSubString(sStr,0,llStringLength(PLUGIN_CHAT_COMMAND)-1) == PLUGIN_CHAT_COMMAND ) { //reset destinations
 
         string sCmd = llStringTrim(llGetSubString(sStr, llStringLength(PLUGIN_CHAT_COMMAND) + 1, -1),STRING_TRIM);
+        g_kCommander=kID;
         if (llListFindList(g_lVolatile_Destinations,[sCmd]) >= 0) {
             integer iIndex = llListFindList(g_lVolatile_Destinations,[sCmd]);
             TeleportTo(llList2String(g_lVolatile_Slurls,iIndex));
+            
         }
-        else if (llListFindList(g_lDestinations,[sCmd]) >= 0) {
+        else if (llListFindList(g_lDestinations,[sCmd]) >= 0) { //Found exact match, TP over
             integer iIndex = llListFindList(g_lDestinations,[sCmd]);
             TeleportTo(llList2String(g_lDestinations_Slurls,iIndex));
         }
+        else if (llStringLength(sCmd) > 0) { // We didn't get a case sensitive match, so lets loop through what we know and try find what we need
+    
+            integer i=0;
+            integer x=llGetListLength(g_lDestinations);
+            string s;
+            integer found=0;
+            list matchedBookmarks;
+            for (i=0;i<x;i++) { //First check OC locations
+                s=llList2String(g_lDestinations,i);
+                if (llSubStringIndex(llToLower(s),llToLower(sCmd))>=0)
+                {
+                    //store it, if we only find one, we'll go there
+                    //Notify(kID,"Matched bookmark '"+s+"'",FALSE);
+                    found+=1;
+                    matchedBookmarks+=s;
+                }
+            }
+            i=0;
+            x=llGetListLength(g_lVolatile_Destinations);
+            for (i=0;i<x;i++) { //Then check volatile destinations
+                s=llList2String(g_lVolatile_Destinations,i);
+                if (llSubStringIndex(llToLower(s),llToLower(sCmd))>=0)
+                {
+                    //store it, if we only find one, we'll go there
+                    //Notify(kID,"Matched bookmark '"+s+"'",FALSE);
+                    found+=1;
+                    matchedBookmarks+=s;
+                }
+            }
+            if (found==0)
+            {
+                Notify(kID,"The bookmark '"+sCmd+"' has not been found in the " + CTYPE + " of "+llKey2Name(g_kWearer)+".",FALSE);
+            } else if (found>1) {
+            //    Notify(kID,"More than one matching landmark was found in the " + CTYPE + " of "+llKey2Name(g_kWearer)+".",FALSE);
+                g_kMenuID = Dialog(kID, "More than one matching landmark was found in the " + CTYPE + " of "+llKey2Name(g_kWearer)+".\nChoose a bookmark to teleport to.", matchedBookmarks, [UPMENU], 0, iNum);
+            } else { //exactly one matching LM found, so use it
+                UserCommand(iNum, "bookmarks "+llList2String(matchedBookmarks,0), g_kCommander); //Push matched result to command for processing
+            }
+        
+        }
+
+        //Can't find in list, lets try find substring matches
         else {
             Notify(kID,"I didn't understand your command.",FALSE);
         }
@@ -562,7 +607,7 @@ default {
           // Pass command to main
           if (g_iRLVOn) {
               string sRlvCmd = "tpto:"+pos_str+"=force";
-              llMessageLinked(LINK_SET, RLV_CMD, sRlvCmd, NULL_KEY);
+              llMessageLinked(LINK_SET, RLV_CMD, sRlvCmd, g_kCommander);
           }
         }
         
@@ -610,7 +655,6 @@ default {
         // send request to main menu and ask other menus if they want to register with us
         llMessageLinked(LINK_THIS, MENUNAME_REQUEST, SUBMENU_BUTTON, "");
         llMessageLinked(LINK_THIS, MENUNAME_RESPONSE, COLLAR_PARENT_MENU + "|" + SUBMENU_BUTTON, "");
-        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, RLV_STRING, "");
     }
 
     // Reset the script if wearer changes. By only reseting on owner change we can keep most of our
