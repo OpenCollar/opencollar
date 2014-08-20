@@ -37,8 +37,6 @@ string DUMPCACHE = "Dump Cache";
 string PREFUSER = "☐ Personal";
 string PREFDESI = "☒ Personal"; // yes, I hate cutoff buttons
 //string WIKI = "Online Guide";
-string SETTINGSHELP="Settings Help";
-string SETTINGSHELP_URL="http://www.opencollar.at/options.html";
 string LOADCARD="Load Defaults";
 string REFRESH_MENU = "Fix Menus";
 string UPMENU = "BACK";
@@ -123,7 +121,7 @@ DoMenu(key keyID, integer iAuth)
 {
     string sPrompt = "\n" + DUMPCACHE + " prints current settings to chat.";
     sPrompt += "\n" +LOADCARD+" restores the default settings.";
-    list lButtons = [DUMPCACHE,LOADCARD,REFRESH_MENU,SETTINGSHELP];
+    list lButtons = [DUMPCACHE,LOADCARD,REFRESH_MENU];
     if (USER_PREF)
     {
         sPrompt += "\n\nUncheck " + PREFDESI + " to give designer settings priority.\n";
@@ -614,18 +612,6 @@ default
                     llMessageLinked(LINK_THIS, iAuth, "menu "+ PARENT_MENU, kAv);
                     return;
                 }
-               // if (sMessage == WIKI) //moved to menu script
-               // {
-                //    llSleep(0.2);
-                //    llLoadURL(kAv, "Read the online guide, check release notes and learn how to get involved on our website.", WIKI_URL);
-                //    return;
-               // }
-               if(sMessage == SETTINGSHELP)
-                    {
-                        llSleep(0.2);
-                        llLoadURL(kAv, "\n\nSettings can be permanently stored and backed up even over a manual script reset by saving them to the defaultsettings notecard inside your collar. For instructions, please visit this page on our website.", SETTINGSHELP_URL);
-                        return;
-                    }
                 if (iAuth < COMMAND_OWNER || iAuth > COMMAND_WEARER) return;
                 
                 if(iAuth==COMMAND_OWNER||iAuth==COMMAND_WEARER)
