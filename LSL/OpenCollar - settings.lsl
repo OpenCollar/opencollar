@@ -36,14 +36,15 @@ string SUBMENU = "Options";
 string DUMPCACHE = "Dump Cache";
 string PREFUSER = "☐ Personal";
 string PREFDESI = "☒ Personal"; // yes, I hate cutoff buttons
-//string WIKI = "Online Guide";
+string STEALTH_OFF = "☐ Stealth"; // show the whole CTYPE
+string STEALTH_ON = "☒ Stealth"; // hide the whole CTYPE
 string LOADCARD="Load Defaults";
 string REFRESH_MENU = "Fix Menus";
 string UPMENU = "BACK";
 key g_kMenuID;
 key g_kWearer;
 string g_sScript;
-//string g_sMenuScript="OpenCollar - main"; //for fixmenus
+integer STEALTH;
 
 string defaultscard = "defaultsettings";
 string split_line; // to parse lines that were split due to lsl constraints
@@ -89,27 +90,20 @@ integer SAY_LIMIT = 1024; // lsl "say" string limit
 integer CARD_LIMIT = 255; // lsl card-line string limit
 string ESCAPE_CHAR = "\\"; // end of card line, more value left for token
 
-/*
-Debug (string str)
-{
-    llOwnerSay(llGetScriptName() + ": " + str);
-}
-*/
+
+//Debug (string str) { llOwnerSay(llGetScriptName() + ": " + str);}
+
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
-    if (kID == g_kWearer)
-    {
-        llOwnerSay(sMsg);
-    }
+    if (kID == g_kWearer) llOwnerSay(sMsg);
     else
     {
-        llInstantMessage(kID, sMsg);
-        if (iAlsoNotifyWearer)
-        {
-            llOwnerSay(sMsg);
-        }
+        if (llGetAgentSize(kID) != ZERO_VECTOR) llRegionSayTo(kID,0,sMsg);
+        else llInstantMessage(kID, sMsg);
+        if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
+
 key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth)
 {
     key kID = llGenerateKey();
@@ -117,6 +111,7 @@ key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integ
     + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kID);
     return kID;
 }
+
 DoMenu(key keyID, integer iAuth)
 {
     string sPrompt = "\n" + DUMPCACHE + " prints current settings to chat.";
@@ -132,6 +127,10 @@ DoMenu(key keyID, integer iAuth)
         sPrompt += "\n\nCheck " + PREFUSER + " to give your personal settings priority.\n";
         lButtons += [PREFUSER];
     }
+    
+    if (STEALTH) lButtons += [STEALTH_ON];
+    else lButtons += [STEALTH_OFF];
+    
     sPrompt +="\nwww.opencollar.at/options";
     g_kMenuID = Dialog(keyID, sPrompt, lButtons, [UPMENU], 0, iAuth);
 }
@@ -407,20 +406,13 @@ SendValues()
     }
     llMessageLinked(LINK_SET, LM_SETTING_RESPONSE, "settings=sent", "");//tells scripts everything has be sentout
 }
-/*
-Refresh()
+ 
+integer UserCommand(integer iAuth, string sStr, key kID)
 {
-    //llMessageLinked(LINK_THIS, MENUNAME_REQUEST, SUBMENU, "");
-    llMessageLinked(LINK_SET, MENUNAME_RESPONSE, PARENT_MENU + "|" + SUBMENU, "");
-    SendValues();
-}
-*/
-integer UserCommand(integer iNum, string sStr, key kID)
-{
-    if (iNum != COMMAND_OWNER && iNum != COMMAND_WEARER) return FALSE;
+    if (iAuth != COMMAND_OWNER && iAuth != COMMAND_WEARER) return FALSE;
     if (sStr == "menu " + SUBMENU || llToLower(sStr) == llToLower(SUBMENU))
     {
-        DoMenu(kID, iNum);
+        DoMenu(kID, iAuth);
         return TRUE;
     }
     if (llToLower(llGetSubString(sStr, 0, 4)) == "dump_")
@@ -430,6 +422,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
         else DumpGroupSettings(sStr, kID);
         return TRUE;
     }
+        
     integer i = llSubStringIndex(sStr, " ");
     string sid = llToLower(llGetSubString(sStr, 0, i - 1)) + "_";
     if (sid != llToLower(g_sScript)) return TRUE;
@@ -455,16 +448,18 @@ integer UserCommand(integer iNum, string sStr, key kID)
     }
     else if (C == llToLower(REFRESH_MENU))
     {
-        llMessageLinked(LINK_THIS,iNum,"fixmenus",kID);
-/*
-        if(llGetInventoryType(g_sMenuScript)==INVENTORY_SCRIPT)
-        {
-            llDialog(kID, "\n\nRebuilding menu.\n\nThis may take several seconds.", [], -341321); 
-            llResetOtherScript(g_sMenuScript);
-        }
-        else Notify(kID,"Menu script is missing or has been renamed. Cannot fix menus!",FALSE);
-*/
-    }        
+        llMessageLinked(LINK_THIS, iAuth,"fixmenus",kID);
+    }
+    else if (C == llToLower(STEALTH_OFF)) 
+    {
+        STEALTH = TRUE;
+        llMessageLinked(LINK_THIS, iAuth,"hide",kID);
+    }
+    else if (C == llToLower(STEALTH_ON))
+    {
+        STEALTH = FALSE;
+        llMessageLinked(LINK_THIS, iAuth,"show",kID);
+    }
     else return FALSE;
     return TRUE;
 }
@@ -500,6 +495,10 @@ default
             SendValues();    
         }
         else llResetScript();
+        
+        // check alpha
+        if (llGetAlpha(ALL_SIDES) > 0) STEALTH = FALSE;
+        else STEALTH = TRUE;
     }
 
     dataserver(key id, string data)
@@ -619,7 +618,7 @@ default
                     UserCommand(iAuth,llGetSubString(g_sScript,0,-2)+" "+sMessage,kAv);
                 }
                 else Notify(kAv,"Sorry, only Owners & Wearers may acces this feature.",FALSE);
-                
+                                
                 //if (sMessage == PREFDESI)
                 //{
                 //    USER_PREF = FALSE;
@@ -653,7 +652,7 @@ default
                 //    }
                 //    else Notify(kAv,"Only the collar wearer and owners may refresh menus.",FALSE);
                 //}
-                    
+                
                 DoMenu(kAv, iAuth);
             }
         }
@@ -673,6 +672,14 @@ default
 
     changed(integer change)
     {
+        if (change & CHANGED_COLOR)
+        {
+            //llSleep(0.1); // not sure for need this sleep...
+            {
+                if (llGetAlpha(ALL_SIDES) > 0) STEALTH = FALSE;
+                else STEALTH = TRUE;
+            }
+        }
         if (change & CHANGED_OWNER) llResetScript();
         if (change & CHANGED_INVENTORY)
         {
