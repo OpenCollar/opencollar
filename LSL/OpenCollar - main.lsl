@@ -229,15 +229,6 @@ MainMenu(key kID, integer iAuth) {
     else Dialog(kID, sPrompt, "LOCK"+lStaticButtons, [], 0, iAuth, "Main");
 }
 
-ConfirmUpdate(key kID, integer iAuth)
-{
-    string sPrompt = "\n3 Golden Rules for Updates:\n\n1.Create a Backup\n2.Rezzed is safer than Worn\n3.Low Lag regions make happy Updates\n\n(These rules apply to any kind of scripted item, not just collars or bondage and kink items!)\n\nATTENTION: Do not rez any other collars till the update has started.\n\nReady?";
-
-    //Debug("max memory used: "+(string)llGetSPMaxMemory());
-
-    Dialog(kID, sPrompt, ["Yes", "No"], [], 0, iAuth, "ConfirmUpdate");
-}
-
 integer UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
     if (iNum == COMMAND_EVERYONE) return TRUE;  // No command for people with no privilege in this plugin.
     else if (iNum > COMMAND_EVERYONE || iNum < COMMAND_OWNER) return FALSE; // sanity check
@@ -553,15 +544,6 @@ default
                     } else {
                         llMessageLinked(LINK_SET, iAuth, "menu "+sMessage, kAv);
                     }
-                } else if (sMenu=="ConfirmUpdate"){
-                    if (sMessage == "Yes") {
-                        //inlined single use SayUpdatePin(g_kUpdaterOrb); function
-                        integer pin = (integer)llFrand(99999998.0) + 1; //set a random pin
-                        llSetRemoteScriptAccessPin(pin);
-                        llRegionSayTo(g_kUpdaterOrb, g_iUpdateChan, "ready|" + (string)pin ); //give the ok to send update sripts etc...
-                    } else {
-                        HelpMenu(kAv, iAuth);
-                    }
                 } else if (sMenu=="Help/About"){
                     //Debug("Help menu response");
                     if (sMessage == UPMENU) MainMenu(kAv, iAuth);
@@ -725,7 +707,9 @@ default
         } else if (g_iWillingUpdaters > 1) {    //if too many updaters, PANIC!
             Notify(g_kCurrentUser,"Multiple updaters were found within 10m.  Please remove all but one and try again",FALSE);
         } else {    //perform update
-            ConfirmUpdate(g_kWearer,COMMAND_WEARER);
+            integer pin = (integer)llFrand(99999998.0) + 1; //set a random pin
+            llSetRemoteScriptAccessPin(pin);
+            llRegionSayTo(g_kUpdaterOrb, g_iUpdateChan, "ready|" + (string)pin );
         }
     }
 }
