@@ -334,7 +334,11 @@ integer UserCommand(integer iNum, string sStr, key kID)
         if (sStr == "menu " + g_sSubMenu || sStr == "hidemenu") ElementMenu(kID, iNum) ;
         else if (sCommand == "hide")
         {
-            if(sValue == "" || sValue == CTYPE) SetAllElementsAlpha(0);
+            if(sValue == "" || sValue == CTYPE)
+            {
+                SetAllElementsAlpha(0);
+                if (!g_iHasElements) MakeOneButtonMenu();
+            }
             else
             {
                 SetElementAlpha(sValue, 0);
@@ -343,7 +347,11 @@ integer UserCommand(integer iNum, string sStr, key kID)
         }
         else if (sCommand == "show")
         {
-            if(sValue == "" || sValue == CTYPE) SetAllElementsAlpha(1);
+            if(sValue == "" || sValue == CTYPE)
+            {
+                SetAllElementsAlpha(1);
+                if (!g_iHasElements) MakeOneButtonMenu();
+            }
             else
             {
                 SetElementAlpha(sValue, 1);
@@ -352,14 +360,14 @@ integer UserCommand(integer iNum, string sStr, key kID)
         }
         else if (sStr == "menu "+HIDE+" Stealth")
         {
-            SetAllElementsAlpha(1) ;
-            MakeOneButtonMenu() ;
+            SetAllElementsAlpha(1);
+            if (!g_iHasElements) MakeOneButtonMenu();
             llMessageLinked(LINK_SET, iNum, "menu " + g_sParentMenu, kID);
         }
         else if (sStr == "menu "+SHOW+" Stealth")
         {
             SetAllElementsAlpha(0) ;
-            MakeOneButtonMenu() ;
+            if (!g_iHasElements) MakeOneButtonMenu();
             llMessageLinked(LINK_SET, iNum, "menu " + g_sParentMenu, kID);
         }
     }
