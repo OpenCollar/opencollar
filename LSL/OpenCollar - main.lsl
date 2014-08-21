@@ -194,9 +194,8 @@ AppsMenu(key kID, integer iAuth) {
 HelpMenu(key kID, integer iAuth) {
     string sPrompt="\nOpenCollar Version "+g_sCollarVersion+"\n";
     if(!g_iLatestVersion) sPrompt+="Update available!";
-    //sPrompt+= "\n\nThe OpenCollar stock software bundle in this item is licensed under the GPLv2 with additional requirements specific to Second Life®.\n\n© 2008 - 2014 Individual Contributors and\nOpenCollar - submission set free™\n\nwww.opencollar.at/helpabout";
-    sPrompt+="\n\nPrefix:"+g_sPrefix+"\nPrivate Channel:"+(string)g_iListenChan+"\nSafeword:"+g_sSafeWord;
-
+    sPrompt+="\n\nPrefix: "+g_sPrefix+"\nChannel: "+(string)g_iListenChan+"\nSafeword: "+g_sSafeWord;
+    sPrompt+="\n\nwww.opencollar.at/helpabout";
 
     //Debug("max memory used: "+(string)llGetSPMaxMemory());
     list lUtility = [UPMENU];
