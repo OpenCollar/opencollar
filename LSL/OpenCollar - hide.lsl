@@ -405,7 +405,7 @@ default
 {
     state_entry()
     {
-        //BuildElementList();
+        BuildElementList();
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
         g_kWearer = llGetOwner();
     }
@@ -414,7 +414,7 @@ default
     {        
         g_iAllAlpha=0;
         if (llGetAlpha(ALL_SIDES)>0) g_iAllAlpha=1;
-        BuildElementList();
+        if (!g_iHasElements) BuildElementList();
     }
     
     changed(integer change)
