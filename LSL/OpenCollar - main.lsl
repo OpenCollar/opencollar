@@ -113,8 +113,17 @@ string g_sLastNewsTime = "0";
 integer g_iUpdateAuth;
 integer g_iWillingUpdaters = 0;
 
+integer g_iListenChan=1;
+string g_sSafeWord="RED";
+string g_sPrefix;
 
 //Debug(string text){llOwnerSay(llGetScriptName() + ": " + text);}
+
+string AutoPrefix()
+{
+    list sName = llParseString2List(llKey2Name(llGetOwner()), [" "], []);
+    return llToLower(llGetSubString(llList2String(sName, 0), 0, 0)) + llToLower(llGetSubString(llList2String(sName, 1), 0, 0));
+}
 
 integer compareVersions(string v1, string v2){ //compares two symantic version strings, true if v1 >= v2
     //Debug("compare "+v1+" with "+v2);
@@ -185,8 +194,10 @@ AppsMenu(key kID, integer iAuth) {
 HelpMenu(key kID, integer iAuth) {
     string sPrompt="\nOpenCollar Version "+g_sCollarVersion+"\n";
     if(!g_iLatestVersion) sPrompt+="Update available!";
-    sPrompt+= "\n\nThe OpenCollar stock software bundle in this item is licensed under the GPLv2 with additional requirements specific to Second Life®.\n\n© 2008 - 2014 Individual Contributors and\nOpenCollar - submission set free™\n\nwww.opencollar.at/helpabout";
-    
+    //sPrompt+= "\n\nThe OpenCollar stock software bundle in this item is licensed under the GPLv2 with additional requirements specific to Second Life®.\n\n© 2008 - 2014 Individual Contributors and\nOpenCollar - submission set free™\n\nwww.opencollar.at/helpabout";
+    sPrompt+="\n\nPrefix:"+g_sPrefix+"\nPrivate Channel:"+(string)g_iListenChan+"\nSafeword:"+g_sSafeWord;
+
+
     //Debug("max memory used: "+(string)llGetSPMaxMemory());
     list lUtility = [UPMENU];
     
@@ -465,6 +476,8 @@ default
         
         init(); //do stuf needed on_rez AND on script start
         
+        g_sPrefix=AutoPrefix();
+        
         //llScriptProfiler(PROFILE_SCRIPT_MEMORY);
         //Debug("Starting, max memory used: "+(string)llGetSPMaxMemory());
     }
@@ -591,6 +604,9 @@ default
                 if(sValue=="default") g_sUnlockSound=g_sDefaultUnlockSound;
                 else if((key)sValue!=NULL_KEY || llGetInventoryType(sValue)==INVENTORY_SOUND) g_sUnlockSound=sValue;
             }
+            else if (sToken == "listener_channel") g_iListenChan = llList2Integer(llParseString2List(sValue,[","],[]),0);
+            else if (sToken == "listener_safeword") g_sSafeWord = sValue;
+            else if (sToken == "Global_prefix") g_sPrefix = sValue;
             else if (sToken == "Global_news") g_iNews = (integer)sValue;
             else if (sStr == "settings=sent") {
                 if (g_iNews) news_request = llHTTPRequest(news_url, [HTTP_METHOD, "GET"], "");
@@ -608,10 +624,10 @@ default
             list lParams = llParseString2List(sStr, ["="], []);
             string sToken = llList2String(lParams, 0);
             string sValue = llList2String(lParams, 1);
-            if (sToken == "auth_owner")
-            {
-                g_lOwners = llParseString2List(sValue, [","], []);
-            }
+            if (sToken == "auth_owner") g_lOwners = llParseString2List(sValue, [","], []);
+            else if (sToken == "listener_channel") g_iListenChan = llList2Integer(llParseString2List(sValue,[","],[]),0);
+            else if (sToken == "listener_safeword") g_sSafeWord = sValue;
+            else if (sToken == "Global_prefix") g_sPrefix = sValue;
         }
         else if (iNum == RLV_REFRESH || iNum == RLV_CLEAR)
         {
