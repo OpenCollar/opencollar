@@ -444,7 +444,9 @@ integer UserCommand(integer iAuth, string sStr, key kID)
     else if (C == llToLower(LOADCARD))
     {
         defaultsline = 0;
-        defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+        if (llGetInventoryKey(defaultscard)) {
+            defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+        }
     }
     else if (C == llToLower(REFRESH_MENU))
     {
@@ -476,8 +478,10 @@ default
         if (INTERFACE_CHANNEL > 0) INTERFACE_CHANNEL *= -1;
         if (INTERFACE_CHANNEL > -10000) INTERFACE_CHANNEL -= 30000;
         defaultsline = 0;
-        defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
-        card_key = llGetInventoryKey(defaultscard);
+        if (llGetInventoryKey(defaultscard)) {
+            defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+            card_key = llGetInventoryKey(defaultscard);
+        }
         DESIGN_ID = llGetObjectDesc();
         integer i = llSubStringIndex(DESIGN_ID, "~");
         DESIGN_ID = llGetSubString(DESIGN_ID, i + 1, -1);
@@ -687,8 +691,10 @@ default
             {
                 // the defaultsettings card changed.  Re-read it.
                 defaultsline = 0;
-                defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
-                card_key = llGetInventoryKey(defaultscard);
+                if (llGetInventoryKey(defaultscard)) {
+                    defaultslineid = llGetNotecardLine(defaultscard, defaultsline);
+                    card_key = llGetInventoryKey(defaultscard);
+                }
             }
             llSleep(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
             SendValues();
