@@ -27,6 +27,8 @@ key g_kMenuPoseMove;
 string g_sPoseMoveWalk;
 string NOWALK = "no walk";
 string g_sPoseWalkAnimationPrefix = "~walk_";
+string g_sPoseMoveWalkToken = "PoseMoveWalk";
+string g_sTweakPoseAOToken = "TweakPoseAO";
 
 //for the height scaling feature
 key g_kDataID;
@@ -841,7 +843,9 @@ default
             g_lAnimScalars = [];
             //start re-reading the ~heightscalars notecard
             g_iLine = 0;
-            g_kDataID = llGetNotecardLine(card, g_iLine);
+            if (llGetInventoryKey(card)) {
+                g_kDataID = llGetNotecardLine(card, g_iLine);
+            }
             if (g_iNumberOfAnims!=llGetInventoryNumber(INVENTORY_ANIMATION)) CreateAnimList();
         }
         if (iChange & CHANGED_OWNER) llResetScript();
@@ -949,6 +953,15 @@ default
                 {
                     g_sAppEngine_Url = sValue;
                 }
+                else if (sToken == g_sPoseMoveWalkToken)
+                {
+                    g_sPoseMoveWalk = sValue;
+                }
+                else if (sToken == g_sTweakPoseAOToken)
+                {
+                    g_iTweakPoseAO = 1;
+                }
+
             }
             else if (sToken == "Global_CType") CTYPE = sValue;
         }
@@ -1062,20 +1075,26 @@ default
                     {
                         if (g_iTweakPoseAO) {
                             g_iTweakPoseAO = 0;
+                            llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sTweakPoseAOToken, "");
                         }
                         else {
                             g_iTweakPoseAO = 1;
+                             llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sTweakPoseAOToken + "=1" , "");
                         }
+
+                       
                         RefreshAnim();
                         PoseMoveMenu(kAv,iNum,iAuth);
                     }
                     else if (sMessage == NOWALK) {
+                        llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sPoseMoveWalkToken, ""); 
                         g_sPoseMoveWalk = "";
                         RefreshAnim();
                         PoseMoveMenu(kAv,iNum,iAuth);
                     }
                     else if (sMessage != "") {
                         g_sPoseMoveWalk = g_sPoseWalkAnimationPrefix + llGetSubString(sMessage,llStringLength(TICKED),-1);
+                        llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sPoseMoveWalkToken + "=" + g_sPoseMoveWalk, "");
                         RefreshAnim();
                         PoseMoveMenu(kAv,iNum,iAuth);
                     }
