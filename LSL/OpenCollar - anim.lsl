@@ -25,8 +25,15 @@ list g_lPoseList;
 integer g_iTweakPoseAO = 0; //Disable/Enable AO for posed animations
 key g_kMenuPoseMove;
 string g_sPoseMoveWalk;
+string g_sPoseMoveRun;
 string NOWALK = "no walk";
-string g_sPoseWalkAnimationPrefix = "~walk_";
+string NORUN = "no run";
+string g_sWalkButtonPrefix = "Walk ";
+string g_sRunButtonPrefix = "Run ";
+list g_lPoseMoveAnimationPrefix = ["~walk_","~run_"];
+string g_sPoseMoveWalkToken = "PoseMoveWalk";
+string g_sPoseMoveRunToken = "PoseMoveRun";
+string g_sTweakPoseAOToken = "TweakPoseAO";
 
 //for the height scaling feature
 key g_kDataID;
@@ -293,20 +300,28 @@ PoseMoveMenu(key kID, integer iPage, integer iAuth) {
         //sPrompt += "\n\nThe The PoseMove Tweak is off.";
         lButtons += [UNTICKED + POSEAO];
    }
-   lButtons += [NOWALK];
+   lButtons += [NORUN,NOWALK];
    integer i = 0;
    integer iAnims = llGetInventoryNumber(INVENTORY_ANIMATION) - 1;
    string sAnim;
    for (i=0;i<=iAnims;++i)
     {
         sAnim = llGetInventoryName(INVENTORY_ANIMATION,i);
-        if (llSubStringIndex(sAnim,g_sPoseWalkAnimationPrefix) == 0) {
+        if (llSubStringIndex(sAnim,llList2String(g_lPoseMoveAnimationPrefix,0)) == 0 ) { 
             //Debug("sAnim = "+sAnim+"\ng_sPoseMoveWalk = "+g_sPoseMoveWalk);
             if (sAnim == g_sPoseMoveWalk) {
-                lButtons += [TICKED + llGetSubString(sAnim,llStringLength(g_sPoseWalkAnimationPrefix),-1)];
+                lButtons += [TICKED + g_sWalkButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,0)),-1)];
             }
             else {
-                lButtons += [UNTICKED + llGetSubString(sAnim,llStringLength(g_sPoseWalkAnimationPrefix),-1)];
+                lButtons += [UNTICKED +g_sWalkButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,0)),-1)];
+            }
+        }
+        else if (llSubStringIndex(sAnim,llList2String(g_lPoseMoveAnimationPrefix,1)) == 0 ) {
+            if (sAnim == g_sPoseMoveRun) {
+                lButtons += [TICKED + g_sRunButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,1)),-1)];
+            }
+            else {
+                lButtons += [UNTICKED + g_sRunButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,1)),-1)];
             }
         }
     }
@@ -398,7 +413,9 @@ StartAnim(string sAnim)
                  if (g_sPoseMoveWalk) {
                      llSetAnimationOverride( "Walking", g_sPoseMoveWalk);
                  }
-                 //  llSetAnimationOverride( "Running", "~run");
+                 if (g_sPoseMoveRun) {
+                     llSetAnimationOverride( "Running", g_sPoseMoveRun);
+                 }
 
             }
             else {
@@ -583,6 +600,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
     {
         string sSubmenu = llGetSubString(sStr, 5, -1);
         if (sSubmenu == g_sPoseMenu) PoseMenu(kID, 0, iNum);
+      //  else if (sSubmenu == g_sPoseMoveMenu) PoseMoveMenu(kID,0,iNum); we handle this as a catch-all else statement
         else if (sSubmenu == g_sAOMenu) AOMenu(kID, iNum);
         else if (sSubmenu == g_sAnimMenu) AnimMenu(kID, iNum);
     }
@@ -713,6 +731,21 @@ integer UserCommand(integer iNum, string sStr, key kID)
             llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iNum + "|ZHAO_AOSHOW" + "|" + (string)kID);
         }
     }
+    else if (sCommand == llToLower(g_sPoseMoveMenu)) { //check for text command of PoseMoveMenu's string
+        if (sValue == "on") {
+            g_iTweakPoseAO = 1;    
+            llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sTweakPoseAOToken + "=1" , "");
+            RefreshAnim();
+        }
+        else if (sValue == "off") {
+            g_iTweakPoseAO = 0;
+            llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sTweakPoseAOToken, "");
+            RefreshAnim();
+        }
+        else {                   
+            PoseMoveMenu(kID,0,iNum);
+        }
+    }
     else if (llGetInventoryType(sStr) == INVENTORY_ANIMATION)
     {
         if (g_sCurrentPose == "")
@@ -841,7 +874,9 @@ default
             g_lAnimScalars = [];
             //start re-reading the ~heightscalars notecard
             g_iLine = 0;
-            g_kDataID = llGetNotecardLine(card, g_iLine);
+            if (llGetInventoryKey(card)) {
+                g_kDataID = llGetNotecardLine(card, g_iLine);
+            }
             if (g_iNumberOfAnims!=llGetInventoryNumber(INVENTORY_ANIMATION)) CreateAnimList();
         }
         if (iChange & CHANGED_OWNER) llResetScript();
@@ -949,6 +984,19 @@ default
                 {
                     g_sAppEngine_Url = sValue;
                 }
+                else if (sToken == g_sPoseMoveWalkToken)
+                {
+                    g_sPoseMoveWalk = sValue;
+                }
+                else if (sToken == g_sPoseMoveRunToken)
+                {
+                    g_sPoseMoveRun = sValue;
+                }
+                else if (sToken == g_sTweakPoseAOToken)
+                {
+                    g_iTweakPoseAO = 1;
+                }
+
             }
             else if (sToken == "Global_CType") CTYPE = sValue;
         }
@@ -1062,20 +1110,38 @@ default
                     {
                         if (g_iTweakPoseAO) {
                             g_iTweakPoseAO = 0;
+                            llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sTweakPoseAOToken, "");
                         }
                         else {
                             g_iTweakPoseAO = 1;
+                             llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sTweakPoseAOToken + "=1" , "");
                         }
+
+                       
                         RefreshAnim();
                         PoseMoveMenu(kAv,iNum,iAuth);
                     }
                     else if (sMessage == NOWALK) {
+                        llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sPoseMoveWalkToken, ""); 
                         g_sPoseMoveWalk = "";
                         RefreshAnim();
                         PoseMoveMenu(kAv,iNum,iAuth);
                     }
+                    else if (sMessage == NORUN) {
+                        llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sPoseMoveRunToken, ""); 
+                        g_sPoseMoveRun = "";
+                        RefreshAnim();
+                        PoseMoveMenu(kAv,iNum,iAuth);
+                    }
                     else if (sMessage != "") {
-                        g_sPoseMoveWalk = g_sPoseWalkAnimationPrefix + llGetSubString(sMessage,llStringLength(TICKED),-1);
+                        if (llSubStringIndex(sMessage,UNTICKED + g_sWalkButtonPrefix) == 0) {
+                            g_sPoseMoveWalk = llList2String(g_lPoseMoveAnimationPrefix,0) + llGetSubString(sMessage,llStringLength(TICKED + g_sWalkButtonPrefix) ,-1);
+                            llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sPoseMoveWalkToken + "=" + g_sPoseMoveWalk, "");
+                        }
+                        else if (llSubStringIndex(sMessage,UNTICKED + g_sRunButtonPrefix) == 0) {
+                            g_sPoseMoveRun = llList2String(g_lPoseMoveAnimationPrefix,1) + llGetSubString(sMessage,llStringLength(TICKED + g_sRunButtonPrefix),-1);
+                            llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sPoseMoveRunToken + "=" + g_sPoseMoveRun, "");
+                        }
                         RefreshAnim();
                         PoseMoveMenu(kAv,iNum,iAuth);
                     }
