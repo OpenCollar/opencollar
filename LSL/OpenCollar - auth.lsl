@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////
 // ------------------------------------------------------------------------------ //
-//                               OpenCollar - auth                                //
+//                               OpenCollar - anim                                //
 //                                 version 3.980                                  //
 // ------------------------------------------------------------------------------ //
 // Licensed under the GPLv2 with additional requirements specific to Second Life® //
@@ -12,29 +12,65 @@
 // ------------------------------------------------------------------------------ //
 ////////////////////////////////////////////////////////////////////////////////////
 
-key g_kWearer;
+//needs to handle anim requests from sister scripts as well
+//this script as essentially two layers
+//lower layer: coordinate animation requests that come in on link messages.  keep a list of playing anims disable AO when needed
+//upper layer: use the link message anim api to provide a pose menu
 
-list g_lOwners;//strided list in form key,name
-list g_lSecOwners;//strided list in the form key,name
-list g_lBlackList;//list of blacklisted UUID
-list g_lTempOwners;//list of temp owners UUID.  Temp owner is just like normal owner, but can't add new owners.
+list g_lAnims;
+//integer g_iNumAnims;//the number of anims that don't start with "~"
+//integer g_iPageSize = 8;//number of anims we can fit on one page of a multi-page menu
+list g_lPoseList;
 
-key g_kGroup = "";
-string g_sGroupName;
-integer g_iGroupEnabled = FALSE;
+//PoseMove tweak stuff
+integer g_iTweakPoseAO = 0; //Disable/Enable AO for posed animations - set it to 1 to default PoseMove tweak to ON
+key g_kMenuPoseMove;
+string g_sPoseMoveWalk;  //Variable to hold our current Walk animation
+string g_sPoseMoveRun;   //Variable to hold our run animation
+string NOWALK = "no walk"; //This can be changed to reflect the PoseMove Menu 'no walk' selected button
+string NORUN = "no run";  //This can be changed to reflect the PoseMove Menu 'no run' selected button
+string g_sWalkButtonPrefix = "Walk "; //This can be changed to prefix walks in the PoseMove menu
+string g_sRunButtonPrefix = "Run "; //This can be changed to prefix runs in the PoseMove menu
+list g_lPoseMoveAnimationPrefix = ["~walk_","~run_"];
 
-string g_sParentMenu = "Main";
-string g_sSubMenu = "Access";
-integer g_iRunawayDisable=0;
+string g_sPoseMoveWalkToken = "PoseMoveWalk"; //tokens for saving - these can be changed
+string g_sPoseMoveRunToken = "PoseMoveRun";
+string g_sTweakPoseAOToken = "TweakPoseAO";
 
-string g_sPrefix;
+//for the height scaling feature
+key g_kDataID;
+string card = "~heightscalars";
+integer g_iLine = 0;
+list g_lAnimScalars;//a 3-strided list in form animname,scalar,delay
+integer g_iAdjustment = 0;
 
-list g_lQueryId; //5 strided list of dataserver/http request: key, uuid, requestType, kAv, remenu.  For AV name/group name  lookups
-integer g_iQueryStride=5;
+string g_sCurrentPose = "";
+integer g_iLastRank = 0; //in this integer, save the rank of the person who posed the av, according to message map.  0 means unposed
+string g_sRootMenu = "Main";
+string g_sAnimMenu = "Animations";
+string g_sPoseMenu = " Pose";
+string g_sPoseMoveMenu = "PoseMove";
+string g_sAOMenu = "AO";
+//string g_sGiveAO = "Give AO";
+string g_sTriggerAO = "AO Menu";
+list g_lAnimButtons; // initialized in state_entry for OpenSim compatibility (= ["Pose", g_sTriggerAO, g_sGiveAO, "AO ON", "AO OFF"];)
+//added for sAnimlock
+string TICKED = "☒ ";
+string UNTICKED = "☐ ";
+string ANIMLOCK = "AnimLock";
+string RELEASE = "STOP";
+integer g_iAnimLock = FALSE;
+string g_sLockToken = "animlock";
 
-//added for attachment auth
-integer g_iInterfaceChannel;
+//added for posture
+string POSTURE="Posture";
+integer g_iPosture;
+string g_sPostureAnim="~PostureOverride";
+string g_sPostureToken="posture";
 
+string g_sAppEngine_Url = "http://data.mycollar.org/"; //defaul OC url, can be changed in defaultsettings notecard and wil be send by settings script if changed
+
+string g_sAnimToken = "currentpose";
 //MESSAGE MAP
 integer COMMAND_NOAUTH = 0;
 integer COMMAND_OWNER = 500;
@@ -42,12 +78,13 @@ integer COMMAND_SECOWNER = 501;
 integer COMMAND_GROUP = 502;
 integer COMMAND_WEARER = 503;
 integer COMMAND_EVERYONE = 504;
-//integer COMMAND_RLV_RELAY = 507;
 integer COMMAND_SAFEWORD = 510;  // new for safeword
-integer COMMAND_BLACKLIST = 520;
-// added so when the sub is locked out they can use postions
 integer COMMAND_WEARERLOCKEDOUT = 521;
 
+//EXTERNAL MESSAGE MAP
+integer EXT_COMMAND_COLLAR = 499; //added for collar or cuff commands to put ao to pause or standOff
+
+//integer SEND_IM = 1000; deprecated.  each script should send its own IMs now.  This is to reduce even the tiny bt of lag caused by having IM slave scripts
 integer POPUP_HELP = 1001;
 
 integer LM_SETTING_SAVE = 2000;//scripts send messages on this channel to have settings saved to httpdb
@@ -57,848 +94,1070 @@ integer LM_SETTING_RESPONSE = 2002;//the httpdb script will send responses on th
 integer LM_SETTING_DELETE = 2003;//delete token from DB
 integer LM_SETTING_EMPTY = 2004;//sent by httpdb script when a token has no value in the db
 
-//integer MENUNAME_REQUEST = 3000;
-//integer MENUNAME_RESPONSE = 3001;
-//integer MENUNAME_REMOVE = 3003;
+integer MENUNAME_REQUEST = 3000;
+integer MENUNAME_RESPONSE = 3001;
+integer MENUNAME_REMOVE = 3003;
 
-//integer RLV_CMD = 6000;
-//integer RLV_REFRESH = 6001;//RLV plugins should reinstate their restrictions upon receiving this message.
-//integer RLV_CLEAR = 6002;//RLV plugins should clear their restriction lists upon receiving this message.
+integer RLV_CMD = 6000;
 
-//integer ANIM_START = 7000;//send this with the name of an anim in the string part of the message to play the anim
-//integer ANIM_STOP = 7001;//send this with the name of an anim in the string part of the message to stop the anim
+integer ANIM_START = 7000;
+integer ANIM_STOP = 7001;
+
+//5000 block is reserved for IM slaves
 
 integer DIALOG = -9000;
 integer DIALOG_RESPONSE = -9001;
 integer DIALOG_TIMEOUT = -9002;
 
-integer FIND_AGENT = -9005;
-
-//added for attachment auth (garvin)
-integer ATTACHMENT_REQUEST = 600;
-integer ATTACHMENT_RESPONSE = 601;
-//new evolution style to handle attachment auth
-integer INTERFACE_REQUEST  = -9006;
-integer INTERFACE_RESPONSE = -9007;
-
-//this can change
-integer WEARERLOCKOUT=620;
-
 string UPMENU = "BACK";
+
+integer g_iAOChannel = -782690;
+integer g_iInterfaceChannel = -12587429;
+string AO_ON = "ZHAO_STANDON";
+string AO_OFF = "ZHAO_STANDOFF";
+string AO_MENU = "ZHAO_MENU";
+
+integer g_iNumberOfAnims; //we store this to avoid running createanimlist() every time inventory is changed...
 
 string CTYPE = "collar";
 
-integer g_iOpenAccess; // 0: disabled, 1: openaccess
-integer g_iLimitRange=1; // 0: disabled, 1: limited
-integer g_iWearerlocksOut;
-
-list g_lMenuIDs;
-integer g_iMenuStride = 3;
-
-key REQUEST_KEY;
-
+key g_kWearer;
 string g_sScript;
 
-//Debug(string sStr){llOwnerSay(llGetScriptName() + ": " + sStr);}
+list g_lMenuIDs;//three strided list of avkey, dialogid, and menuname
+integer g_iMenuStride = 3;
 
-Notify(key kID, string sMsg, integer iAlsoNotifyWearer) {
-    if (kID == g_kWearer) llOwnerSay(sMsg);
-    else {
+string ANIMMENU = "Anim";
+string AOMENU = "AO";
+string POSEMENU = " Pose";
+string POSEMOVEMENU = "PoseMove";
+
+string HEIGHTFIX = "HeightFix";
+string POSEAO = "PoseMove";
+string g_sHeightFixToken = "HFix";
+integer g_iHeightFix = TRUE;
+list g_lHeightFixAnims;
+integer maxHeightAdjust;
+integer minHeightAdjust;
+
+Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
+{
+    if (kID == g_kWearer)
+    {
+        llOwnerSay(sMsg);
+    }
+    else
+    {
         llInstantMessage(kID, sMsg);
-        if (iAlsoNotifyWearer) {
+        if (iAlsoNotifyWearer)
+        {
             llOwnerSay(sMsg);
         }
     }
 }
 
-Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth, string sName) {
-    key kMenuID = llGenerateKey();
-    llMessageLinked(LINK_SET, DIALOG, (string)kID + "|" + sPrompt + "|" + (string)iPage + "|" + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kMenuID);
+//Debug(string sStr){llOwnerSay(llGetScriptName() + ": " + sStr);}
 
-    integer iIndex = llListFindList(g_lMenuIDs, [kID]);
-    if (~iIndex) { //we've alread given a menu to this user.  overwrite their entry
-        g_lMenuIDs = llListReplaceList(g_lMenuIDs, [kID, kMenuID, sName], iIndex, iIndex + g_iMenuStride - 1);
-    } else { //we've not already given this user a menu. append to list
-        g_lMenuIDs += [kID, kMenuID, sName];
-    }
-} 
+key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth)
+{
+    key kID = llGenerateKey();
+    llMessageLinked(LINK_SET, DIALOG, (string)kRCPT + "|" + sPrompt + "|" + (string)iPage + "|" 
+    + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kID);
+    return kID;
+}
 
-FetchAvi(integer iAuth, string type, string name, key kAv) {
-    if (name == "") name = " ";
-    string out = llDumpList2String(["getavi_", g_sScript, kAv, iAuth, type, name], "|");
-    integer i = 0;
-    list src = g_lOwners;
-    if (type == "tempowner") src += g_lTempOwners;
-    if (type == "secowner") src += g_lSecOwners;
-    else if (type == "blacklist") src = g_lBlackList;
-    list exclude; // build list of existing-listed keys to exclude from name search
-    for (; i < llGetListLength(src); i += 2)
+AnimMenu(key kID, integer iAuth)
+{
+    string sPrompt = "\nThe wearer of this "+ CTYPE;
+    list lButtons;
+    if(g_iAnimLock)
     {
-        exclude += [llList2String(src, i)];
+        //sPrompt += TICKED + ANIMLOCK + " is turned on:\n";
+        sPrompt += " is forbidden to change or stop poses on their own";
+        lButtons = [TICKED + ANIMLOCK];
     }
-    if (llGetListLength(exclude))
-        out += "|" + llDumpList2String(exclude, ",");
-    llMessageLinked(LINK_THIS, FIND_AGENT, out, REQUEST_KEY = llGenerateKey());
-}
-
-AuthMenu(key kAv, integer iAuth) {
-    string sPrompt = "\n✓: add someone\n✗: remove someone\n\nwww.opencollar.at/access";
-    list lButtons = ["✓ Owner", "✓ Secowner", "✓ Blacklisted", "✗ Owner", "✗ Secowner", "✗ Blacklisted"];
-
-    if (g_kGroup=="") lButtons += ["Group ☐"];    //set group
-    else lButtons += ["Group ☒"];    //unset group
-
-    if (g_iOpenAccess) lButtons += ["Public ☒"];    //set open access
-    else lButtons += ["Public ☐"];    //unset open access
-
-    if (g_iLimitRange) lButtons += ["LimitRange ☒"];    //set ranged
-    else lButtons += ["LimitRange ☐"];    //unset open ranged
-
-    lButtons += ["Runaway","List Owners"];
-
-    Dialog(kAv, sPrompt, lButtons, [UPMENU], 0, iAuth, "Auth");
-}
-
-RemPersonMenu(key kID, string sToken, integer iAuth) {
-    list lPeople;
-    if (sToken=="owner") lPeople=g_lOwners;
-    else if (sToken=="tempowner") lPeople=g_lTempOwners;
-    else if (sToken=="secowner") lPeople=g_lSecOwners;
-    else if (sToken=="blacklist") lPeople=g_lBlackList;
-    else return;
-
-    if (llGetListLength(lPeople)){
-        string sPrompt = "\nChoose the person to remove:\n";
-        list lButtons;
-        
-        integer iNum= llGetListLength(lPeople);
-        integer n;
-        for (n=1; n <= iNum/2; n = n + 1) {
-            string sName = llList2String(lPeople, 2*n-1);
-            if (sName != "") {
-                sPrompt += "\n" + (string)(n) + " - " + sName;
-                lButtons += [(string)(n)];
-            }
-        }
-        lButtons += ["Remove All"];
-
-        Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth, "rem"+sToken);
-    } else {
-        Notify(kID, "The list is empty", FALSE);
-        AuthMenu(kID, iAuth);
-    }
-}
-
-RemovePerson(string sName, string sToken, key kCmdr) {
-    //where "lPeople" is a 2-strided list in form key,name
-    //looks for strides identified by "name", removes them if found, and returns the list
-    //also handles notifications so as to reduce code duplication in the link message event
-    //Debug("removing: " + sName);
-    //all our comparisons will be cast to lower case first
-
-    list lPeople;
-    if (sToken=="owner") lPeople=g_lOwners;
-    else if (sToken=="tempowner") lPeople=g_lTempOwners;
-    else if (sToken=="secowner") lPeople=g_lSecOwners;
-    else if (sToken=="blacklist") lPeople=g_lBlackList;
-    else return;
-    
-    if (~llListFindList(g_lTempOwners,[(string)kCmdr]) && ! ~llListFindList(g_lOwners,[(string)kCmdr]) && sToken != "tempowner"){
-        Notify(kCmdr,"Temporary owners can only change the temporary owners list",FALSE);
-        return;
-    }
-
-    sName = llToLower(sName);
-    integer iFound=FALSE;
-    integer numPeople= llGetListLength(lPeople)/2;
-    while (numPeople--) {
-        string sThisName = llToLower(llList2String(lPeople, numPeople*2+1));
-        //Debug("checking " + sThisName);
-        if (sName == sThisName || sName == "remove all") {   //remove name and key
-            
-            if (sToken == "owner") {
-                Notify(llList2String(lPeople,numPeople*2),"You have been removed as owner on the " + CTYPE + " of " + llKey2Name(g_kWearer) + ".",FALSE);
-                llWhisper(g_iInterfaceChannel, "CollarCommand|499|OwnerChange");    //tell attachments owner changed
-            } else if (sToken == "secowner") {
-                Notify(llList2String(lPeople,numPeople*2),"You have been removed as secowner on the " + CTYPE + " of " + llKey2Name(g_kWearer) + ".",FALSE);
-                llWhisper(g_iInterfaceChannel, "CollarCommand|499|OwnerChange");    //tell attachments owner changed
-            }
-            lPeople = llDeleteSubList(lPeople, numPeople*2, numPeople*2+1);
-
-            Notify(kCmdr, sThisName + " removed from list.", TRUE);
-            iFound=TRUE;
-        }
-    }
-
-    if (iFound){
-        //save to db
-        if (llGetListLength(lPeople)>0)
-            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sToken + "=" + llDumpList2String(lPeople, ","), "");
-        else
-            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + sToken, "");
-        
-        //store temp list
-        if (sToken=="owner") g_lOwners = lPeople;
-        else if (sToken=="tmepowner") g_lTempOwners = lPeople;
-        else if (sToken=="secowner") g_lSecOwners = lPeople;
-        else if (sToken=="blacklist") g_lBlackList = lPeople;
-
-    } else 
-        Notify(kCmdr, "Error: '" + sName + "' not in list.",FALSE);
-}
-
-AddUniquePerson(key kPerson, string sName, string sToken, key kAv) {
-    list lPeople;
-    //Debug(llKey2Name(kAv)+" is adding "+llKey2Name(kPerson)+" to list "+sToken);
-    if (~llListFindList(g_lTempOwners,[(string)kAv]) && ! ~llListFindList(g_lOwners,[(string)kAv]) && sToken != "tempowner"){
-        Notify(kAv,"Temporary owners can only change the temporary owners list",FALSE);
-    } else {
-        if (sToken=="owner") {
-            lPeople=g_lOwners;
-        } else if (sToken=="secowner") {
-            lPeople=g_lSecOwners;
-            if (llGetListLength (lPeople) >=20) {
-                Notify(kAv, "The maximum of 10 people allowed in this list.",FALSE);
-                return;
-            }
-        } else if (sToken=="tempowner") {
-            lPeople=g_lTempOwners;
-            if (llGetListLength (lPeople) >=20) {
-                Notify(kAv, "The maximum of 10 people allowed in this list.",FALSE);
-                return;
-            }
-        } else if (sToken=="blacklist") {
-            lPeople=g_lBlackList;
-            if (llGetListLength (lPeople) >=20) {
-                Notify(kAv, "The maximum of 10 people allowed in this list.",FALSE);
-                return;
-            }
-        } else
-            return;
-        
-        if (! ~llListFindList(lPeople, [(string)kPerson])) //owner is not already in list.  add him/her
-            lPeople += [(string)kPerson, sName];
-
-        if (kPerson != g_kWearer) {
-            Notify(g_kWearer, "Added " + sName + " to " + sToken + ".", FALSE);
-            if (sToken == "owner") 
-                Notify(g_kWearer, "Your owner can have a lot  power over you and you consent to that by making them your owner on your " + CTYPE + ". They can leash you, put you in poses, lock your " + CTYPE + ", see your location and what you say in local chat.  If you are using RLV they can  undress you, make you wear clothes, restrict your  chat, IMs and TPs as well as force TP you anywhere they like. Please read the help for more info. If you do not consent, you can use the command \"" + g_sPrefix + "runaway\" to remove all owners from the " + CTYPE + ".", FALSE);
-        }
-
-        if (sToken == "owner" || sToken == "secowner") {
-            Notify(kPerson, "You have been added to the " + sToken + " list on " + llKey2Name(g_kWearer) + "'s " + CTYPE + ".\nFor help concerning the " + CTYPE + " usage either say \"" + g_sPrefix + "help\" in chat or go to http://www.opencollar.at/user-guide.html .",FALSE);
-            llWhisper(g_iInterfaceChannel, "CollarCommand|499|OwnerChange");    //tell attachments owner changed
-        }
-        
-        string sOldToken=sToken;
-        if (sToken == "secowner") sOldToken+="s";
-        llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + sOldToken + "=" + llDumpList2String(lPeople, ","), "");
-        
-        if (sToken=="owner") g_lOwners = lPeople;
-        else if (sToken=="secowner") g_lSecOwners = lPeople;
-        else if (sToken=="tempowner") g_lTempOwners = lPeople;
-        else if (sToken=="blacklist") g_lBlackList = lPeople;
-    }
-}
-
-SayOwners() {
-    // Give a "you are owned by" message, nicely formatted.
-    list ownernames = llList2ListStrided(llDeleteSubList(g_lOwners, 0, 0), 0, -1, 2);
-    integer ownercount = llGetListLength(ownernames);
-    if (ownercount) {
-        string msg = "You are owned by ";
-        if (ownercount == 1) {
-            // if one person, then just name.
-            msg += (string)ownernames;
-        } else if (ownercount == 2) {
-            // if two people, then A and B.
-            msg += llDumpList2String(ownernames, " and ");
-        } else {
-            // if >2 people, then A, B, and C
-            list init = llDeleteSubList(ownernames, -1, -1);
-            list tail = llDeleteSubList(ownernames, 0, -2);
-            msg += llDumpList2String(init, ", ");
-            msg += ", and " + (string)tail;
-        }
-        // end with a period.
-        msg += ".";
-        Notify(llGetOwner(), msg, FALSE);
-    }
-}
-
-SetPrefix(string sValue) {
-    if (sValue != "auto") g_sPrefix = sValue;
-    else {
-        list name = llParseString2List(llKey2Name(g_kWearer), [" "], []);
-        string init = llGetSubString(llList2String(name, 0), 0, 0);
-        init += llGetSubString(llList2String(name, 1), 0, 0);
-        g_sPrefix = llToLower(init);
-    }
-}
-
-integer in_range(key kID) {
-    if (g_iLimitRange) {
-        if (llVecDist(llGetPos(), llList2Vector(llGetObjectDetails(kID, [OBJECT_POS]), 0)) > 20) { //if the distance between my position and their position  > 20
-            llDialog(kID, "\nNot in range...", [], 298479);
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
-integer Auth(string kObjID, integer attachment) {
-    string kID = (string)llGetOwnerKey(kObjID); // if kObjID is an avatar key, then kID is the same key
-    integer iNum;
-    if (~llListFindList(g_lOwners+g_lTempOwners, [kID]))
-        iNum = COMMAND_OWNER;
-    else if (g_iWearerlocksOut && kID == (string)g_kWearer && !attachment)
-        iNum = COMMAND_WEARERLOCKEDOUT;
-    else if (llGetListLength(g_lOwners+g_lTempOwners) == 0 && kID == (string)g_kWearer)
-        //if no owners set, then wearer's cmds have owner auth
-        iNum = COMMAND_OWNER;
-    else if (~llListFindList(g_lBlackList, [kID]))
-        iNum = COMMAND_BLACKLIST;
-    else if (~llListFindList(g_lSecOwners, [kID]))
-        iNum = COMMAND_SECOWNER;
-    else if (kID == (string)g_kWearer)
-        iNum = COMMAND_WEARER;
-    else if (g_iOpenAccess)
-        if (in_range((key)kID))
-            iNum = COMMAND_GROUP;
-        else
-            iNum = COMMAND_EVERYONE;
-    else if (g_iGroupEnabled && (string)llGetObjectDetails((key)kObjID, [OBJECT_GROUP]) == (string)g_kGroup && (key)kID != g_kWearer)  //meaning that the command came from an object set to our control group, and is not owned by the wearer
-        iNum = COMMAND_GROUP;
-    else if (llSameGroup(kID) && g_iGroupEnabled && kID != (string)g_kWearer)
-        if (in_range((key)kID))
-            iNum = COMMAND_GROUP;
-        else
-            iNum = COMMAND_EVERYONE;
     else
-        iNum = COMMAND_EVERYONE;
-    //Debug("Authed as "+(string)iNum);
-    return iNum;
+    {
+        //sPrompt += UNTICKED + ANIMLOCK + " is turned off:\n";
+        sPrompt += " is allowed to change or stop poses on their own";
+        lButtons = [UNTICKED + ANIMLOCK];
+    }        
+    if(llGetInventoryType(g_sPostureAnim)==INVENTORY_ANIMATION)
+    {
+        if(g_iPosture)
+        {
+            //sPrompt +="\n"+ TICKED + POSTURE + " is turned on.\n";
+            sPrompt +=" and has their neck forced stiff.";
+            lButtons += [TICKED + POSTURE];
+        }
+        else
+        {
+            //sPrompt +="\n"+ UNTICKED + POSTURE + " is turned off.\n";
+            sPrompt +=" and can relax their neck.";
+            lButtons += [UNTICKED + POSTURE];
+        }
+    }
+    if(g_iTweakPoseAO)
+    {
+        //sPrompt += "\n\nThe height of some poses will be adjusted now.";
+        lButtons += [TICKED + POSEAO];
+    }
+    else
+   {
+        //sPrompt += "\n\nThe height of the poses will not be changed.";
+        lButtons += [UNTICKED + POSEAO];
+   }
+    if(g_iHeightFix)
+    {
+        //sPrompt += "\n\nThe height of some poses will be adjusted now.";
+        lButtons += [TICKED + HEIGHTFIX];
+    }
+    else
+   {
+        //sPrompt += "\n\nThe height of the poses will not be changed.";
+        lButtons += [UNTICKED + HEIGHTFIX];
+   }
+    sPrompt +="\n\nwww.opencollar.at/animations";    
+    //sPrompt +="\n\nGet a free, unisex and upgradeable Submissive AO here:\nmarketplace.secondlife.com/p/OpenCollar-Sub-AO/5493736";
+
+    lButtons += llListSort(g_lAnimButtons, 1, TRUE);
+    key kMenuID = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);
+    list lNewStride = [kID, kMenuID, ANIMMENU];
+    integer iIndex = llListFindList(g_lMenuIDs, [kID]);
+    if (iIndex == -1)
+    {
+        g_lMenuIDs += lNewStride;
+    }
+    else
+    {//this person is already in the dialog list.  replace their entry
+        g_lMenuIDs = llListReplaceList(g_lMenuIDs, lNewStride, iIndex, iIndex - 1 + g_iMenuStride);
+    }
 }
 
-// returns TRUE if eligible (AUTHED link message number)
-integer UserCommand(integer iNum, string sStr, key kID, integer remenu) { // here iNum: auth value, sStr: user command, kID: avatar id
-    //Debug ("UserCommand("+(string)iNum+","+sStr+","+(string)kID+")");
+AOMenu(key kID, integer iAuth) // wrapper to send menu back to the AO's menu
+{
+    llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iAuth + "|" + AO_MENU + "|" + (string)kID);
+    llWhisper(g_iAOChannel, AO_MENU + "|" + (string)kID);
+}
+
+PoseMenu(key kID, integer iPage, integer iAuth)
+{ //create a list
+    string sPrompt = "\nChoose a pose to play.\n\nwww.opencollar.at/animations\n\n";
+    if (g_sCurrentPose == "")sPrompt += "Current Pose is = None\n";
+    else sPrompt += "Current Pose is = " + g_sCurrentPose +"\n";
+
+    list lHeightFixButtons=[];
+    if (g_iHeightFix){
+        lHeightFixButtons=["↑","↓"];
+    }
+    key kMenuID = Dialog(kID, sPrompt, g_lPoseList, lHeightFixButtons+[RELEASE, UPMENU], iPage, iAuth);
+    list lNewStride = [kID, kMenuID, POSEMENU];
+    integer iIndex = llListFindList(g_lMenuIDs, [kID]);
+    if (iIndex == -1)
+    {
+        g_lMenuIDs += lNewStride;
+    }
+    else
+    {//this person is already in the dialog list.  replace their entry
+        g_lMenuIDs = llListReplaceList(g_lMenuIDs, lNewStride, iIndex, iIndex - 1 + g_iMenuStride);
+    }
+}
+
+integer SetPosture(integer iOn, key kCommander)
+{
+    if(llGetInventoryType(g_sPostureAnim)!=INVENTORY_ANIMATION) return FALSE;
+    if (llGetPermissions() & PERMISSION_TRIGGER_ANIMATION)
+    {
+        if(iOn && !g_iPosture)
+        {
+            llStartAnimation(g_sPostureAnim);
+            if(kCommander) Notify(kCommander,"Posture override active.",TRUE);
+            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + g_sPostureToken +"=1","");
+        }
+        else if (!iOn)
+        {
+            llStopAnimation(g_sPostureAnim);
+            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + g_sPostureToken, "");
+        }
+        g_iPosture=iOn;
+        return TRUE;
+    }
+    else 
+    {
+        llOwnerSay("Error: Somehow I lost permission to animate you.  Try taking me off and re-attaching me.");
+        return FALSE;
+    }
+}
+
+PoseMoveMenu(key kID, integer iPage, integer iAuth) {
+    string sPrompt = "\nThe wearer of this "+ CTYPE;
+    list lButtons;
+    if(g_iTweakPoseAO)
+    {
+        //sPrompt += "\n\nThe PoseMove Tweak is on.";
+        lButtons += [TICKED + POSEAO];
+    }
+    else
+   {
+        //sPrompt += "\n\nThe The PoseMove Tweak is off.";
+        lButtons += [UNTICKED + POSEAO];
+   }
+   lButtons += [NORUN,NOWALK];
+   integer i = 0;
+   integer iAnims = llGetInventoryNumber(INVENTORY_ANIMATION) - 1;
+   string sAnim;
+   for (i=0;i<=iAnims;++i)
+    {
+        sAnim = llGetInventoryName(INVENTORY_ANIMATION,i);
+        if (llSubStringIndex(sAnim,llList2String(g_lPoseMoveAnimationPrefix,0)) == 0 ) { 
+            //Debug("sAnim = "+sAnim+"\ng_sPoseMoveWalk = "+g_sPoseMoveWalk);
+            if (sAnim == g_sPoseMoveWalk) {
+                lButtons += [TICKED + g_sWalkButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,0)),-1)];
+            }
+            else {
+                lButtons += [UNTICKED +g_sWalkButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,0)),-1)];
+            }
+        }
+        else if (llSubStringIndex(sAnim,llList2String(g_lPoseMoveAnimationPrefix,1)) == 0 ) {
+            if (sAnim == g_sPoseMoveRun) {
+                lButtons += [TICKED + g_sRunButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,1)),-1)];
+            }
+            else {
+                lButtons += [UNTICKED + g_sRunButtonPrefix+ llGetSubString(sAnim,llStringLength(llList2String(g_lPoseMoveAnimationPrefix,1)),-1)];
+            }
+        }
+    }
+
+    sPrompt +="\n\nwww.opencollar.at/animations";    
+
+    g_kMenuPoseMove = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);
+    list lNewStride = [kID, g_kMenuPoseMove, POSEMOVEMENU];
+    integer iIndex = llListFindList(g_lMenuIDs, [kID]);
+    if (iIndex == -1)
+    {
+        g_lMenuIDs += lNewStride;
+    }
+    else
+    {//this person is already in the dialog list.  replace their entry
+        g_lMenuIDs = llListReplaceList(g_lMenuIDs, lNewStride, iIndex, iIndex - 1 + g_iMenuStride);
+    }
+
+}
+        
+
+RefreshAnim()
+{ //g_lAnims can get lost on TP, so re-play g_lAnims[0] here, and call this function in "changed" event on TP
+    if (llGetListLength(g_lAnims))
+    {
+
+        if(g_iPosture) llStartAnimation(g_sPostureAnim);
+        if (llGetPermissions() & PERMISSION_TRIGGER_ANIMATION && llGetPermissions() & PERMISSION_OVERRIDE_ANIMATIONS)
+        {
+            llResetAnimationOverride("ALL");            
+            string sAnim = llList2String(g_lAnims, 0);
+            if (llGetInventoryType(sAnim) == INVENTORY_ANIMATION)
+            { //get and stop currently playing anim
+                StartAnim(sAnim);
+                /*
+                    if (llGetListLength(g_lAnims))
+                    {
+                        string s_Current = llList2String(g_lAnims, 0);
+                        llStopAnimation(s_Current);
+                    }
+                //add anim to list
+                g_lAnims = [sAnim] + g_lAnims;//this way, g_lAnims[0] is always the currently playing anim
+                llStartAnimation(sAnim);
+                llSay(g_iInterfaceChannel, AO_OFF);
+                */
+                }
+            else
+            {
+                //Popup(g_kWearer, "Error: Couldn't find anim: " + sAnim);
+            }
+        }
+        else
+        {
+            Notify(g_kWearer, "Error: Somehow I lost permission to animate you.  Try taking me off and re-attaching me.", FALSE);
+        }
+    }
+}
+
+StartAnim(string sAnim)
+{
+    if (llGetPermissions() & PERMISSION_TRIGGER_ANIMATION && llGetPermissions() & PERMISSION_OVERRIDE_ANIMATIONS)
+    {
+        if (llGetInventoryType(sAnim) == INVENTORY_ANIMATION)
+        {   //get and stop currently playing anim
+            if (llGetListLength(g_lAnims))
+
+            {
+                string s_Current = llList2String(g_lAnims, 0);
+                if (g_iTweakPoseAO) {
+                    llResetAnimationOverride("ALL");
+                }
+                else {
+                    llStopAnimation(s_Current);
+                }
+            }
+
+            //stop any currently playing height adjustment
+            if (g_iAdjustment)
+            {
+                llStopAnimation("~" + (string)g_iAdjustment);
+                g_iAdjustment = 0;
+            }
+
+            //add anim to list
+            g_lAnims = [sAnim] + g_lAnims;//this way, g_lAnims[0] is always the currently playing anim
+            if (g_iTweakPoseAO) {
+
+                 llSetAnimationOverride( "Standing", sAnim);
+                 if (g_sPoseMoveWalk) {
+                     llSetAnimationOverride( "Walking", g_sPoseMoveWalk);
+                 }
+                 if (g_sPoseMoveRun) {
+                     llSetAnimationOverride( "Running", g_sPoseMoveRun);
+                 }
+
+            }
+            else {
+               llStartAnimation(sAnim);
+            }
+            llWhisper(g_iInterfaceChannel, "CollarComand|" + (string)EXT_COMMAND_COLLAR + "|" + AO_OFF);
+            llWhisper(g_iAOChannel, AO_OFF);
+            
+            if (g_iHeightFix)
+            {
+                //adjust height for anims in g_lAnimScalars
+                integer iIndex = llListFindList(g_lAnimScalars, [sAnim]);
+                if (iIndex != -1)
+                {//we just started playing an anim in our g_iAdjustment list
+                    //pause to give certain anims time to ease in
+                    llSleep((float)llList2String(g_lAnimScalars, iIndex + 2));
+                    vector vAvScale = llGetAgentSize(g_kWearer);
+                    float fScalar = (float)llList2String(g_lAnimScalars, iIndex + 1);
+                    g_iAdjustment = llRound(vAvScale.z * fScalar);
+                    if (g_iAdjustment > maxHeightAdjust)
+                    {
+                        g_iAdjustment = maxHeightAdjust;
+                    }
+                    else if (g_iAdjustment < minHeightAdjust)
+                    {
+                        g_iAdjustment = minHeightAdjust;
+                    }
+                    llStartAnimation("~" + (string)g_iAdjustment);
+                }
+            }                        
+        }
+        else
+        {
+            //Popup(g_kWearer, "Error: Couldn't find anim: " + sAnim);
+        }
+    }
+    else
+    {
+        Notify(g_kWearer, "Error: Somehow I lost permission to animate you.  Try taking me off and re-attaching me.", FALSE);
+    }
+}
+
+StopAnim(string sAnim)
+{
+    if (llGetPermissions() & PERMISSION_TRIGGER_ANIMATION && llGetPermissions() & PERMISSION_OVERRIDE_ANIMATIONS)
+    {
+        if (llGetInventoryType(sAnim) == INVENTORY_ANIMATION)
+        {   //remove all instances of anim from anims
+            //loop from top to avoid skipping
+            integer n;
+            for (n = llGetListLength(g_lAnims) - 1; n >= 0; n--)
+            {
+                if (llList2String(g_lAnims, n) == sAnim)
+                {
+                    g_lAnims = llDeleteSubList(g_lAnims, n, n);
+                }
+            }
+//            if ( llGetPermissions() & PERMISSION_OVERRIDE_ANIMATIONS ) llResetAnimationOverride("ALL");
+            if (g_iTweakPoseAO) {
+                llResetAnimationOverride("ALL");
+            }
+            else {
+                llStopAnimation(sAnim);
+            }
+            
+            //stop any currently-playing height adjustment
+            if (g_iAdjustment)
+            {
+                llStopAnimation("~" + (string)g_iAdjustment);
+                g_iAdjustment = 0;
+            }
+            //play the new g_lAnims[0]
+            //if anim list is empty, turn AO back on
+            if (llGetListLength(g_lAnims))
+            {
+                string sNewAnim = llList2String(g_lAnims, 0);
+                llStartAnimation(sNewAnim);
+                
+                //adjust height for anims in g_lAnimScalars
+                integer iIndex = llListFindList(g_lAnimScalars, [sNewAnim]);
+                if (iIndex != -1)
+                {//we just started playing an anim in our adjustment list
+                    //pause to give certain anims time to ease in
+                    llSleep((float)llList2String(g_lAnimScalars, iIndex + 2));
+                    vector vAvScale = llGetAgentSize(g_kWearer);
+                    float fScalar = (float)llList2String(g_lAnimScalars, iIndex + 1);
+                    g_iAdjustment = llRound(vAvScale.z * fScalar);
+                    if (g_iAdjustment > maxHeightAdjust)
+                    {
+                        g_iAdjustment = maxHeightAdjust;
+                    }
+                    else if (g_iAdjustment < minHeightAdjust)
+                    {
+                        g_iAdjustment = minHeightAdjust;
+                    }
+                    llStartAnimation("~" + (string)g_iAdjustment);
+                }
+            }
+            else
+            {
+                llWhisper(g_iInterfaceChannel, "CollarComand|" + (string)EXT_COMMAND_COLLAR + "|" + AO_ON);
+                llWhisper(g_iAOChannel, AO_ON);
+            }
+        }
+        else
+        {
+            //Popup(g_kWearer, "Error: Couldn't find anim: " + sAnim);
+        }
+    }
+    else
+    {
+        Notify(g_kWearer, "Error: Somehow I lost permission to animate you.  Try taking me off and re-attaching me.", FALSE);
+    }
+}
+
+DeliverAO(key kID)
+{
+    llLoadURL(kID,"Get an up to date Submissive AO for free here.","https://marketplace.secondlife.com/p/OpenCollar-Sub-AO/5493736"); 
+}
+
+integer StartsWith(string sHayStack, string sNeedle) // http://wiki.secondlife.com/wiki/llSubStringIndex
+{
+    return llDeleteSubString(sHayStack, llStringLength(sNeedle), -1) == sNeedle;
+}
+
+RequestPerms()
+{
+    if (llGetAttached())
+    {
+        llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION | PERMISSION_OVERRIDE_ANIMATIONS );
+    }
+}
+
+
+CreateAnimList()
+{
+    g_lPoseList=[];
+    integer iMax = llGetInventoryNumber(INVENTORY_ANIMATION);
+    g_iNumberOfAnims=iMax;
+    //eehhh why writing this here?
+    //g_iNumAnims;
+    integer i;
+    string sName;
     
+    g_lHeightFixAnims=[];
+    
+    for (i=0;i<iMax;i++)
+    {
+        sName=llGetInventoryName(INVENTORY_ANIMATION, i);
+        //check here if the anim start with ~ or for some reason does not get a name returned (spares to check that all again in the menu ;)
+        if (sName != "" && llGetSubString(sName, 0, 0) != "~")
+        {
+            g_lPoseList+=[sName];
+        }
+        
+        if (llSubStringIndex(sName,"~")==0 && llStringLength(sName)==4){
+            sName=llGetSubString(sName,1,3);
+            if ((integer)sName != 0){
+                g_lHeightFixAnims += sName;
+            }
+        }
+    }
+    //    g_iNumAnims=llGetListLength(g_lPoseList);
+    
+    
+    g_lHeightFixAnims=llListSort(g_lHeightFixAnims,1,1);
+    //Debug("Height fix:"+llDumpList2String(g_lHeightFixAnims,","));
+    maxHeightAdjust=llList2Integer(g_lHeightFixAnims,0);
+    minHeightAdjust=llList2Integer(g_lHeightFixAnims,-1);
+    //Debug("max:"+(string)maxHeightAdjust+" min:"+(string)minHeightAdjust);
+}
+
+integer UserCommand(integer iNum, string sStr, key kID)
+{
     if (iNum == COMMAND_EVERYONE) return TRUE;  // No command for people with no privilege in this plugin.
     else if (iNum > COMMAND_EVERYONE || iNum < COMMAND_OWNER) return FALSE; // sanity check
-    string sMessage=llToLower(sStr);
+
     list lParams = llParseString2List(sStr, [" "], []);
-    string sCommand = llList2String(lParams, 0);
-    string sOwnerError="Sorry, only an owner can do that.";
-    
-    if (sStr == "menu "+g_sSubMenu) {
-        AuthMenu(kID, iNum);
-    } else if (sStr == "listowners") {   //say owner, secowners, group
-        if (iNum == COMMAND_OWNER || kID == g_kWearer) {
-            //Do Owners list
-            integer iLength = llGetListLength(g_lOwners);
-            string sOutput="";
-            while (iLength)
-                sOutput += "\n" + llList2String(g_lOwners, --iLength) + " (" + llList2String(g_lOwners,  --iLength) + ")";
-            if (sOutput) Notify(kID, "Owners: " + sOutput,FALSE);
-            else Notify(kID, "Owners: None",FALSE);
-
-            //Do TempOwners list
-            iLength = llGetListLength(g_lTempOwners);
-            sOutput="";
-            while (iLength)
-                sOutput += "\n" + llList2String(g_lTempOwners, --iLength) + " (" + llList2String(g_lTempOwners,  --iLength) + ")";
-            if (sOutput) Notify(kID, "Temp Owners: " + sOutput,FALSE);
-
-            //Do Secowners list
-            iLength = llGetListLength(g_lSecOwners);
-            sOutput="";
-            while (iLength)
-                sOutput += "\n" + llList2String(g_lSecOwners, --iLength) + " (" + llList2String(g_lSecOwners, --iLength) + ")";
-            if (sOutput) Notify(kID, "Secowners: " + sOutput,FALSE);
-            
-            iLength = llGetListLength(g_lBlackList);
-            sOutput="";
-            while (iLength)
-                sOutput += "\n" + llList2String(g_lBlackList, --iLength) + " (" + llList2String(g_lBlackList, --iLength) + ")";
-            if (sOutput) Notify(kID, "Black List: " + sOutput,FALSE);
-            
-            if (g_sGroupName) Notify(kID, "Group: " + g_sGroupName,FALSE);
-            if (g_kGroup) Notify(kID, "Group Key: " + (string)g_kGroup,FALSE);
-            sOutput="false"; 
-            if (g_iOpenAccess) sOutput="true"; 
-            Notify(kID, "Open Access: "+ sOutput,FALSE);
-            sOutput="false"; 
-            if (g_iLimitRange) sOutput="true";
-            Notify(kID, "LimitRange: "+ sOutput,FALSE);
-        }
-        else Notify(kID, "Only Owners & Wearer may access this command",FALSE);
-        if (remenu) AuthMenu(kID, iNum);
-    } else if (sStr == "owners" || sStr == "access") {   //give owner menu
-        AuthMenu(kID, iNum);
-//    } else if (sStr=="give hud" || sMessage == "give hud") {
-//        if (kID == g_kWearer) llGiveInventory(kID,"Virtual Disgrace - Collar HUD");
-//        else llGiveInventory(kID,"Virtual Disgrace - Owner HUD");
-//        if (remenu) AuthMenu(kID, iNum);
-        
-    } else  if (sMessage == "owner" && remenu==FALSE) { //request for access menu from chat
-        AuthMenu(kID, iNum);
-    } else if (sCommand == "owner" || sCommand == "tempowner" || sCommand == "secowner" || sCommand == "blacklist") { //add a person to a list
-        string sTmpName = llDumpList2String(llDeleteSubList(lParams,0,0), " "); //get full name
-        if (iNum!=COMMAND_OWNER) {
-            Notify(kID, sOwnerError, FALSE);
-            if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-        } else if ((key)sTmpName){
-            g_lQueryId+=[llRequestAgentData( sTmpName, DATA_NAME ),sTmpName,sCommand, kID, remenu];
-            if (remenu) FetchAvi(Auth(kID,FALSE), sCommand, sTmpName, kID);
-        } else
-            FetchAvi(iNum, sCommand, sTmpName, kID);
-    } else if (llSubStringIndex(sCommand,"rem")==0) { //remove person from a list
-        if (sCommand=="remowners") sCommand="remowner";
-        //Debug("got command "+sCommand);
-        string sToken = llGetSubString(sCommand,3,-1);
-        //Debug("got token "+sToken);
-        string sTmpName = llDumpList2String(llDeleteSubList(lParams,0,0), " "); //get full name
-        if (iNum!=COMMAND_OWNER){
-            Notify(kID, sOwnerError, FALSE);
-            if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-        } else if (sTmpName=="") 
-            RemPersonMenu(kID, sToken, iNum);
-        else {
-            RemovePerson(sTmpName, sToken, kID);
-            if (remenu) RemPersonMenu(kID, sToken, Auth(kID,FALSE));
-        }
-            
-    } else if (sCommand == "setgroup") {
-        if (iNum==COMMAND_OWNER){
-            //if key provided use that, else read current group
-            if ((key)(llList2String(lParams, -1))) g_kGroup = (key)llList2String(lParams, -1);
-            else g_kGroup = (key)llList2String(llGetObjectDetails(llGetKey(), [OBJECT_GROUP]), 0); //record current group key
-
-            if (g_kGroup != "") {
-                llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + "group=" + (string)g_kGroup, "");
-                g_iGroupEnabled = TRUE;
-             
-                key kGroupHTTPID = llHTTPRequest("http://world.secondlife.com/group/" + (string)g_kGroup, [], "");   //get group name from world api
-                g_lQueryId+=[kGroupHTTPID,"","group", kID, FALSE];
-            }
-        } else {
-            Notify(kID, sOwnerError, FALSE);
-        }
-        if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-    } else if (sCommand == "setgroupname") {
-        if (iNum==COMMAND_OWNER){
-            g_sGroupName = llDumpList2String(llList2List(lParams, 1, -1), " ");
-            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + "groupname=" + g_sGroupName, "");
-        } else {
-            Notify(kID, sOwnerError, FALSE);
-        }
-    } else if (sCommand == "unsetgroup") {
-        if (iNum==COMMAND_OWNER){
-            g_kGroup = "";
-            g_sGroupName = "";
-            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + "group", "");
-            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + "groupname", "");
-            g_iGroupEnabled = FALSE;
-            Notify(kID, "Group unset.", FALSE);
-            llWhisper(g_iInterfaceChannel, "CollarCommand|499|OwnerChange");    //tell attachments owner changed
-        } else {
-            Notify(kID, sOwnerError, FALSE);
-        }
-        if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-    } else if (sCommand == "setopenaccess") {
-        if (iNum==COMMAND_OWNER){
-            g_iOpenAccess = TRUE;
-            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + "openaccess=" + (string) g_iOpenAccess, "");
-            Notify(kID, "Your " + CTYPE + " is open to the public.", FALSE);
-            llWhisper(g_iInterfaceChannel, "CollarCommand|499|OwnerChange");    //tell attachments owner changed
-        } else {
-            Notify(kID, sOwnerError, FALSE);
-        }
-        if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-    } else if (sCommand == "unsetopenaccess") {
-        if (iNum==COMMAND_OWNER){
-            g_iOpenAccess = FALSE;
-            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + "openaccess", "");
-            Notify(kID, "Your " + CTYPE + " is closed to the public.", FALSE);
-            llWhisper(g_iInterfaceChannel, "CollarCommand|499|OwnerChange");    //tell attachments owner changed
-        } else {
-            Notify(kID, sOwnerError, FALSE);
-        }
-        if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-    } else if (sCommand == "setlimitrange") {
-        if (iNum==COMMAND_OWNER){
-            g_iLimitRange = TRUE;
-            // as the default is range limit on, we do not need to store anything for this
-            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + "limitrange", "");
-            Notify(kID, "Range is limited.", FALSE);
-        } else {
-            Notify(kID, sOwnerError, FALSE);
-        }
-        if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-    } else if (sCommand == "unsetlimitrange") {
-        if (iNum==COMMAND_OWNER){
-            g_iLimitRange = FALSE;
-            // save off state for limited range (default is on)
-            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + "limitrange=" + (string) g_iLimitRange, "");
-            Notify(kID, "Range is simwide.", FALSE);
-        } else {
-            Notify(kID, sOwnerError, FALSE);
-        }
-        if (remenu) AuthMenu(kID, Auth(kID,FALSE));
-    } else if (sCommand == "runaway"){
-        list lButtons=[];
-        string message;
-        if (iNum == COMMAND_WEARER){  //wearer called for menu
-            if (g_iRunawayDisable){
-                lButtons=["Stay","Cancel","Remain","Don't Run", "Stay Loyal"];
-                message="\nACCESS DENIED:\n\nYou chose to disable the runaway function.\n\nOnly primary owners can restore this ability.";
-            } else {
-                lButtons=["Runaway!", "Disable"];
-                message="\nYou can run away from your owners or you can disable your ability to ever run from them.";
-            }
-        } else if (iNum == COMMAND_OWNER && kID == g_kWearer) {  //wearer-owner called for menu
-            if (g_iRunawayDisable){
-                lButtons=["Stay","Enable"];
-                message="\nYou chose to disable the runaway function.\n\nAs an owner you can restore this ability if desired.";
-            } else {
-                lButtons=["Runaway!", "Disable"];
-                message="\nYou can run away from your owners or you can disable your ability to ever run from them.";
-            }
-        } else if (iNum == COMMAND_OWNER ) {  //owner called for menu
-            if (g_iRunawayDisable){
-                lButtons=["Release", "Enable"];
-                message="\nYou can release this sub of your service or you can return their ability to run away on their own.";
-            } else {
-                lButtons=["Release"];
-                message="\nYou can release this sub of your service.";
-            }
-        }
-        //Debug("runaway button");
-        Dialog(kID, message, lButtons, [UPMENU], 0, iNum, "runawayMenu");
+    string sCommand = llToLower(llList2String(lParams, 0));
+    string sValue = llToLower(llList2String(lParams, 1));
+    if (sCommand == "menu")
+    {
+        string sSubmenu = llGetSubString(sStr, 5, -1);
+        if (sSubmenu == g_sPoseMenu) PoseMenu(kID, 0, iNum);
+      //  else if (sSubmenu == g_sPoseMoveMenu) PoseMoveMenu(kID,0,iNum); we handle this as a catch-all else statement
+        else if (sSubmenu == g_sAOMenu) AOMenu(kID, iNum);
+        else if (sSubmenu == g_sAnimMenu) AnimMenu(kID, iNum);
     }
-
+    else if (sStr == "release" || sStr == "stop")
+    { //only release if person giving command outranks person who posed us
+        if (iNum <= g_iLastRank || !g_iAnimLock)
+        {
+            g_iLastRank = 0;
+            llMessageLinked(LINK_SET, ANIM_STOP, g_sCurrentPose, "");
+            g_sCurrentPose = "";
+            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + g_sAnimToken, "");
+        }
+    }
+    else if (sStr == "animations")
+    {   //give menu
+        AnimMenu(kID, iNum);
+    }
+    else if (sStr == "settings")
+    {
+        if (g_sCurrentPose != "" && (iNum == COMMAND_OWNER || iNum == COMMAND_WEARER))
+        {
+            Notify(kID, "Current Pose: " + g_sCurrentPose, FALSE);
+        }
+    }
+    //pose menu
+    else if (sStr == "pose"){
+        PoseMenu(kID, 0, iNum);
+    }
+    else if ((sStr == "runaway" || sStr == "reset") && (iNum == COMMAND_OWNER || iNum == COMMAND_WEARER))
+    {   //stop pose
+        if (g_sCurrentPose != "")
+        {
+            StopAnim(g_sCurrentPose);
+        }
+        llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + g_sAnimToken, "");
+        llResetScript();
+    }
+    //posture
+    else if ( sStr=="posture on" || sStr == UNTICKED+POSTURE) {
+        if(iNum<COMMAND_WEARER) {
+            SetPosture(TRUE,kID);
+            Notify(g_kWearer, "Your neck is locked in place.", FALSE);
+            if(kID != g_kWearer) Notify(kID, llKey2Name(g_kWearer) + "'s neck is locked in place.", FALSE);
+        } else Notify(kID,"Only owners can do that, sorry.",FALSE);
+    } else if ( sStr=="posture off" || sStr == UNTICKED+POSTURE) {
+        if(iNum<COMMAND_WEARER) {
+            SetPosture(FALSE,kID);
+            Notify(g_kWearer, "You can move your neck again.", FALSE);
+            if(kID != g_kWearer) Notify(kID, llKey2Name(g_kWearer) + " is free to move their neck.", FALSE);
+        } else Notify(kID,"Only owners can do that, sorry.",FALSE);
+    }
+    //anim lock
+    else if ( sStr=="animlock on" || sStr == UNTICKED+ANIMLOCK){
+        if(iNum<COMMAND_WEARER) {
+            g_iAnimLock = TRUE;
+            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + g_sLockToken + "=1", "");
+            Notify(g_kWearer, "Only owners can change or stop your poses now.", FALSE);
+            if(kID != g_kWearer) Notify(kID, llKey2Name(g_kWearer) + " can have their poses changed or stopped only by owners.", FALSE);
+        } else Notify(kID,"Only owners can do that, sorry.",FALSE);
+    } else if ( sStr=="animlock off" || sStr == TICKED+ANIMLOCK){
+        if(iNum<COMMAND_WEARER) {
+            g_iAnimLock = FALSE;
+            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + g_sLockToken, "");
+            Notify(g_kWearer, "You are now free to change or stop poses on your own.", FALSE);
+            if(kID != g_kWearer) Notify(kID, llKey2Name(g_kWearer) + " is free to change or stop poses on their own.", FALSE);
+        } else Notify(kID,"Only owners can do that, sorry.",FALSE);
+    //heightfix
+    } else if ( sStr=="heightfix on" || sStr == UNTICKED+HEIGHTFIX){
+        if ((iNum == COMMAND_OWNER)||(kID == g_kWearer)){
+            g_iHeightFix = TRUE;
+            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sHeightFixToken, NULL_KEY);
+            Notify(g_kWearer, "HeightFix override activated.", TRUE);
+            if (g_sCurrentPose != "") {
+                string sTemp = g_sCurrentPose;
+                StopAnim(sTemp);
+                StartAnim(sTemp);
+            }
+            AnimMenu(kID, iNum);
+        }
+        else Notify(kID,"Only owners or the wearer can use this option.",FALSE);
+    } else if ( sStr=="heightfix off" || sStr == TICKED+HEIGHTFIX){
+        if ((iNum == COMMAND_OWNER)||(kID == g_kWearer)){
+            g_iHeightFix = FALSE;
+            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sHeightFixToken + "=0", NULL_KEY);
+            Notify(g_kWearer, "HeightFix override deactivated.", TRUE);
+            if (g_sCurrentPose != "") {
+                string sTemp = g_sCurrentPose;
+                StopAnim(sTemp);
+                StartAnim(sTemp);
+            }
+            AnimMenu(kID, iNum);
+        }
+        else Notify(kID,"Only owners or the wearer can use this option.",FALSE);
+    //AO
+    } else if(sCommand == "ao") {
+        if(sValue == "" || sValue == "menu")
+        {
+            AOMenu(kID, iNum);
+        }
+        else if(sValue == "off")
+        {
+            llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iNum + "|ZHAO_AOOFF" + "|" + (string)kID);
+            llWhisper(g_iAOChannel,"ZHAO_AOOFF");
+        }
+        else if(sValue == "on")
+        {
+            llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iNum + "|ZHAO_AOON" + "|" + (string)kID);
+            llWhisper(g_iAOChannel,"ZHAO_AOON");
+        }
+        else if(sValue == "menu")
+        {
+            AOMenu(kID, iNum);
+        }
+        else if (sValue == "lock")
+        {
+            llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iNum + "|ZHAO_LOCK"  + "|" + (string)kID);
+        }
+        else if (sValue == "unlock")
+        {
+            llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iNum + "|ZHAO_UNLOCK"  + "|" + (string)kID);
+        }
+        else if(sValue == "hide")
+        {
+            llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iNum + "|ZHAO_AOHIDE" + "|" + (string)kID);
+        }
+        else if(sValue == "show")
+        {
+            llWhisper(g_iInterfaceChannel, "CollarCommand|" + (string)iNum + "|ZHAO_AOSHOW" + "|" + (string)kID);
+        }
+    }
+    else if (sCommand == llToLower(g_sPoseMoveMenu)) { //check for text command of PoseMoveMenu's string
+        if (iNum <= g_iLastRank || !g_iAnimLock) {
+            if (sValue == "on") {
+                g_iTweakPoseAO = 1;    
+                llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sTweakPoseAOToken + "=1" , "");
+                RefreshAnim();
+                Notify(kID, g_sPoseMoveMenu +" is now enabled.", FALSE);
+            }
+            else if (sValue == "off") {
+                g_iTweakPoseAO = 0;
+                llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sTweakPoseAOToken, "");
+                RefreshAnim();
+                Notify(kID, g_sPoseMoveMenu +" is now disabled.", FALSE);
+            }
+            else {                   
+                PoseMoveMenu(kID,0,iNum);
+            }
+        }
+        else {
+            Notify(g_kWearer, "Only owners can change or stop your poses now.", FALSE);
+        }
+    }
+    else if (llGetInventoryType(sStr) == INVENTORY_ANIMATION)
+    {
+        if (g_sCurrentPose == "")
+        {
+            g_sCurrentPose = sStr;
+            //not currently in a pose.  play one
+            g_iLastRank = iNum;
+            //StartAnim(sStr);
+            llMessageLinked(LINK_SET, ANIM_START, g_sCurrentPose, "");
+            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + g_sAnimToken + "=" + g_sCurrentPose + "," + (string)g_iLastRank, "");
+        }
+        else
+        {  //only change if command rank is same or higher (lower integer) than that of person who posed us
+            if (iNum <= g_iLastRank || !g_iAnimLock)
+            {
+                g_iLastRank = iNum;
+                llMessageLinked(LINK_SET, ANIM_STOP, g_sCurrentPose, "");
+                g_sCurrentPose = sStr;
+                llMessageLinked(LINK_SET, ANIM_START, g_sCurrentPose, "");
+                llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + g_sAnimToken + "=" + g_sCurrentPose + "," + (string)g_iLastRank, "");
+            }
+        }
+    }
     return TRUE;
+}
+
+AdjustOffset(integer direction){
+    //first, check we're running an anim
+    if (llGetListLength(g_lAnims)>0){
+        //get sleep time from list    
+        string sNewAnim = llList2String(g_lAnims, 0);
+        integer iIndex = llListFindList(g_lAnimScalars, [sNewAnim]);
+        string sleepTime="2.0";
+        if (iIndex != -1){
+            sleepTime=llList2String(g_lAnimScalars, iIndex + 2);
+            g_lAnimScalars=llDeleteSubList(g_lAnimScalars,iIndex,iIndex+2);       //we re-write it at the end
+        }
+    
+        //stop last adjustment anim and play next one
+        integer iOldAdjustment=g_iAdjustment;
+        if (g_iAdjustment){
+            g_iAdjustment+=direction;
+            while (g_iAdjustment > minHeightAdjust && g_iAdjustment < maxHeightAdjust && !~llListFindList(g_lHeightFixAnims,[(string)g_iAdjustment])){
+                //Debug("Re-adjust "+(string)g_iAdjustment);
+                g_iAdjustment+=direction;
+            }
+            
+            if (g_iAdjustment > maxHeightAdjust){
+                g_iAdjustment = 0;
+                Notify(g_kWearer,sNewAnim+" height fix cancelled",FALSE);
+            } else if (g_iAdjustment < minHeightAdjust){
+                g_iAdjustment = minHeightAdjust;
+            }
+            
+            
+        } else if (direction == -1){
+            g_iAdjustment=maxHeightAdjust;
+        }
+        if (g_iAdjustment != 0){
+            llStartAnimation("~" + (string)g_iAdjustment);
+            
+            //now calculate the new offset for notecard dump print
+            vector avscale = llGetAgentSize(llGetOwner());
+            float test = (float)g_iAdjustment/avscale.z;
+            Notify(g_kWearer,sNewAnim+"|"+(string)test+"|"+sleepTime,FALSE);
+            
+            //and store it
+            g_lAnimScalars+=[sNewAnim,test,sleepTime];
+        }
+        if (iOldAdjustment && iOldAdjustment != g_iAdjustment){
+            llStopAnimation("~" + (string)iOldAdjustment);
+        }
+    }
 }
 
 default
 {
-    state_entry() {   //until set otherwise, wearer is owner
-        //llOwnerSay("Auth: free memory="+(string)llGetFreeMemory());
-        g_sScript = "auth_";
-        g_kWearer = llGetOwner();
-        SetPrefix("auto");
-        //added for attachment auth
-        g_iInterfaceChannel = (integer)("0x" + llGetSubString(g_kWearer,30,-1));
-        if (g_iInterfaceChannel > 0) g_iInterfaceChannel = -g_iInterfaceChannel;
-        //Debug("Auth starting: "+(string)llGetFreeMemory());
-        // Request owner list.  Be careful about doing this in all scripts,
-        // because we can easily flood the 64 event limit in LSL's event queue
-        // if all the scripts send a ton of link messages at the same time on
-        // startup.
-        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, g_sScript + "owner", "");
-        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, g_sScript + "secowners", "");
-        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, g_sScript + "tempowners", "");
-        llMessageLinked(LINK_SET, LM_SETTING_REQUEST, g_sScript + "blacklist", "");
+    on_rez(integer iNum)
+    {
+        llResetScript();
     }
 
-    link_message(integer iSender, integer iNum, string sStr, key kID) {  
-        if (iNum == COMMAND_NOAUTH) { //authenticate messages on COMMAND_NOAUTH
-            integer iAuth = Auth((string)kID, FALSE);
-            if ( kID == g_kWearer && sStr == "runaway") {   // note that this will work *even* if the wearer is blacklisted or locked out
-                if (g_iRunawayDisable){
-                    Notify(g_kWearer, "Runaway is currently disabled.",FALSE);
-                } else {
-                    Notify(g_kWearer, "Running away from all owners started, your owners will now be notified!",FALSE);
-                    integer n;
-                    integer stop = llGetListLength(g_lOwners+g_lTempOwners);
-                    for (n = 0; n < stop; n += 2) {
-                        key kOwner = (key)llList2String(g_lOwners+g_lTempOwners, n);
-                        if (kOwner != g_kWearer)
-                        {
-                            Notify(kOwner, llKey2Name(g_kWearer) + " has run away!",FALSE);
-                        }
-                    }
-                    llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + "all", "");
-                    Notify(g_kWearer, "Runaway finished, the " + CTYPE + " will now release locks!",FALSE);
-                    // moved reset request from settings to here to allow noticifation of owners.
-                    llMessageLinked(LINK_SET, COMMAND_OWNER, "clear", kID); // clear RLV restrictions
-                    llMessageLinked(LINK_SET, COMMAND_OWNER, "runaway", kID); // this is not a LM loop, since it is now really authed
-                    llResetScript();
-                }
-            } else llMessageLinked(LINK_SET, iAuth, sStr, kID);
+    state_entry()
+    {
+        g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
+        //g_lAnimButtons = [" Pose", g_sTriggerAO, g_sGiveAO, "AO ON", "AO OFF"];
+        g_lAnimButtons = [" Pose", g_sTriggerAO, "AO ON", "AO OFF"];
+        g_kWearer = llGetOwner();
+        g_iInterfaceChannel = (integer)("0x" + llGetSubString(g_kWearer,30,-1));
+        if (g_iInterfaceChannel > 0) g_iInterfaceChannel = -g_iInterfaceChannel;
+        RequestPerms();
 
-            //Debug("noauth: " + sStr + " from " + (string)kID + " who has auth " + (string)iAuth);
-            return; // NOAUTH messages need go no further
-        } else if (UserCommand(iNum, sStr, kID, FALSE)) return;
-        else if (iNum == LM_SETTING_RESPONSE) {
-            //Debug("Got setting response: "+sStr);
+        CreateAnimList();
+
+        //llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sAnimMenu, "");
+        //llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sRootMenu + "|" + g_sAnimMenu, "");
+    
+         //start reading the ~heightscalars notecard
+         if (llGetInventoryKey(card)) {
+             g_kDataID = llGetNotecardLine(card, g_iLine);
+        }
+    }
+
+    dataserver(key kID, string sData)
+    {
+        if (kID == g_kDataID)
+        {
+            if (sData != EOF)
+            {
+                g_lAnimScalars += llParseString2List(sData, ["|"], []);
+                g_iLine++;
+                g_kDataID = llGetNotecardLine(card, g_iLine);
+            }
+        }   
+    }
+
+    changed(integer iChange)
+    {
+        if (iChange & CHANGED_TELEPORT)
+        {
+            RefreshAnim();
+        }
+
+        if (iChange & CHANGED_INVENTORY)
+        {
+            g_lAnimScalars = [];
+            //start re-reading the ~heightscalars notecard
+            g_iLine = 0;
+            if (llGetInventoryKey(card)) {
+                g_kDataID = llGetNotecardLine(card, g_iLine);
+            }
+            if (g_iNumberOfAnims!=llGetInventoryNumber(INVENTORY_ANIMATION)) CreateAnimList();
+        }
+        if (iChange & CHANGED_OWNER) llResetScript();
+    }
+    run_time_permissions(integer iPerm)
+    {
+        if(iPerm & PERMISSION_TRIGGER_ANIMATION)
+        {
+            if(g_iPosture) llStartAnimation(g_sPostureAnim);
+        }
+        if(iPerm & PERMISSION_OVERRIDE_ANIMATIONS )
+        {
+            //Do nothing - we can call default replacement walks/runs when a pose is triggered
+        }
+    } 
+    attach(key kID)
+    {
+        if (kID == NULL_KEY)
+        {
+            //Debug("detached");
+            //we were just detached.  clear the anim list and tell the ao to play stands again.
+            llWhisper(g_iInterfaceChannel, (string)EXT_COMMAND_COLLAR + "|" + AO_ON);
+            llWhisper(g_iAOChannel, AO_ON);
+            g_lAnims = [];
+        }
+        else
+        {
+            llRequestPermissions(llGetOwner(),PERMISSION_TRIGGER_ANIMATION | PERMISSION_OVERRIDE_ANIMATIONS);
+            //g_lAnimButtons = [" Pose", g_sTriggerAO, g_sGiveAO, "AO ON", "AO OFF"];
+            //llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sAnimMenu, ""); //even necessary? Dunno, shoudln't be, but with this, now reproduces old behaviour of resetting on every rez, only without resetting on every rez. -MD
+        }
+    }
+
+    link_message(integer iSender, integer iNum, string sStr, key kID)
+    {
+        // SA: TODO delete this after transition is finished
+        if (iNum == COMMAND_NOAUTH) return;
+        // /SA
+        if (UserCommand(iNum, sStr, kID)) return;
+        else if (iNum == ANIM_START)
+        {
+            StartAnim(sStr);
+        }
+        else if (iNum == ANIM_STOP)
+        {
+            StopAnim(sStr);
+        }
+        else if (iNum == MENUNAME_REQUEST && sStr == g_sRootMenu)
+        {
+            llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sRootMenu + "|" + g_sAnimMenu, ""); //no need for fixed main menu
+            //g_lAnimButtons = [" Pose", g_sTriggerAO, g_sGiveAO, "AO ON", "AO OFF"];
+            g_lAnimButtons = [" Pose", g_sTriggerAO, "AO ON", "AO OFF"];
+            llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sAnimMenu, "");
+        }
+        else if (iNum == MENUNAME_RESPONSE)
+        {
+            if (StartsWith(sStr, g_sAnimMenu + "|"))
+            {
+                string child = llList2String(llParseString2List(sStr, ["|"], []), 1);
+                if (llListFindList(g_lAnimButtons, [child]) == -1)
+                {
+                    g_lAnimButtons += [child];
+                }
+            }
+        }
+        else if (iNum == COMMAND_SAFEWORD)
+        { // saefword command recieved, release animation
+            if(llGetInventoryType(g_sCurrentPose) == INVENTORY_ANIMATION)
+            {
+                g_iLastRank = 0;
+                llMessageLinked(LINK_SET, ANIM_STOP, g_sCurrentPose, "");
+                g_iAnimLock = FALSE;
+                llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + g_sLockToken, "");
+                g_sCurrentPose = "";
+            }
+        }
+        else if (iNum == LM_SETTING_RESPONSE)
+        {
             list lParams = llParseString2List(sStr, ["="], []);
             string sToken = llList2String(lParams, 0);
             string sValue = llList2String(lParams, 1);
             integer i = llSubStringIndex(sToken, "_");
-            if (llGetSubString(sToken, 0, i) == g_sScript) {
+            if (llGetSubString(sToken, 0, i) == g_sScript)
+            {
                 sToken = llGetSubString(sToken, i + 1, -1);
-                if (sToken == "owner") {
-                    // temporarily stash owner list so we can see if it's changing.
-                    list tmpowners = g_lOwners;
-                    g_lOwners = llParseString2List(sValue, [","], []);
-                    // only say the owner list if it has changed (including on_rez)
-                    if (llGetListLength(g_lOwners) && tmpowners != g_lOwners) SayOwners();
-                } else if (sToken == "tempowner") {
-                    // temporarily stash owner list so we can see if it's changing.
-                    list tmpowners = g_lTempOwners;
-                    g_lTempOwners = llParseString2List(sValue, [","], []);
-                    //Debug("Tempowners: "+llDumpList2String(g_lTempOwners,","));
-                    // only say the owner list if it has changed (including on_rez)
-                    if (llGetListLength(g_lTempOwners) && tmpowners != g_lTempOwners) SayOwners();
-                } else if (sToken == "group") {
-                    g_kGroup = (key)sValue;
-                    //check to see if the object's group is set properly
-                    if (g_kGroup != "") {
-                        if ((key)llList2String(llGetObjectDetails(llGetKey(), [OBJECT_GROUP]), 0) == g_kGroup) g_iGroupEnabled = TRUE;
-                        else g_iGroupEnabled = FALSE;
+                if (sToken == g_sAnimToken)
+                {
+                    list lAnimParams = llParseString2List(sValue, [","], []);
+                    g_sCurrentPose = llList2String(lAnimParams, 0);
+                    g_iLastRank = (integer)llList2String(lAnimParams, 1);
+                    llMessageLinked(LINK_SET, ANIM_START, g_sCurrentPose, "");
+                }
+                else if (sToken == g_sLockToken)
+                {
+                    if(sValue == "1")
+                    {
+                        g_iAnimLock = TRUE;
                     }
-                    else g_iGroupEnabled = FALSE;
                 }
-                else if (sToken == "groupname") g_sGroupName = sValue;
-                else if (sToken == "openaccess") g_iOpenAccess = (integer)sValue;
-                else if (sToken == "limitrange") g_iLimitRange = (integer)sValue;
-                else if (sToken == "runawaydisable") g_iRunawayDisable = (integer)sValue;
-                else if (sToken == "secowners") g_lSecOwners = llParseString2List(sValue, [","], [""]);
-                else if (sToken == "blacklist") g_lBlackList = llParseString2List(sValue, [","], [""]);
+                else if (sToken ==g_sPostureToken)
+                {
+                    SetPosture((integer)sValue,NULL_KEY);
+                }
+                else if (sToken == "HTTPDB")
+                {
+                    g_sAppEngine_Url = sValue;
+                }
+                else if (sToken == g_sPoseMoveWalkToken)
+                {
+                    g_sPoseMoveWalk = sValue;
+                }
+                else if (sToken == g_sPoseMoveRunToken)
+                {
+                    g_sPoseMoveRun = sValue;
+                }
+                else if (sToken == g_sTweakPoseAOToken)
+                {
+                    g_iTweakPoseAO = 1;
+                }
+
             }
-            else if (sToken == "Global_prefix") SetPrefix(sValue);
             else if (sToken == "Global_CType") CTYPE = sValue;
-        } else if (iNum == LM_SETTING_EMPTY) {
-            //Debug("Got setting empty: "+sStr);
-            integer i = llSubStringIndex(sStr, "_");
-            if (llGetSubString(sStr, 0, i) == g_sScript) {
-                sStr = llGetSubString(sStr, i + 1, -1);
-                if (sStr == "owner") {
-                    g_lOwners = [];
-                    SayOwners();
-                } else if (sStr == "tempowner") {
-                    g_lTempOwners = [];
-                    SayOwners();
-                } else if (sStr == "group") {
-                    g_kGroup = NULL_KEY;
-                    g_iGroupEnabled = FALSE;
-                }
-                else if (sStr == "groupname") g_sGroupName = "";
-                else if (sStr == "openaccess") g_iOpenAccess = FALSE;
-                else if (sStr == "limitrange") g_iLimitRange = TRUE;
-                else if (sStr == "runawaydisable") g_iRunawayDisable = FALSE;
-                else if (sStr == "secowners") g_lSecOwners = [];
-                else if (sStr == "blacklist") g_lBlackList = [];
-            }
-        } else if (iNum == LM_SETTING_SAVE) {
-            list lParams = llParseString2List(sStr, ["="], []);
-            string sToken = llList2String(lParams, 0);
-            string sValue = llList2String(lParams, 1);
-            if (sToken == "Global_prefix") SetPrefix(sValue);
-        } else if (iNum == COMMAND_SAFEWORD) {
-            string sSubName = llKey2Name(g_kWearer);
-            string sSubFirstName = llList2String(llParseString2List(sSubName, [" "], []), 0);
-            integer n;
-            integer iStop = llGetListLength(g_lOwners+g_lTempOwners);
-            for (n = 0; n < iStop; n += 2) {
-                key kOwner = (key)llList2String(g_lOwners+g_lTempOwners, n);
-                Notify(kOwner, "Your sub " + sSubName + " has used the safeword. Please check on " + sSubFirstName +"'s well-being and if further care is required.",FALSE);
-            }
-            llMessageLinked(LINK_THIS, INTERFACE_RESPONSE, "safeword", "");
-        }        
-    // JS: For backwards compatibility until all attachments/etc are rolled over to new interface
-        //added for attachment auth (Garvin)
-        else if (iNum == ATTACHMENT_REQUEST) {
-          integer iAuth = Auth((string)kID, TRUE);
-          llMessageLinked(LINK_SET, ATTACHMENT_RESPONSE, (string)iAuth, kID);
         }
-    // JS: Remove ATTACHMENT_REQUEST & RESPONSE after all attachments have been updated properly
-        else if (iNum == INTERFACE_REQUEST) {
-            list lParams = llParseString2List(sStr, ["|"], []);
-            string sTarget = llList2String(lParams, 0);
-            string sCommand = llList2String(lParams, 1);
-            if (sTarget == "auth_") {
-                if (sCommand == "level") {
-                    string sAuth = (string)Auth((string)kID, TRUE);
-                    lParams = llListReplaceList(lParams, ["level=" + sAuth], 1, 1);
-                }
-                else return; // do not send response if the message was erroneous
-                llMessageLinked(LINK_SET, INTERFACE_RESPONSE, llDumpList2String(lParams, "|"), kID);
-            }
-        } else if (iNum == WEARERLOCKOUT) {
-            if (sStr == "on") g_iWearerlocksOut=TRUE;
-            else if (sStr == "off") g_iWearerlocksOut=FALSE;
-        } else if (iNum == DIALOG_RESPONSE) {
+        else if (iNum == DIALOG_RESPONSE)
+        {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-            if (~iMenuIndex) {
+            if (iMenuIndex != -1)
+            {
+                //got a menu response meant for us.  pull out values
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
                 key kAv = (key)llList2String(lMenuParams, 0);
                 string sMessage = llList2String(lMenuParams, 1);
                 integer iPage = (integer)llList2String(lMenuParams, 2);
-                integer iAuth = (integer)llList2String(lMenuParams, 3);
-               
+                integer iAuth = llList2Integer(lMenuParams, 3);
+                string sMenuType = llList2String(g_lMenuIDs, iMenuIndex + 1);
                 //remove stride from g_lMenuIDs
-                string sMenu=llList2String(g_lMenuIDs, iMenuIndex + 1);
-                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                
-                
-                if (sMenu == "Auth") {
-                    //g_kAuthMenuID responds to setowner, setsecowner, setblacklist, remowner, remsecowner, remblacklist, setgroup, unsetgroup, setopenaccess, unsetopenaccess
-                    if (sMessage == UPMENU) 
-                        llMessageLinked(LINK_SET, iAuth, "menu " + g_sParentMenu, kAv);
-                    else {
-                        list lTranslation=[
-                            "✓ Owner","owner",
-//                            "✓ Temp Owner","tempowner",
-                            "✓ Secowner","secowner",
-                            "✓ Blacklisted","blacklist",
-                            "✗ Owner","remowner",
-//                            "✗ Temp Owner","remtempowner",
-                            "✗ Secowner","remsecowner",
-                            "✗ Blacklisted","remblacklist",
-                            "Group ☐","setgroup",
-                            "Group ☒","unsetgroup",
-                            "Public ☐","setopenaccess",
-                            "Public ☒","unsetopenaccess",
-                            "Limit Range ☐","setlimitrange",
-                            "Limit Range ☒","unsetlimitrange",
-                            //"Give Hud","givehud", 
-                            "List Owners","listowners",
-                            "Runaway","runaway"
-                        ];
-                        integer buttonIndex=llListFindList(lTranslation,[sMessage]);
-                        if (~buttonIndex){
-                            sMessage=llList2String(lTranslation,buttonIndex+1);
-                        }
-                        //Debug("Sending UserCommand "+sMessage);
-                        UserCommand(iAuth, sMessage, kAv, TRUE);
+                //we have to subtract from the index because the dialog id comes in the middle of the stride
+                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+
+                if (sMenuType == ANIMMENU)
+                {
+                    if (sMessage == UPMENU)
+                    {
+                        llMessageLinked(LINK_SET, iAuth, "menu " + g_sRootMenu, kAv);
                     }
-                } else if (sMenu == "remowner" || sMenu == "remsecowner" || sMenu == "remblacklist" ) {
-                    if (sMessage == UPMENU) {
-                        AuthMenu(kAv, iAuth);
-                    } else  if (sMessage == "Remove All") {
-                        UserCommand(iAuth, sMenu + " Remove All", kAv,TRUE);
-                    } else if (sMenu == "remowner") {
-                        UserCommand(iAuth, sMenu+" " + llList2String(g_lOwners, (integer)sMessage*2 - 1), kAv, TRUE);
-                    } else if (sMenu == "remtempowner") {
-                        UserCommand(iAuth, sMenu+" " + llList2String(g_lTempOwners, (integer)sMessage*2 - 1), kAv, TRUE);
-                    } else if(sMenu == "remsecowner") {
-                        UserCommand(iAuth, sMenu+" " + llList2String(g_lSecOwners, (integer)sMessage*2 - 1), kAv, TRUE);
-                    } else if(sMenu == "remblacklist") {
-                        UserCommand(iAuth, sMenu+" " + llList2String(g_lBlackList, (integer)sMessage*2 - 1), kAv, TRUE);
+                    else if (sMessage == " Pose")
+                    {
+                        PoseMenu(kAv, 0, iAuth);
                     }
-                } else if (sMenu == "runawayMenu" ) {   //no chat commands for this menu, by design, so handle it all here
-                    if (sMessage == UPMENU) {
-                        AuthMenu(kAv, iAuth);
-                    } else  if (sMessage == "Runaway!") {
-                        llMessageLinked(LINK_SET, COMMAND_NOAUTH, "runaway", kAv);
-                    } else if (sMessage == "Enable") {
-                        if (~llListFindList(g_lTempOwners,[(string)kAv]) && ! ~llListFindList(g_lOwners,[(string)kAv]) ){
-                            Notify(kAv,"Temporary owners can't enable runaway.",FALSE);
-                        } else {
-                            g_iRunawayDisable=FALSE;
-                            llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript+"runawayDisable","");
-                            Notify(kAv,"The ability to runaway has been restored.", TRUE);
-                            UserCommand(iAuth, "runaway", kAv, TRUE);
-                        }
-                    } else if (sMessage == "Disable") {
-                        g_iRunawayDisable=TRUE;
-                        llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript+"runawayDisable=1","");
-                        Notify(g_kWearer,"You have disabled your ability to runaway.", TRUE);
-                        UserCommand(iAuth, "runaway", kAv, TRUE);
-                    } else if (sMessage == "Cancel") {
-                        return;  //no remenu on canel
-                    } else if (sMessage == "Release") {
-                        integer iOwnerIndex=llListFindList(g_lOwners,[(string)kAv]);
-                        if (~iOwnerIndex){
-                            string name=llList2String(g_lOwners,iOwnerIndex+1);
-                            UserCommand(iAuth, "remowner "+name, kAv, FALSE);  //no remenu, owner is done with this sub
-                        } else {
-                            Notify(kAv, "You are not on the owners list.", TRUE);
-                            UserCommand(iAuth,"runaway",kAv, TRUE); //remenu to runaway
-                        }
-                    } else {
-                        UserCommand(iAuth,"runaway",kAv, TRUE); //remenu to runaway
+                    else if (sMessage == g_sTriggerAO)
+                    {
+                        Notify(kAv, "Attempting to trigger the AO menu.  This will only work if " + llKey2Name(g_kWearer) + " is meeting the a) or c) requirement for AO features.", FALSE);
+                        AOMenu(kAv, iAuth);
+                    }
+/*                    else if (sMessage == g_sGiveAO)
+                    {   
+                        DeliverAO(kAv);
+                    }
+*/
+                    else if(sMessage == "☐ AO" || sMessage== "AO ON")
+                    {
+                        UserCommand(iAuth, "ao on", kAv);
+                        AnimMenu(kAv, iAuth);
+                    }
+                    else if(sMessage == "☒ AO"  || sMessage== "AO OFF")
+                    {
+                        UserCommand(iAuth, "ao off", kAv);
+                        AnimMenu(kAv, iAuth);
+                    }
+                    else if(llGetSubString(sMessage, llStringLength(TICKED), -1) == ANIMLOCK)
+                    {
+                        UserCommand(iAuth, sMessage, kAv);
+                        AnimMenu(kAv, iAuth);
+                    }
+                    else if(llGetSubString(sMessage, llStringLength(TICKED), -1) == POSEAO)
+                    {
+                        //This is the Animation menu item, we need to call the PoseMoveMenu item from here...
+                        PoseMoveMenu(kAv,iNum,iAuth);
+                    }
+                    else if(llGetSubString(sMessage, llStringLength(TICKED), -1) == HEIGHTFIX)
+                    {
+                        UserCommand(iAuth, sMessage, kAv);
+                    }
+                    else if(llGetSubString(sMessage, llStringLength(TICKED), -1) == POSTURE)
+                    {
+                        string sCommand=POSTURE+" on";
+                        if(~llSubStringIndex(sMessage,TICKED)) sCommand=POSTURE+" off";
+                        UserCommand(iAuth, llToLower(sCommand), kAv);
+                        AnimMenu(kAv, iAuth);
+                    }
+                    else if (~llListFindList(g_lAnimButtons, [sMessage]))
+                    { // SA: can be child scripts menus, not handled in UserCommand()
+                        llMessageLinked(LINK_SET, iAuth, "menu " + sMessage, kAv);
                     }
                 }
-            }
-        } else if (iNum == FIND_AGENT) { //reply from add-by-name or add-from-menu (via FetchAvi dialog)
-            if (kID == REQUEST_KEY) {
-                list params = llParseString2List(sStr, ["|"], []);
-                if (llList2String(params, 0) == g_sScript) {
-                    string sRequestType = llList2String(params, 4);
-                    key kAv = llList2Key(params, 2);
-                    key kNewOwner=(key)llList2String(params, 5);
-                    AddUniquePerson(kNewOwner, llKey2Name(kNewOwner), sRequestType, kAv); //should be safe to uase key2name here, as we added from sensor dialog
-                    //FetchAvi(llList2Integer(params, 3), sRequestType, "", kAv);   //remenu
-                    integer iNewAuth=Auth(kAv,FALSE);
-                    if (iNewAuth == COMMAND_OWNER){
-                        UserCommand(iNewAuth,sRequestType,kAv,TRUE);
-                        //FetchAvi(COMMAND_OWNER, sRequestType, "", kAv);   //remenu
-                    } else {
-                        AuthMenu(kAv,iNewAuth);
+                else if (sMenuType == POSEMENU)
+                {
+                    if (sMessage == UPMENU)
+                    { //return on parent menu, so the animmenu below doesn't come up
+                        AnimMenu(kAv, iAuth);
+                        return;
                     }
+                    else if (sMessage == RELEASE)
+                    {
+                        UserCommand(iAuth, "release", kAv);
+                    }
+                    else if (sMessage == "↑")
+                    {
+                        AdjustOffset(1);
+                    }
+                    else if (sMessage == "↓")
+                    {
+                        AdjustOffset(-1);
+                    }
+                    else  //we got an animation name
+                        //if ((integer)sMessage)
+                    { //we don't know any more what the speaker's auth is, so pass the command back through the auth system.  then it will play only if authed
+                        //string sAnimsName = llGetInventoryName(INVENTORY_ANIMATION, (integer)sMessage - 1);
+                        UserCommand(iAuth, sMessage, kAv);
+                    }
+                    PoseMenu(kAv, iPage, iAuth);
                 }
-            }
-        } else if (iNum == DIALOG_TIMEOUT) {
-            integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-            //remove stride from g_lMenuIDs
-            //we have to subtract from the index because the dialog id comes in the middle of the stride
-            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                        
-        }
-    }
-
-    on_rez(integer iParam) {
-        llResetScript();
-    }
-
-    changed(integer iChange) {
-        if (iChange & CHANGED_OWNER) llResetScript();
-    }
-
-    http_response(key kQueryId, integer iStatus, list lMeta, string sBody) { //response to a group name lookup
-        integer listIndex=llListFindList(g_lQueryId,[kQueryId]);
-        if (listIndex!= -1){
-            key g_kDialoger=llList2Key(g_lQueryId,listIndex+3);
-            g_lQueryId=llDeleteSubList(g_lQueryId,listIndex,listIndex+g_iQueryStride-1);
-            
-            g_sGroupName = "(group name hidden)";
-            if (iStatus == 200) {
-                integer iPos = llSubStringIndex(sBody, "<title>");
-                integer iPos2 = llSubStringIndex(sBody, "</title>");
-                if ((~iPos) // Found
-                    && iPos2 > iPos // Has to be after it
-                    && iPos2 <= iPos + 43 // 36 characters max (that's 7+36 because <title> has 7)
-                    && !~llSubStringIndex(sBody, "AccessDenied") // Check as per groupname.py (?)
-                ) {
-                    g_sGroupName = llGetSubString(sBody, iPos + 7, iPos2 - 1);
-                }
-            }
-
-            Notify(g_kDialoger, "Group set to " + g_sGroupName + ".", FALSE);
-            llMessageLinked(LINK_SET, LM_SETTING_SAVE, g_sScript + "groupname=" + g_sGroupName, "");
-        }
-    }
+                else if (sMenuType == POSEMOVEMENU) {
+                    if (sMessage == UPMENU)
+                        { //return on parent menu, so the animmenu below doesn't come up
+                            AnimMenu(kAv, iAuth);
+                            return;
+                        }
+                    if (iAuth <= g_iLastRank || !g_iAnimLock) {
+                        if(llGetSubString(sMessage, llStringLength(TICKED), -1) == POSEAO)
+                        {
+                            if (g_iTweakPoseAO) {
+                                g_iTweakPoseAO = 0;
+                                llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sTweakPoseAOToken, "");
+                            }
+                            else {
+                                g_iTweakPoseAO = 1;
+                                 llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sTweakPoseAOToken + "=1" , "");
+                            }
     
-    dataserver(key kQueryId, string sData){ //response after an add-by-uuid
-        integer listIndex=llListFindList(g_lQueryId,[kQueryId]);
-        if (listIndex!= -1){
-            key newOwner=llList2Key(g_lQueryId,listIndex+1);
-            string sRequestType=llList2String(g_lQueryId,listIndex+2);
-            key kAv =llList2Key(g_lQueryId,listIndex+3);
-            integer remenu =llList2Integer(g_lQueryId,listIndex+4);
-            
-            g_lQueryId=llDeleteSubList(g_lQueryId,listIndex,listIndex+g_iQueryStride-1);
-            
-            AddUniquePerson(newOwner, sData, sRequestType, kAv);
-            if (remenu){
-                integer iNewAuth=Auth(kAv,FALSE);
-                if (iNewAuth == COMMAND_OWNER){
-                    UserCommand(iNewAuth,sRequestType,kAv,TRUE);
-                    //FetchAvi(COMMAND_OWNER, sRequestType, "", kAv);   //remenu
-                } else {
-                    AuthMenu(kAv,iNewAuth);
+                           
+                            RefreshAnim();
+                            PoseMoveMenu(kAv,iNum,iAuth);
+                        }
+                        else if (sMessage == NOWALK) {
+                            llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sPoseMoveWalkToken, ""); 
+                            g_sPoseMoveWalk = "";
+                            RefreshAnim();
+                            PoseMoveMenu(kAv,iNum,iAuth);
+                        }
+                        else if (sMessage == NORUN) {
+                            llMessageLinked(LINK_THIS, LM_SETTING_DELETE, g_sScript + g_sPoseMoveRunToken, ""); 
+                            g_sPoseMoveRun = "";
+                            RefreshAnim();
+                            PoseMoveMenu(kAv,iNum,iAuth);
+                        }
+                        else if (sMessage != "") {
+                            if (llSubStringIndex(sMessage,UNTICKED + g_sWalkButtonPrefix) == 0) {
+                                g_sPoseMoveWalk = llList2String(g_lPoseMoveAnimationPrefix,0) + llGetSubString(sMessage,llStringLength(TICKED + g_sWalkButtonPrefix) ,-1);
+                                llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sPoseMoveWalkToken + "=" + g_sPoseMoveWalk, "");
+                            }
+                            else if (llSubStringIndex(sMessage,UNTICKED + g_sRunButtonPrefix) == 0) {
+                                g_sPoseMoveRun = llList2String(g_lPoseMoveAnimationPrefix,1) + llGetSubString(sMessage,llStringLength(TICKED + g_sRunButtonPrefix),-1);
+                                llMessageLinked(LINK_THIS, LM_SETTING_SAVE, g_sScript + g_sPoseMoveRunToken + "=" + g_sPoseMoveRun, "");
+                            }
+                            RefreshAnim();
+                            PoseMoveMenu(kAv,iNum,iAuth);
+                        }
+                    }
+                    else {
+                        Notify(g_kWearer, "Only owners can change or stop your poses now.", FALSE);
+                    }
                 }
             }
         }
