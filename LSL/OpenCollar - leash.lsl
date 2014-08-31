@@ -783,7 +783,8 @@ default
                 g_vPos = vNewPos;
                 g_iTargetHandle = llTarget(g_vPos, (float)g_iLength);
             }
-            if (g_vPos != ZERO_VECTOR) llMoveToTarget(g_vPos,0.7);
+            integer iDist=llVecDist(g_vPos,llGetPos());// Distance between leasher and wearer
+            if (g_vPos != ZERO_VECTOR && iDist<1.2*g_iLength+10) llMoveToTarget(g_vPos,0.7);
             else llStopMoveToTarget();
         } else {
             DoUnleash();
