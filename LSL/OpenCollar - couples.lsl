@@ -452,16 +452,28 @@ default
         
         string text = llList2String(g_lAnimSettings, g_iCmdIndex * 4 + 3);
         if (text != "")
-        {
-            text = StrReplace(text, "_SELF_", WEARERNAME);
-            text = StrReplace(text, "_PARTNER_", g_sPartnerName);
-            
+        {	
+			string sName = llGetObjectName();
+			string sObjectName;
+			if (llSubStringIndex(text,"_SELF_ ") == 0) { //we know object name should be full wearername
+				text = StrReplace(text,"_PARTNER_ ",g_sPartnerName);
+				text = StrReplace(text,"_SELF_ ","");
+				sObjectName = WEARERNAME;
+			}
+			else if (llSubStringIndex(text,"_PARTNER_ ") == 0) { //we assume partner name should be object name
+				text = StrReplace(text,"_PARTNER_ ","");
+				text = StrReplace(text,"_SELF_ ",WEARERNAME);
+				sObjectName = g_sPartnerName;
+			}
+			else { //message doesn't have a self/partner as first word, shrink object name anyways
+				text = StrReplace(text,"_PARTNER_ ",g_sPartnerName);
+				text = StrReplace(text,"_SELF_ ",WEARERNAME);
+				sObjectName = ":"
+			}
+				
             //inlined PrettySay function.  Renames collar to wearer's first name for duration of say command
-            string sName = llGetObjectName();
-            list lWords = llParseString2List(text, [" "], []);
-            llSetObjectName(llList2String(lWords, 0));
-            lWords = llDeleteSubList(lWords, 0, 0);
-            llSay(0, "/me " + llDumpList2String(lWords, " "));
+            llSetObjectName(sObjectName);
+            llSay(0, "/me " + text);
             llSetObjectName(sName);
             
         }
