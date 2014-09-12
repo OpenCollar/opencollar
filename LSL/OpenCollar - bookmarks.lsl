@@ -39,7 +39,7 @@ key     g_kDataID;
 integer g_iLine = 0;
 string  UPMENU                      = "BACK"; // when your menu hears this, give the parent menu
 key     g_kCommander;
-
+key     g_kLeasher = NULL_KEY;      //variable to unleash if we're forced to TP by leasher
 string CTYPE                        = "collar";    // designer can set in notecard to appropriate word for their item
 
 list    PLUGIN_BUTTONS              = ["SAVE", "PRINT", "REMOVE"];
@@ -415,6 +415,10 @@ default {
             // Pass command to main
             if(g_iRLVOn) {
                 string sRlvCmd = "tpto:" + pos_str + "=force";
+                if (g_kLeasher == g_kCommander) {
+                    llMessageLinked(LINK_THIS, COMMAND_OWNER, "unleash", g_kLeasher);
+                    llSleep(0.2); //give the link message some time to process the unleash
+                }
                 llMessageLinked(LINK_SET, RLV_CMD, sRlvCmd, g_kCommander);
             }
         }
@@ -489,6 +493,17 @@ default {
                     // if the button isnt in our menu yet, than we add it
                     g_lButtons = llListSort(g_lButtons + [button], 1, TRUE);
                 }
+            }
+        } else if (iNum == LM_SETTING_SAVE) {
+            //Debug("received setting save:"+sMessage);
+            list lParts=llParseStringKeepNulls(sStr,[",","="],[]);
+            if (llList2String(lParts,0)=="leash_leashedto"){
+                g_kLeasher=llList2String(lParts,1);
+            }
+        } else if (iNum==LM_SETTING_DELETE){
+            list lParts=llParseStringKeepNulls(sStr,[",","="],[]);
+            if (llList2String(lParts,0)=="leash_leashedto"){
+                g_kLeasher=NULL_KEY;
             }
         } else if(iNum == LM_SETTING_RESPONSE) {
             // response from setting store have been received
