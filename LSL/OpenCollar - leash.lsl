@@ -116,6 +116,13 @@ integer g_iLeasherInRange=FALSE; //
 integer g_iRLVOn=FALSE;     // To store if RLV was enabled in the collar
 integer g_iAwayCounter=0;
 
+// Length for when we do a rezpost
+float POST_LEASH_LENGTH=2.5;
+
+//We need to track these when we do a rezpost.
+integer iAuth_for_rez;
+key kMessageID_for_rez;
+
 list g_lRestrictionNames= ["fartouch","sittp","tplm","tplure","tploc"];
 string RLV_STRING = "rlvmain_on";
 string OWNER_STRING = "auth_owner";
@@ -480,7 +487,14 @@ integer UserCommand(integer iAuth, string sMessage, key kMessageID, integer bFro
             if (bFromMenu) UserCommand(iAuth, "post", kMessageID ,bFromMenu);
             
         } else if (sMessage == "rezpost" || sMessage == "rez post") {
-            llRezObject("Grabby Post", llGetPos() + (<0.1, 0.0, 0.37> * llGetRot()), ZERO_VECTOR, llEuler2Rot(<0, 90, 270> * DEG_TO_RAD), 0);
+            //We're going to intentionally attach the sub to the post ourselves, rather than
+            //let the grabby post collision event handle it. This is so we can properly
+            //preserve iAuth.
+            //To accomplish this, we'll rez the post far enough away so it doesn't act
+            //grabby.
+            iAuth_for_rez = iAuth;
+            kMessageID_for_rez = kMessageID;
+            llRezObject("Grabby Post", llGetPos() + (<1.0, 0.0, 1.0> * llGetRot()), ZERO_VECTOR, llEuler2Rot(<0, 90, 270> * DEG_TO_RAD), 0);
             if (bFromMenu) UserCommand(iAuth, "post", kMessageID ,bFromMenu);
             
         } else if (sMessage == "yank" && kMessageID == g_kLeashedTo) {
@@ -672,6 +686,13 @@ default
     
     on_rez(integer start_param) {
         DoUnleash();
+    }
+    
+    //this is always going to be a grabby post that has rezzed
+    object_rez(key postId)
+    {
+        UserCommand(iAuth_for_rez, "length " + (string)POST_LEASH_LENGTH, kMessageID_for_rez, FALSE);
+        UserCommand(iAuth_for_rez, "leashto " + (string)postId, kMessageID_for_rez, FALSE);
     }
     
     changed (integer change){
