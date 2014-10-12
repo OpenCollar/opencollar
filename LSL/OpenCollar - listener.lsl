@@ -218,15 +218,21 @@ sendCommandFromLink(integer iLinkNumber, string sType, key kToucher) {
     }
 }
 
+string GetName(key kID)
+{
+    string name = llGetDisplayName(kID);
+    if (name == "???" || name == "") name == llKey2Name(kID);
+    return name;
+}
 
+}
 default
 {
     state_entry()
     {
         g_kWearer = llGetOwner();
-        WEARERNAME = llGetDisplayName(g_kWearer);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
-        
+        WEARERNAME = GetName(g_kWearer);
+
         list name = llParseString2List(llKey2Name(g_kWearer), [" "], []);
         g_sPrefix = llGetSubString(llList2String(name, 0), 0, 0);
         g_sPrefix += llGetSubString(llList2String(name, 1), 0, 0);
@@ -435,8 +441,7 @@ default
                     }
                     else if(sValue=="reset") { //unset Global_WearerName
                         string message=WEARERNAME+"'s new name is reset to ";
-                        WEARERNAME = llGetDisplayName(g_kWearer);
-                        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+                        WEARERNAME = GetName(g_kWearer);
                         llMessageLinked(LINK_SET, LM_SETTING_DELETE, "Global_WearerName", "");  
                         message += WEARERNAME;
                         g_iCustomName = FALSE;
@@ -638,8 +643,8 @@ default
     timer()
     {
         if (g_iCustomName == FALSE) { //If we don't have a custom LM_SETTING Global_WearerName
-            string sLoadDisplayName = llGetDisplayName(g_kWearer); //Load this once
-            if (((sLoadDisplayName != "") && (sLoadDisplayName != "???")) && (sLoadDisplayName != WEARERNAME)) {
+            string sLoadDisplayName = GetName(g_kWearer); //Load this once
+            if (sLoadDisplayName != WEARERNAME) {
                 //The displayname loaded correctly, and it's different than our current WEARERNAME
                 //wearer changed their displayname since last timer event
                 WEARERNAME = sLoadDisplayName;
