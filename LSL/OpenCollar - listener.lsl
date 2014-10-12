@@ -645,8 +645,8 @@ default
     timer()
     {
         if (g_iCustomName == FALSE) { //If we don't have a custom LM_SETTING Global_WearerName
-        string sLoadDisplayName = llGetDisplayName(g_kWearer); //Load this once
-        if (((sLoadDisplayName != "") && (sLoadDisplayName != "???")) && (sLoadDisplayName != WEARERNAME)) {
+            string sLoadDisplayName = llGetDisplayName(g_kWearer); //Load this once
+            if (((sLoadDisplayName != "") && (sLoadDisplayName != "???")) && (sLoadDisplayName != WEARERNAME)) {
                 //The displayname loaded correctly, and it's different than our current WEARERNAME
                 //wearer changed their displayname since last timer event
                 WEARERNAME = sLoadDisplayName;
