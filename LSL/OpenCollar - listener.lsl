@@ -218,13 +218,6 @@ sendCommandFromLink(integer iLinkNumber, string sType, key kToucher) {
     }
 }
 
-string GetName(key kID)
-{
-    string name = llGetDisplayName(kID);
-    if (name == "???" || name == "") name = llKey2Name(kID);
-    return name;
-}
-
 CheckAttach()
 {
     integer iAttachPt = llGetAttached();
@@ -240,7 +233,8 @@ default
     state_entry()
     {
         g_kWearer = llGetOwner();
-        WEARERNAME = GetName(g_kWearer);
+        WEARERNAME = llGetDisplayName(g_kWearer);
+        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
 
         list name = llParseString2List(llKey2Name(g_kWearer), [" "], []);
         g_sPrefix = llGetSubString(llList2String(name, 0), 0, 0);
