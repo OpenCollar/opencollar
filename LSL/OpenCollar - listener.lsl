@@ -225,6 +225,16 @@ string GetName(key kID)
     return name;
 }
 
+CheckAttach()
+{
+    integer iAttachPt = llGetAttached();
+    if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
+    {
+        llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
+        llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
+    }
+}
+
 default
 {
     state_entry()
@@ -266,12 +276,8 @@ default
         llListenRemove(g_iHUDListener);
         g_iHUDListener = llListen(g_iHUDChan, "", NULL_KEY ,""); //reinstated
     
-        integer iAttachPt = llGetAttached();
-        if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
-        {
-            llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
-            llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
-        }
+        CheckAttach();
+
         //llMessageLinked(LINK_SET, LM_SETTING_REQUEST, "Global_prefix", "");
         //llMessageLinked(LINK_SET, LM_SETTING_REQUEST, "channel", "");
         //Debug("Starting");
@@ -284,13 +290,10 @@ default
         {
             llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=No");
         }
-        //else
-        //{
-            //llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
-        //}
-        //integer iAttachPt = llGetAttached();
-        //if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
-       //     llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
+        else
+        {
+            CheckAttach();
+        }
     }
 
     listen(integer iChan, string sName, key kID, string sMsg)
