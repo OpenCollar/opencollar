@@ -225,7 +225,6 @@ string GetName(key kID)
     return name;
 }
 
-
 default
 {
     state_entry()
