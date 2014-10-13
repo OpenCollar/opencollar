@@ -225,7 +225,7 @@ default
     {
         g_kWearer = llGetOwner();
         WEARERNAME = llGetDisplayName(g_kWearer);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
         
         list name = llParseString2List(llKey2Name(g_kWearer), [" "], []);
         g_sPrefix = llGetSubString(llList2String(name, 0), 0, 0);
@@ -433,7 +433,7 @@ default
                     else if(sValue=="reset") { //unset Global_WearerName
                         string message=WEARERNAME+"'s new name is reset to ";
                         WEARERNAME = llGetDisplayName(g_kWearer);
-                        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+                        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
                         llMessageLinked(LINK_SET, LM_SETTING_DELETE, "Global_WearerName", "");  
                         message += WEARERNAME;
                         g_iCustomName = FALSE;
