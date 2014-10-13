@@ -321,7 +321,7 @@ default
             else {
                 g_kWearer = llGetOwner();
                 WEARERNAME = llGetDisplayName(g_kWearer);
-                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
             }
         }
         else if (iNum == LM_SETTING_RESPONSE)
