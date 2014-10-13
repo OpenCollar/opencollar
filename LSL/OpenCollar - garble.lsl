@@ -188,7 +188,7 @@ default
     {
         gkWear = llGetOwner();
         WEARERNAME = llGetDisplayName(gkWear);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(gkWear);
+        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(gkWear);
         gsWear = WEARERNAME;
         
         giCRC = llRound(llFrand(499) + 1);
@@ -256,7 +256,7 @@ default
             }
             else {
                 WEARERNAME = llGetDisplayName(llGetOwner());
-                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(llGetOwner());
+                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(llGetOwner());
                 gsWear = WEARERNAME;
             }
         }

@@ -718,7 +718,7 @@ default
         g_sScript = llStringTrim(llList2String(llParseString2List(llGetScriptName(), ["-"], []), 1), STRING_TRIM) + "_";
         g_kWearer = llGetOwner();
         WEARERNAME = llGetDisplayName(g_kWearer);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
         g_sWearerName = WEARERNAME;
         //llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sSubMenu, "");
         //llSleep(1.0);
@@ -748,7 +748,7 @@ default
             else {
                 g_kWearer = llGetOwner();
                 WEARERNAME = llGetDisplayName(g_kWearer);
-                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
             }
         }
         else if (iNum == LM_SETTING_RESPONSE)

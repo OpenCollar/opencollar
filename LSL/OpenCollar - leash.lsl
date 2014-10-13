@@ -664,7 +664,7 @@ default
         //llOwnerSay("statentry:"+(string)llGetFreeMemory( ));
         g_kWearer = llGetOwner();
         WEARERNAME = llGetDisplayName(g_kWearer);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
         llMinEventDelay(0.3);
         
         DoUnleash();
@@ -678,11 +678,10 @@ default
     
     changed (integer change){
         if (change & CHANGED_OWNER){
-            g_kWearer = llGetOwner();
-            WEARERNAME = llGetDisplayName(g_kWearer);
-            if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+            llResetScript();
         }
     }
+    
     link_message(integer iPrim, integer iNum, string sMessage, key kMessageID){
         if (UserCommand(iNum, sMessage, kMessageID, FALSE)) return;
         else if (iNum == MENUNAME_REQUEST  && sMessage == BUTTON_PARENTMENU) {
@@ -710,7 +709,7 @@ default
             else {
                 g_kWearer = llGetOwner();
                 WEARERNAME = llGetDisplayName(g_kWearer);
-                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
             }
         } else if (iNum == LM_SETTING_RESPONSE) {
             integer iInd = llSubStringIndex(sMessage, "=");

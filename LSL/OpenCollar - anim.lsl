@@ -516,7 +516,7 @@ default {
     state_entry() {
         g_kWearer = llGetOwner();
         g_sWearerName = llGetDisplayName(g_kWearer);
-        if (g_sWearerName == "???" || g_sWearerName == "") g_sWearerName == llKey2Name(g_kWearer);
+        if (g_sWearerName == "???" || g_sWearerName == "") g_sWearerName = llKey2Name(g_kWearer);
 
         g_iInterfaceChannel = (integer)("0x" + llGetSubString(g_kWearer,30,-1));
         if (g_iInterfaceChannel > 0) g_iInterfaceChannel = -g_iInterfaceChannel;
@@ -617,7 +617,7 @@ default {
             if (llSubStringIndex(sStr, "Global_WearerName") == 0 ) {
                 integer iInd = llSubStringIndex(sStr, "=");
                 g_sWearerName = llGetDisplayName(g_kWearer);
-                if (g_sWearerName == "???" || g_sWearerName == "") g_sWearerName == llKey2Name(g_kWearer);
+                if (g_sWearerName == "???" || g_sWearerName == "") g_sWearerName = llKey2Name(g_kWearer);
             }
         } else if (iNum == DIALOG_RESPONSE) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
