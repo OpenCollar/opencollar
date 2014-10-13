@@ -488,7 +488,7 @@ default
     state_entry() {
         g_kWearer = llGetOwner(); //updates in change event prompting script restart
         WEARERNAME = llGetDisplayName(g_kWearer);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
         BuildLockElementList(); //updates in change event, doesn;t need a reset every time
         g_iScriptCount = llGetInventoryNumber(INVENTORY_SCRIPT);  //updates on change event;
         
@@ -613,7 +613,7 @@ default
             else {
                 g_kWearer = llGetOwner();
                 WEARERNAME = llGetDisplayName(g_kWearer);
-                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+                if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
             }
         }
         else if (iNum == LM_SETTING_RESPONSE)
