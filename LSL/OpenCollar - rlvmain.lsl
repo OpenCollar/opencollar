@@ -465,7 +465,7 @@ default {
         llOwnerSay("@clear");
         g_kWearer = llGetOwner();
         WEARERNAME = llGetDisplayName(g_kWearer);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME = llKey2Name(g_kWearer);
     }
 
     on_rez(integer param){
