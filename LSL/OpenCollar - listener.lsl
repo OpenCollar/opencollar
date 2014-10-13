@@ -218,15 +218,30 @@ sendCommandFromLink(integer iLinkNumber, string sType, key kToucher) {
     }
 }
 
+string GetName(key kID)
+{
+    string name = llGetDisplayName(kID);
+    if (name == "???" || name == "") name = llKey2Name(kID);
+    return name;
+}
+
+CheckAttach()
+{
+    integer iAttachPt = llGetAttached();
+    if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
+    {
+        llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
+        llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
+    }
+}
 
 default
 {
     state_entry()
     {
         g_kWearer = llGetOwner();
-        WEARERNAME = llGetDisplayName(g_kWearer);
-        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
-        
+        WEARERNAME = GetName(g_kWearer);
+
         list name = llParseString2List(llKey2Name(g_kWearer), [" "], []);
         g_sPrefix = llGetSubString(llList2String(name, 0), 0, 0);
         g_sPrefix += llGetSubString(llList2String(name, 1), 0, 0);
@@ -261,9 +276,8 @@ default
         llListenRemove(g_iHUDListener);
         g_iHUDListener = llListen(g_iHUDChan, "", NULL_KEY ,""); //reinstated
     
-        integer iAttachPt = llGetAttached();
-        if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
-            llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
+        CheckAttach();
+
         //llMessageLinked(LINK_SET, LM_SETTING_REQUEST, "Global_prefix", "");
         //llMessageLinked(LINK_SET, LM_SETTING_REQUEST, "channel", "");
         //Debug("Starting");
@@ -278,11 +292,8 @@ default
         }
         else
         {
-            llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
+            CheckAttach();
         }
-        integer iAttachPt = llGetAttached();
-        if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
-            llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
     }
 
     listen(integer iChan, string sName, key kID, string sMsg)
@@ -432,8 +443,7 @@ default
                     }
                     else if(sValue=="reset") { //unset Global_WearerName
                         string message=WEARERNAME+"'s new name is reset to ";
-                        WEARERNAME = llGetDisplayName(g_kWearer);
-                        if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
+                        WEARERNAME = GetName(g_kWearer);
                         llMessageLinked(LINK_SET, LM_SETTING_DELETE, "Global_WearerName", "");  
                         message += WEARERNAME;
                         g_iCustomName = FALSE;
