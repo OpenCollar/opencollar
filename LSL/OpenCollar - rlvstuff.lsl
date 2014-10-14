@@ -130,6 +130,7 @@ integer g_iRLVOn=FALSE;
 list g_lMenuIDs;//3-strided list of avatars given menus, their dialog ids, and the name of the menu they were given
 integer g_iMenuStride = 3;
 
+
 /*
 integer g_iProfiled;
 Debug(string sStr) {
@@ -140,20 +141,10 @@ Debug(string sStr) {
         g_iProfiled=1;
         llScriptProfiler(1);
     }
-    llOwnerSay(llGetScriptName() + "(min free:"+(string)(llGetMemoryLimit()-llGetSPMaxMemory())+")["+(string)llGetFreeMemory()+"] :\n" + sStr);
+    llOwnerSay(llGetScriptName() + "(min free:"+(string)(llGetMemoryLimit()-llGetSPMaxMemory())+") :\n" + sStr);
 }
 */
 
-Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth, string sName) {
-    key kMenuID = llGenerateKey();
-    llMessageLinked(LINK_SET, DIALOG, (string)kID + "|" + sPrompt + "|" + (string)iPage + "|" + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kMenuID);
-
-    integer iIndex = llListFindList(g_lMenuIDs, [kID]);
-    if (~iIndex) g_lMenuIDs = llListReplaceList(g_lMenuIDs, [kID, kMenuID, sName], iIndex, iIndex + g_iMenuStride - 1);
-    else g_lMenuIDs += [kID, kMenuID, sName];
-
-    //Debug("Made "+sName+" menu.");
-} 
 
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer) {
     if (kID == g_kWearer) llOwnerSay(sMsg);
@@ -163,6 +154,18 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer) {
         if (iAlsoNotifyWearer) llOwnerSay(sMsg);
     }
 }
+
+Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth, string sName) {
+    key kMenuID = llGenerateKey();
+    llMessageLinked(LINK_SET, DIALOG, (string)kID + "|" + sPrompt + "|" + (string)iPage + "|" + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kMenuID);
+
+    integer iIndex = llListFindList(g_lMenuIDs, [kID]);
+    if (~iIndex) { //we've alread given a menu to this user.  overwrite their entry
+        g_lMenuIDs = llListReplaceList(g_lMenuIDs, [kID, kMenuID, sName], iIndex, iIndex + g_iMenuStride - 1);
+    } else { //we've not already given this user a menu. append to list
+        g_lMenuIDs += [kID, kMenuID, sName];
+    }
+} 
 
 Menu(key kID, integer iAuth, string sMenuName) {
     //Debug("Making menu "+sMenuName);
@@ -337,9 +340,9 @@ UserCommand(integer iNum, string sStr, key kID, string fromMenu) {
             if (sStr == "standnow") {
                 if (iNum == COMMAND_WEARER) llOwnerSay("Sorry, but RLV commands may only be given by owner, secowner, or group (if set).");
                 else {
-                    sStr = "unsit=force";
-                    if (GetSetting("rlvsit_","unsit")=="n") sStr = "unsit=y," + sStr + ",unsit=n";
-                    llMessageLinked(LINK_SET, RLV_CMD, "unsit=y," + sStr + ",unsit=n", NULL_KEY);
+                    if (GetSetting("rlvsit_","unsit")=="n") sStr = "unsit=y,unsit=force,unsit=n";
+                    else sStr = "unsit=force";
+                    llMessageLinked(LINK_SET, RLV_CMD, sStr, NULL_KEY);
                 }
             }
             else if (~iBehaviourIndex) {
