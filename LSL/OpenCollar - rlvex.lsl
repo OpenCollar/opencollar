@@ -481,7 +481,7 @@ SetAllExs(string sVal)
                 }
                 string sStr = llDumpList2String(sCmd, ",");
                 //llOwnerSay("sending " + sStr);
-                llMessageLinked(LINK_SET, RLV_CMD, sStr, "rlvex");
+                llMessageLinked(LINK_SET, RLV_CMD, sStr, "");
                 //llOwnerSay("@" + sStr);
             }
         }
@@ -511,7 +511,7 @@ SetAllExs(string sVal)
                 }
                 string sStr = llDumpList2String(sCmd, ",");
                 //llOwnerSay("sending " + sStr);
-                llMessageLinked(LINK_SET, RLV_CMD, sStr, "rlvex");
+                llMessageLinked(LINK_SET, RLV_CMD, sStr, "");
                 //llOwnerSay("@" + sStr);
             }
         }
@@ -541,7 +541,7 @@ SetAllExs(string sVal)
             }
             string sStr = llDumpList2String(sCmd, ",");
             //llOwnerSay("sending " + sStr);
-            llMessageLinked(LINK_SET, RLV_CMD, sStr, "rlvex");
+            llMessageLinked(LINK_SET, RLV_CMD, sStr, "");
             //llOwnerSay("@" + sStr);
             @skip;
         }
