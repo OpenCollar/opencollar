@@ -496,7 +496,7 @@ integer UserCommand(integer iAuth, string sMessage, key kMessageID, integer bFro
             
         } else if (sMessage == "rezpost" || sMessage == "rez post") {
             g_iRezAuth=iAuth;
-            llRezObject("Leash Post", llGetPos() + (<0.1, 0.0, 0.37> * llGetRot()), ZERO_VECTOR, llEuler2Rot(<0, 90, 270> * DEG_TO_RAD), 0);
+            llRezObject("Leash Post", llGetPos() + (<0.5, 0.0, 0.37> * llGetRot()), ZERO_VECTOR, llEuler2Rot(<0, 90, 270> * DEG_TO_RAD), 0);
             if (bFromMenu) UserCommand(iAuth, "post", kMessageID ,bFromMenu);
             
         } else if (sMessage == "yank" && kMessageID == g_kLeashedTo) {
