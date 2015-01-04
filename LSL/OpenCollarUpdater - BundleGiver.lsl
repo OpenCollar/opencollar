@@ -82,18 +82,27 @@ default
             if (data != EOF)
             {
                 // process bundle line
-                list parts = llParseString2List(data, ["|"], []);
-                string type = llList2String(parts, 0);
-                string name = llList2String(parts, 1);
-                key uuid;
-                string msg;
+                data = llStringTrim(data, STRING_TRIM); //trim head and tail spaces
+                if (data != "") //check for empty string
+                {
+                    list parts = llParseString2List(data, ["|"], []);
+                    string type = llList2String(parts, 0);
+                    string name = llList2String(parts, 1);
+                    key uuid;
+                    string msg;
                 
-                SetStatus(name);
+                    SetStatus(name);
                 
-                uuid = llGetInventoryKey(name);
-                msg = llDumpList2String([type, name, uuid, mode], "|");
-                debug("querying: " + msg);             
-                llRegionSayTo(rcpt, talkchannel, msg);
+                    uuid = llGetInventoryKey(name);
+                    msg = llDumpList2String([type, name, uuid, mode], "|");
+                    debug("querying: " + msg);
+                    llRegionSayTo(rcpt, talkchannel, msg);
+                }
+                else  //strind is empty
+                {
+                    line++;  // do next line
+                    lineid = llGetNotecardLine(card, line);
+                }      
             }
             else
             {
