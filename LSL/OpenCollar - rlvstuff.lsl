@@ -38,7 +38,7 @@ list g_lRLVcmds=[ //4 strided list of menuname,command,prettyname,description
     "rlvtalk_","emote","Emote","Short Emotes if Chat blocked",
     "rlvtouch_","fartouch","Far","Touch objects >1.5m away",
     "rlvtouch_","touchworld","World","Touch in-world objects",
-    "rlvtouch_","touchattach","Self","Touch your attachments",
+    "rlvtouch_","touchattachself","Self","Touch your attachments",
     "rlvtouch_","touchattachother","Others","Touch others' attachments",
     "rlvmisc_","shownames","Names","See Avatar Names",
     "rlvmisc_","fly","Fly","Ability to Fly",
