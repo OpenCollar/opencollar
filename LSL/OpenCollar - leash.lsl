@@ -183,7 +183,7 @@ ApplyRestrictions(){
         if (g_iStrictModeOn){
             if (g_kLeashedTo){
                 //Debug("Setting restrictions");
-                llMessageLinked(LINK_SET, RLV_CMD, "fartouch=n,sittp=n,tplm=n,tplure=n,tploc=n,tplure:" + (string) g_kLeashedTo + "=add", "realleash");     //set all restrictions
+                llMessageLinked(LINK_SET, RLV_CMD, "fartouch=n,sittp=n,tplm=n,tplure=n,tploc=n,tprequest=n,tplure:" + (string) g_kLeashedTo + "=add,tplure:" + (string) g_kLeashedTo + "=add,accepttp:"+ (string) g_kLeashedTo +"=add", "realleash");     //set all restrictions
                 return;
             }
         //} else {
