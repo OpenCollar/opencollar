@@ -369,7 +369,7 @@ init (){
     github_version_request = llHTTPRequest(version_check_url, [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
     
     g_iWaitRebuild = TRUE;
-    llSetTimerEvent(2);//delay menu rebuild until other scripts are ready  
+    llSetTimerEvent(1);//delay menu rebuild until other scripts are ready  
 }
 
 integer UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
