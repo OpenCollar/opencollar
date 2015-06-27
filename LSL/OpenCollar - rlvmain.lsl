@@ -93,6 +93,8 @@ key g_kSitTarget=NULL_KEY;
 integer CMD_ADDSRC = 11;
 integer CMD_REMSRC = 12;
 
+integer g_iWaitRelay = FALSE ;
+
 /*
 integer g_iProfiled;
 Debug(string sStr) {
@@ -170,17 +172,14 @@ setRlvState(){
             llMessageLinked(LINK_SET, MENUNAME_REQUEST, g_sSubMenu, "");
             //tell rlv plugins to reinstate restrictions  (and wake up the relay listener... so that it can at least hear !pong's!
             llMessageLinked(LINK_SET, RLV_REFRESH, "", NULL_KEY);
-            llSleep(5); //Make sure the relay is ready before pinging
-            //ping inworld object so that they reinstate their restrictions
-            integer i;
-            for (i=0;i<llGetListLength(g_lRestrictions)/2;i++) {
-                key kSource=(key)llList2String(llList2ListStrided(g_lRestrictions,0,-1,2),i);
-                if ((key)kSource) llShout(RELAY_CHANNEL,"ping,"+(string)kSource+",ping,ping");
-                else rebakeSourceRestrictions(kSource);  //reapply collar's restrictions here
-            }
+            
+            g_iWaitRelay = TRUE ;
+            llSetTimerEvent(5); //Make sure the relay is ready before pinging
+            //move ping to timer
             
             //reinstate exceptions
             //Debug("adding exceptions:\n"+llDumpList2String(g_lExceptions,",\n"));
+            integer i;
             for (i=0;i<llGetListLength(g_lExceptions);i+=2) {
                 key kSource=(key)llList2String(g_lExceptions,i);
                 list lBehaviours=llParseString2List(llList2String(g_lExceptions,i+1),["§"],[]);
@@ -669,6 +668,17 @@ default {
     }
 
     timer() {
+        if (g_iWaitRelay) {
+            llSetTimerEvent(0.0);
+            g_iWaitRelay = FALSE;
+            //ping inworld object so that they reinstate their restrictions
+            integer i;
+            for (i=0;i<llGetListLength(g_lRestrictions)/2;i++) {
+                key kSource=(key)llList2String(llList2ListStrided(g_lRestrictions,0,-1,2),i);
+                if ((key)kSource) llShout(RELAY_CHANNEL,"ping,"+(string)kSource+",ping,ping");
+                else rebakeSourceRestrictions(kSource);  //reapply collar's restrictions here
+            }            
+        } else {   
         if (g_iCheckCount++ <= g_iMaxViewerChecks) {   //no response in timeout period, try again
             llOwnerSay("@versionnew=293847");
             if (g_iCheckCount>1) llMessageLinked(LINK_SET, POPUP_HELP, "\n\nIf your viewer doesn't support RLV, you can stop the \"@versionnew\" message by switching RLV off in your "+CTYPE+"'s RLV menu or by typing: _PREFIX_rlvoff\n", g_kWearer);
