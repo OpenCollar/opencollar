@@ -121,6 +121,9 @@ integer g_iListenChan=1;
 string g_sSafeWord="RED";
 string g_sPrefix;
 
+integer g_iWaitUpdate = FALSE;
+integer g_iWaitRebuild = FALSE;
+
 /*
 integer g_iProfiled;
 Debug(string sStr) {
@@ -365,8 +368,8 @@ RebuildMenu()
 init (){
     github_version_request = llHTTPRequest(version_check_url, [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
     
-    llSleep(1.0);//delay menu rebuild until other scripts are ready
-    RebuildMenu();
+    g_iWaitRebuild = TRUE;
+    llSetTimerEvent(1);//delay menu rebuild until other scripts are ready  
 }
 
 integer UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
@@ -474,6 +477,7 @@ integer UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
             g_iUpdateHandle = llListen(g_iUpdateChan, "", "", "");
             g_iUpdateFromMenu=fromMenu;
             llWhisper(g_iUpdateChan, "UPDATE|" + sVersion);
+            g_iWaitUpdate = TRUE;
             llSetTimerEvent(5.0); //set a timer to wait for responses from updaters
         } else {
             Notify(kID,"Only the wearer can update the " + CTYPE + ".",FALSE);
@@ -732,19 +736,28 @@ default {
     }
 
     timer() {
-        llSetTimerEvent(0.0);
-        llListenRemove(g_iUpdateHandle);
+        if (g_iWaitUpdate) {
+            g_iWaitUpdate = FALSE;            
+            llListenRemove(g_iUpdateHandle);
 
-        if (!g_iWillingUpdaters) {   //if no updaters responded, get upgrader info from web and remenu
-            g_kWebLookup = llHTTPRequest("https://raw.githubusercontent.com/OpenCollar/OpenCollarUpdater/main/LSL/~update", [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
-            if (g_iUpdateFromMenu) HelpMenu(g_kCurrentUser,g_iUpdateAuth);
-        } else if (g_iWillingUpdaters > 1) {    //if too many updaters, PANIC!
-            Notify(g_kCurrentUser,"Multiple updaters were found within 10m.  Please remove all but one and try again",FALSE);
-        } else {    //perform update
-            integer pin = (integer)llFrand(99999998.0) + 1; //set a random pin
-            llSetRemoteScriptAccessPin(pin);
-            llRegionSayTo(g_kUpdaterOrb, g_iUpdateChan, "ready|" + (string)pin );
+            if (!g_iWillingUpdaters) {   //if no updaters responded, get upgrader info from web and remenu
+                g_kWebLookup = llHTTPRequest("https://raw.githubusercontent.com/OpenCollar/OpenCollarUpdater/main/LSL/~update", [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
+                if (g_iUpdateFromMenu) HelpMenu(g_kCurrentUser,g_iUpdateAuth);
+            } else if (g_iWillingUpdaters > 1) {    //if too many updaters, PANIC!
+                Notify(g_kCurrentUser,"Multiple updaters were found within 10m.  Please remove all but one and try again",FALSE);
+            } else {    //perform update
+                integer pin = (integer)llFrand(99999998.0) + 1; //set a random pin
+                llSetRemoteScriptAccessPin(pin);
+                llRegionSayTo(g_kUpdaterOrb, g_iUpdateChan, "ready|" + (string)pin );
+            }
         }
+        
+        if (g_iWaitRebuild) {            
+            g_iWaitRebuild = FALSE;
+            RebuildMenu();
+        }
+        
+        if (!g_iWaitUpdate && !g_iWaitRebuild) llSetTimerEvent(0.0);
     }
     
     changed(integer iChange)
