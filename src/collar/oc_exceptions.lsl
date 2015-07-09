@@ -477,7 +477,7 @@ default {
         g_kWearer = llGetOwner();
         g_kTmpKey = NULL_KEY;
         g_sTmpName = "";
-        llMessageLinked(LINK_SET, RLV_QUERY, "", "");
+       // llMessageLinked(LINK_SET, RLV_QUERY, "", "");
         //Debug("Starting");
     }
 
@@ -539,12 +539,12 @@ default {
             //rlvmain just started up. Tell it about our current restrictions
             g_iRLVOn = TRUE;
             UpdateSettings();
-        } else if (iNum == RLV_RESPONSE) {
+        /*} else if (iNum == RLV_RESPONSE) {
             if (g_iRlvUnknown) {
                 g_iRlvUnknown=FALSE;
                 if (sStr=="ON") g_iRLVOn=TRUE;
                 else if (sStr=="OFF") g_iRLVOn=FALSE;
-            }
+            }*/
         } else if (iNum == RLV_CLEAR) {
             llSleep(2.0);
             UpdateSettings();
@@ -554,7 +554,7 @@ default {
             g_iRLVOn=FALSE;
         } else if (iNum == RLV_ON) {
             g_iRLVOn=TRUE;
-            UpdateSettings();//send the settings as we did notbefore
+          //  UpdateSettings();//send the settings as we did notbefore
         } else if (iNum == DIALOG_RESPONSE) {
             if (kID == g_kMenuID) {
                 //Debug("dialog response: " + sStr);
