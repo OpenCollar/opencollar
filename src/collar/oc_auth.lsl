@@ -344,7 +344,7 @@ AddUniquePerson(key kPerson, string sName, string sToken, key kAv) {
         if (! ~llListFindList(lPeople, [(string)kPerson])) { //owner is not already in list.  add him/her
             lPeople += [(string)kPerson, sName];
             if (kPerson == g_kWearer) g_iSelfOwned = TRUE;
-        else {
+        } else {
             llMessageLinked(LINK_SET,NOTIFY,"0"+NameURI(kPerson)+" is already registered as "+sToken+".",kAv);
             return;
         }
