@@ -267,7 +267,8 @@ RemovePerson(string sName, string sToken, key kCmdr) {
             if (sToken == "owner" || sToken == "trust") {
                 key kID = llList2Key(lPeople,iNumPeople*2);
                 if (sToken == "owner" && kID == g_kWearer) {
-                    if (kCmdr == g_kWearer)
+                    g_iSelfOwned = FALSE;
+                    if (kCmdr == g_kWearer) 
                         llMessageLinked(LINK_SET,NOTIFY,"0"+"You no longer own yourself.",kCmdr);
                     else
                         llMessageLinked(LINK_SET,NOTIFY,"0"+"%WEARERNAME% does no longer own themselves.",kCmdr);
@@ -340,8 +341,9 @@ AddUniquePerson(key kPerson, string sName, string sToken, key kAv) {
         } else
             return;
 
-        if (! ~llListFindList(lPeople, [(string)kPerson])) //owner is not already in list.  add him/her
+        if (! ~llListFindList(lPeople, [(string)kPerson])) { //owner is not already in list.  add him/her
             lPeople += [(string)kPerson, sName];
+            if (kPerson == g_kWearer) g_iSelfOwned = TRUE;
         else {
             llMessageLinked(LINK_SET,NOTIFY,"0"+NameURI(kPerson)+" is already registered as "+sToken+".",kAv);
             return;
