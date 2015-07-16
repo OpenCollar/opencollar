@@ -531,8 +531,10 @@ default {
                 while(numAgents--) {
                     key avId=llList2Key(agentList, numAgents);
                     string name = llKey2Name(avId);
-                    if ( !~llSubStringIndex(llToLower(name), llToLower(find)) || ~llListFindList(excl,[(string)avId])) {       //if this name does not contain find string or key is in the exclude list
-                        agentList=llDeleteSubList(agentList,numAgents,numAgents); //delete this agent from the list
+                    string sDisplayName = llGetDisplayName(avId);
+                    if ( !~llSubStringIndex(llToLower(name),llToLower(find)) || ~llListFindList(excl,[(string)avId])) {     //if this name does not contain find string or key is in the exclude list
+                        if (!~llSubStringIndex(llToLower(sDisplayName),llToLower(find))) 
+                            agentList=llDeleteSubList(agentList,numAgents,numAgents); //delete this agent from the list
                     }
                 }
 
@@ -540,7 +542,8 @@ default {
                 if (!numAgents) {
                     string findNotify;
                     if (find != "") findNotify = "starting with \"" + find + "\" ";
-                    llInstantMessage(kRCPT, "Could not find any avatars "+ findNotify + "in this region.");
+                    llMessageLinked(LINK_SET,NOTIFY,"0"+"Could not find any avatars "+ findNotify + "in this region.",kRCPT);
+                   // llInstantMessage(kRCPT, "Could not find any avatars "+ findNotify + "in this region.");
                 } else {
                     //Debug("Found avatars:"+llDumpList2String(agentList,","));
                     g_iSelectAviMenu = TRUE;
