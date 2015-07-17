@@ -19,7 +19,7 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//           Kidnap - 150610.1           .*' /  .*' ; .*`- +'  `*'          //
+//           Kidnap - 150711.1           .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2014 - 2015 littlemousy, Sumi Perl, Wendy Starfall,       //
@@ -57,7 +57,6 @@
 key     g_kWearer;
 
 list    g_lMenuIDs;      //menu information, 5 strided list, userKey, menuKey, menuName, kidnapperKey, kidnapperName
-
 
 //MESSAGE MAP
 //integer CMD_ZERO = 0;
@@ -122,7 +121,7 @@ Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPa
 }
 
 KidnapMenu(key kId, integer iAuth) {
-    string sPrompt = "\n[http://www.virtualdisgrace.com/collar#kidnap Virtual Disgrace - Kidnap]";
+    string sPrompt = "\n[http://www.opencollar.at/kidnap.html Kidnap]\n";
     list lMyButtons;
     if (llGetListLength(g_lTempOwners)) lMyButtons += "Release";
     else {
@@ -152,6 +151,10 @@ doCapture(key kKidnapper, string sKidnapper, integer iIsConfirmed) {
         llMessageLinked(LINK_SET,NOTIFY,"0"+"%WEARERNAME% is already kidnapped, try another time.",kKidnapper);
         return;
     }
+    if (llVecDist(llList2Vector(llGetObjectDetails( kKidnapper,[OBJECT_POS] ),0),llGetPos()) > 10 ) { 
+        llMessageLinked(LINK_SET,NOTIFY,"0"+"You could kidnap %WEARERNAME% if you get a bit closer.",kKidnapper);
+        return;
+    }
     if (!iIsConfirmed) {
         Dialog(g_kWearer, "\nsecondlife:///app/agent/"+(string)kKidnapper+"/about wants to kidnap you...", ["Allow","Reject"], ["BACK"], 0, CMD_WEARER, "AllowKidnapMenu", kKidnapper, sKidnapper);
     }
@@ -159,7 +162,7 @@ doCapture(key kKidnapper, string sKidnapper, integer iIsConfirmed) {
         llMessageLinked(LINK_SET, CMD_OWNER, "follow " + (string)kKidnapper, kKidnapper);
         llMessageLinked(LINK_SET, CMD_OWNER, "yank", kKidnapper);
         llMessageLinked(LINK_SET, NOTIFY, "0"+"You are at "+NameURI(kKidnapper)+"'s whim.",g_kWearer);
-        llMessageLinked(LINK_SET, NOTIFY, "0"+"%WEARERNAME% is at your mercy.\n\n/%CHANNEL%%PREFIX%menu\n/%CHANNEL%%PREFIX%pose\n/%CHANNEL%%PREFIX_restrictions\n/%CHANNEL%%PREFIX_sit\n/%CHANNEL%%PREFIX%help\n\nNOTE: During kidnap RP %WEARERNAME% cannot refuse your teleport offers and you will keep full control. To end the kidnapping, please type: /%CHANNEL%%PREFIX%kidnap release\n\nHave fun! www.virtualdisgrace.com\n", kKidnapper);
+        llMessageLinked(LINK_SET, NOTIFY, "0"+"%WEARERNAME% is at your mercy.\n\n/%CHANNEL%%PREFIX%menu\n/%CHANNEL%%PREFIX%pose\n/%CHANNEL%%PREFIX_restrictions\n/%CHANNEL%%PREFIX_sit\n/%CHANNEL%%PREFIX%help\n\nNOTE: During kidnap RP %WEARERNAME% cannot refuse your teleport offers and you will keep full control. To end the kidnapping, please type: /%CHANNEL%%PREFIX%kidnap release\n\nHave fun!\n", kKidnapper);
         g_lTempOwners+=[kKidnapper,sKidnapper];
         saveTempOwners();
         llSetTimerEvent(0.0);
