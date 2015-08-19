@@ -167,6 +167,13 @@ doCapture(key kKidnapper, string sKidnapper, integer iIsConfirmed) {
         g_lTempOwners+=[kKidnapper,sKidnapper];
         saveTempOwners();
         llSetTimerEvent(0.0);
+        
+        // find and remove all wearers dialogs
+        integer iMenuIndex;
+        do {
+            iMenuIndex = llListFindList(g_lMenuIDs, [g_kWearer]);
+            if (iMenuIndex != -1) g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex, iMenuIndex + 4);
+        } while (iMenuIndex != -1);
     }
 }
 
