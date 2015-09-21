@@ -84,7 +84,7 @@ string L_DEFAULTS   = "ResetDefaults";
 
 // Defalut leash particle, can read from defaultsettings:
 // User_leashDefault=Texture~chain~Size~<0.07,0.07,1.0>~Color~<1,1,1>~Density~-0.04~Gravity~-1.1~Life~3.0~Glow~1
-list g_lDefaultSettings = [L_TEXTURE,"chain", L_SIZE,"<0.07,0.07,1.0>", L_COLOR,"<1,1,1>", L_DENSITY,"-0.04", L_GRAVITY,"-1.0", L_LIFE, "3.0", L_GLOW, "0", L_COLL, EMIT_COLL, L_MULT, EMIT_MULT]; 
+list g_lDefaultSettings = [L_TEXTURE,"chain", L_SIZE,"<0.07,0.07,1.0>", L_COLOR,"<1,1,1>", L_DENSITY,"-0.04", L_GRAVITY,"-1.0", L_LIFE, "3.0", L_GLOW, "0", L_COLL, EMIT_COLL, L_MULT, EMIT_MULT];
 
 list g_lSettings;
 
@@ -323,7 +323,7 @@ string Float2String(float in)
 SaveSettings(string sToken, string sValue, integer bSaveToLocal)
 {
     integer iIndex = llListFindList(g_lSettings, [sToken]);
-    if (iIndex>=0) 
+    if (iIndex>=0)
     {
         g_lSettings = llListReplaceList(g_lSettings, [sValue], iIndex +1, iIndex +1);
     }
@@ -416,7 +416,7 @@ SetTexture(string sIn, key kIn)
         debug("particleTexture= " + sIn);
         g_sParticleTextureID = llGetInventoryKey(sIn);
         if (g_sParticleTextureID == NULL_KEY) g_sParticleTextureID=sIn; //for textures without full perm, we send the texture name. For this to work, texture must be in the emitter prim as well as in root, if different.
-    }        
+    }
     debug("particleTextureID= " + (string)g_sParticleTextureID);
     if (kIn)
     {
@@ -493,7 +493,7 @@ GravityMenu(key kIn, integer iAuth)
     list lButtons = ["+", "-", "Default", "noGravity"];
     g_sCurrentMenu = L_GRAVITY;
     string Default = GetDefaultSetting(L_GRAVITY);
-    string sPrompt = "\n\nChoose '+' for more and '-' for less leash-gravity\n'Default' to revert to the default: "+Default; 
+    string sPrompt = "\n\nChoose '+' for more and '-' for less leash-gravity\n'Default' to revert to the default: "+Default;
     sPrompt += "\n\nCurrent Gravity = "+Float2String(g_vLeashGravity.z) ;
     g_kDialogID = Dialog(kIn, sPrompt, lButtons, [UPMENU], 0, iAuth);
 }
@@ -502,10 +502,10 @@ SizeMenu(key kIn, integer iAuth)
 {
     list lButtons = ["X+", "Y+", "Default", "X-", "Y-", "MIN"];   // ADDED FOR ST changed "minimum" to "MIN"
     g_sCurrentMenu = L_SIZE;
-    vector defaultsize = (vector)GetDefaultSetting(L_SIZE);    
+    vector defaultsize = (vector)GetDefaultSetting(L_SIZE);
     string sPrompt = "\n\nChoose '+' for bigger and '-' for smaller size of the leash texture";
     sPrompt += "\n'Default' to revert to the default size: "+Float2String(defaultsize.x)+" x "+Float2String(defaultsize.y);
-    sPrompt += "\n'MIN' for the smallest possible: 0.04 x 0.04\n" ; 
+    sPrompt += "\n'MIN' for the smallest possible: 0.04 x 0.04\n" ;
     sPrompt += "\nCurrent Size = "+ Float2String(g_vLeashSize.x)+" x "+Float2String(g_vLeashSize.y) + "  (0.03 steps)";
     g_kDialogID = Dialog(kIn, sPrompt, lButtons, [UPMENU], 0, iAuth);
 }
@@ -515,7 +515,7 @@ LifeMenu(key kIn, integer iAuth)   // ADDED FOR ST
     list lButtons = ["+0.1", "+0.5", "Default", "-0.1", "-0.5", "MIN"];
     g_sCurrentMenu = L_LIFE;
     string sPrompt = "\nChoose '+' for longer or '-' for shorter life,";
-    sPrompt += "\n'Default' to revert to the default life: "+GetDefaultSetting(L_LIFE); 
+    sPrompt += "\n'Default' to revert to the default life: "+GetDefaultSetting(L_LIFE);
     sPrompt += "\n'MIN' for the shortest life: 0.1\n";
     sPrompt += "\nCurrent Life = "+llGetSubString((string)g_fParticleAge,0,2);
     g_kDialogID = Dialog(kIn, sPrompt, lButtons, [UPMENU], 0, iAuth);
@@ -590,13 +590,13 @@ default
         //SetTexture(g_sParticleTexture, NULLKEY);
         //llSleep(1.0);
         //llMessageLinked(LINK_SET, MENUNAME_RESPONSE, PARENTMENU + "|" + SUBMENU, "");
-                
+
         //SetTexture("chain", NULLKEY);
         //if (g_kLeashedTo != NULLKEY)
        // {
        //     debug ("entry leash targeted");
          //   StartParticles(g_kParticleTarget);
-        //}        
+        //}
         llListen(COMMAND_PARTICLE,"","","");    // ADDED FOR BETA 0.1
         //llOwnerSay((string)llGetFreeMemory());
     }
@@ -697,7 +697,7 @@ default
                         llMessageLinked(LINK_SET, LM_SETTING_DELETE, g_sScript + "all", "");
                         if (!g_bInvisibleLeash && g_bLeashActive)
                         {
-                            GetSettings(); // get settings before 
+                            GetSettings(); // get settings before
                             StartParticles(g_kParticleTarget);
                         }
                         OptionsMenu(kAv, iAuth);
@@ -840,7 +840,7 @@ default
                         {
                             g_vLeashGravity.z = -3.0;
                             Notify(kAv, "You have already reached maximum gravity.", FALSE);
-                        } 
+                        }
                     }
                     else if (sButton == "-")
                     {
@@ -864,10 +864,10 @@ default
                 }
                 else if (g_sCurrentMenu == L_SIZE)
                 {
-                    if (sButton == "Default") 
+                    if (sButton == "Default")
                     {
                         g_vLeashSize = (vector)GetDefaultSetting(L_SIZE);
-                     }        
+                     }
                     else if (sButton == "X+")
                     {
                         g_vLeashSize.x +=0.03;
@@ -878,7 +878,7 @@ default
                     }
                     else if (sButton == "X-")
                     {
-                        g_vLeashSize.x -=0.03;                        
+                        g_vLeashSize.x -=0.03;
                         if (g_vLeashSize.x < 0.04)
                         {
                             g_vLeashSize.x = 0.04 ;
@@ -925,7 +925,7 @@ default
                         //{
                             g_fParticleAge -= 0.5;
                         //}
-                        
+
                         if (g_fParticleAge < 0.1)
                         {
                             g_fParticleAge = 0.1;
@@ -972,13 +972,13 @@ default
             else if (llGetSubString(sToken, 0, i) == g_sScript)
             {
                 // load current settings
-                sToken = llGetSubString(sToken, i + 1, -1);                
+                sToken = llGetSubString(sToken, i + 1, -1);
                 SaveSettings(sToken, sValue, FALSE);
                 SaveDefaultSettings(sToken, sValue);
             }
             else if (sToken == "Global_CType") CTYPE = sValue;
             // in case wearer is currently leashed
-            else if (sMessage == "settings=sent")             
+            else if (sMessage == "settings=sent")
             {
                 GetSettings(); // get settings before
                 if (g_kLeashedTo != NULLKEY) StartParticles(g_kParticleTarget);
@@ -1018,13 +1018,13 @@ default
                 }
             }
         }
-        // ADDED BELOW FOR BETA 0.1  TOGGLES LEASH PARTICLES OFF IF COFFLES BEING USED.        
+        // ADDED BELOW FOR BETA 0.1  TOGGLES LEASH PARTICLES OFF IF COFFLES BEING USED.
         else if(iChannel == COMMAND_PARTICLE)
         {
             if(llGetOwnerKey(kID) == g_kWearer)
             {
                 integer currentglow;
-                
+
                 if(sMessage == "noLeash")
                 {
                     currentglow = g_bParticleGlow;
@@ -1032,13 +1032,13 @@ default
                     SetTexture(sMessage, g_kWearer);
                     StartParticles(g_kParticleTarget);
                 }
-                
+
                 if(sMessage == "chain")
                 {
                     g_bParticleGlow = currentglow;
                     SetTexture(sMessage, g_kWearer);
                     StartParticles(g_kParticleTarget);
-                }      
+                }
             }
         }
     }

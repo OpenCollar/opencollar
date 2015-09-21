@@ -63,7 +63,7 @@
 
 // The lite variation of this script is complementary to AntiSlide technology.
 
-integer iType; 
+integer iType;
 //If left like this, script will try to determine AO type automatically.
 //To force compatibility for a particular type of AO, change to:
 // integer iType=1; //for Oracul type AOs
@@ -73,7 +73,7 @@ integer iType;
 // integer iType=5; // for Gaeline type AOs
 //----------------------------------------------------------------------
 //Integer map for above
-integer ORACUL  = 1; 
+integer ORACUL  = 1;
 integer ZHAO    = 2;
 integer VISTA   = 3;
 integer AKEYO   = 4;
@@ -92,9 +92,9 @@ integer g_iCommandChannel = 88;
 integer g_iCommandHandle;
 
 //Menu handler for script's own ZHAO menu
-integer g_iMenuHandle; 
+integer g_iMenuHandle;
 integer g_iMenuChannel = -23423456; //dummy channel, changed to unique on attach
-list g_lMenuUsers; //list of menu users to allow for multiple users of menu 
+list g_lMenuUsers; //list of menu users to allow for multiple users of menu
 integer g_iMenuTimeout = 60;
 
 string g_sOraculstring; //configuration string for Oracul power on/off, 0 prepended for off, 1 prepended for on
@@ -113,7 +113,7 @@ determineType() { //function to determine AO type.
     if (llSubStringIndex(llGetObjectName(),"AKEYO") >= 0) { //AKEYO is not a string in their script name, it is in animations but think the object name is a better test for this AO - Sumi Perl
         iType = AKEYO;
         llOwnerSay("OC compatibility script configured for AKEYO AO.  This support is experimental.  Please let us know if you notice any problems.");
-    } else if (llSubStringIndex(llGetObjectName(),"HUDDLES") >= 0) { 
+    } else if (llSubStringIndex(llGetObjectName(),"HUDDLES") >= 0) {
         iType = HUDDLES;
         llOwnerSay("OC compatibility script configured for HUDDLES AO.  This support is experimental.  Please let us know if you notice any problems.");
     }
@@ -174,17 +174,17 @@ AOPause() {
 AOUnPause() {
     if(g_iAOSwitch) {
         if (iType == ORACUL && g_sOraculstring != "") llMessageLinked(LINK_SET,0,"1"+g_sOraculstring,"ocpause");
-        else if(iType == AKEYO ) llMessageLinked(LINK_ROOT, 0, "PAO_AOON", "ocpause"); 
+        else if(iType == AKEYO ) llMessageLinked(LINK_ROOT, 0, "PAO_AOON", "ocpause");
         else if(iType == GAELINE) llMessageLinked(LINK_THIS, 103, "", "ocpause");
         else if (iType == HUDDLES) llMessageLinked(LINK_THIS, 4900, "AO_ON", "ocpause");
-        else if(iType>1 ) llMessageLinked(LINK_THIS, 0, "ZHAO_AOON", "ocpause"); 
+        else if(iType>1 ) llMessageLinked(LINK_THIS, 0, "ZHAO_AOON", "ocpause");
     }
     g_iOCSwitch=TRUE;
 }
 
 zhaoMenu(key kMenuTo) {
-    //script's own menu for some ZHAO features. 
-    //Open listener if no menu users are registered in g_lMenuUsers already, and add 
+    //script's own menu for some ZHAO features.
+    //Open listener if no menu users are registered in g_lMenuUsers already, and add
     //menu user to list if not already present.
     if(!llGetListLength(g_lMenuUsers)) g_iMenuHandle=llListen(g_iMenuChannel,"","","");
     if(llListFindList(g_lMenuUsers,[kMenuTo])==-1) g_lMenuUsers+=kMenuTo;
@@ -192,7 +192,7 @@ zhaoMenu(key kMenuTo) {
     if(g_iSitOverride) sSit = "AO Sits OFF";
     list lButtons=[sSit,"Load Notecard","Done","AO on","AO off","Next Stand"];
     llSetTimerEvent(g_iMenuTimeout);
-    llDialog(kMenuTo,"AO options. Depending on model of AO, some may not work. Use OC Sub AO for more comprehensive control!",lButtons,g_iMenuChannel);   
+    llDialog(kMenuTo,"AO options. Depending on model of AO, some may not work. Use OC Sub AO for more comprehensive control!",lButtons,g_iMenuChannel);
 }
 
 MenuCommand(string sMsg, key kID) {
@@ -218,7 +218,7 @@ MenuCommand(string sMsg, key kID) {
         }
         llSetTimerEvent(g_iMenuTimeout);
         llDialog(kID,"Pick an AO settings notecard to load, or click Cancel",lButtons+["Cancel"],g_iMenuChannel);
-        
+
     } else if(sMsg == "AO Sits ON") {
         g_iSitOverride = TRUE; //this will get set by the link message anyway, but set here just in case remenu happens before link message is read.
         llMessageLinked(LINK_SET,0,"ZHAO_SITON","");
@@ -234,28 +234,28 @@ MenuCommand(string sMsg, key kID) {
     else if(sMsg=="Next Stand") {
         if(iType == 2) // ZHAO-II
             llMessageLinked(LINK_SET,0,"ZHAO_NEXTSTAND","");
-        else // VISTA                
+        else // VISTA
             llMessageLinked(LINK_SET,0,"ZHAO_NEXTPOSE","");
     //check if sMsg is a notecard picked from Load Notecard menu, and send load command if so.
     } else  if(llGetInventoryType(sMsg) == INVENTORY_NOTECARD) llMessageLinked(LINK_THIS,0,"ZHAO_LOAD|"+sMsg,"");
     //resend the menu where it makes sense.
     if(sMsg!="Done" && sMsg!="Cancel" && sMsg!="Load Notecard") zhaoMenu(kID);
 }
-                                   
+
 default {
     state_entry() {
         g_kWearer = llGetOwner();
         if(iType == 0) determineType();
         g_iMenuChannel = -(integer)llFrand(999999)-10000; //randomise menu channel
     }
-    
+
     attach(key kAvatar) {
         if(kAvatar) {//on attach
             if(iType == 0) determineType();
-            g_iMenuChannel = -(integer)llFrand(999999)-10000; //randomise menu channel 
-        }  
+            g_iMenuChannel = -(integer)llFrand(999999)-10000; //randomise menu channel
+        }
     }
-    
+
     listen(integer iChannel, string sName, key kID, string sMsg) {
         if(iChannel == g_iMenuChannel) {// this is for our own limited ZHAO menu.
             MenuCommand(sMsg,kID);
@@ -287,7 +287,7 @@ default {
             }
         }
     }
-    
+
     link_message(integer iPrim, integer iNum, string sMsg, key kID) {
         if (iType == ORACUL && iNum == 0 && kID != "ocpause") {//oracul power command
                 g_sOraculstring = llGetSubString(sMsg,1,-1); //store the config string for Oracul AO.
@@ -299,17 +299,17 @@ default {
                 if(sMsg == "ZHAO_AOON") g_iAOSwitch=TRUE;
                 else if(sMsg == "ZHAO_AOOFF")
                     g_iAOSwitch = FALSE;
-            }          
+            }
         }
     }
-        
+
     timer() {
         llSetTimerEvent(0);
         llListenRemove(g_iMenuHandle);
         g_lMenuUsers = []; //clear list
     }
-    
+
     changed(integer change) {
         if(change & CHANGED_OWNER) llResetScript();
-    }  
+    }
 }

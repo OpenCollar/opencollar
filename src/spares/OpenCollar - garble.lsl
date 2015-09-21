@@ -21,7 +21,7 @@ integer COMMAND_SECOWNER = 501;
 integer COMMAND_GROUP = 502;
 integer COMMAND_WEARER = 503;
 //integer COMMAND_EVERYONE = 504;
-//integer COMMAND_OBJECT = 506; 
+//integer COMMAND_OBJECT = 506;
 //integer COMMAND_RLV_RELAY = 507;
 integer COMMAND_SAFEWORD = 510;
 //integer COMMAND_BLACKLIST = 520;
@@ -65,7 +65,7 @@ key g_kBinder;
 integer g_iProfiled;
 Debug(string sStr) {
     //if you delete the first // from the preceeding and following  lines,
-    //  profiling is off, debug is off, and the compiler will remind you to 
+    //  profiling is off, debug is off, and the compiler will remind you to
     //  remove the debug calls from the code, we're back to production mode
     if (!g_iProfiled){
         g_iProfiled=1;
@@ -192,12 +192,12 @@ default {
     on_rez(integer _r) {
         if (llGetOwner() != g_kWearer) llResetScript();
     }
-    
+
     state_entry() {
         //llSetMemoryLimit(65536);  //this script needs to be profiled, and its memory limited
         g_kWearer = llGetOwner();
         WEARERNAME = llKey2Name(g_kWearer);  //quick and dirty default, will get replaced by value from settings
-        
+
         giCRC = llRound(llFrand(499) + 1);
         if (bOn) release(g_kWearer,0);
         llMessageLinked(LINK_THIS, LM_SETTING_REQUEST, "listener_safeword", "");
@@ -286,7 +286,7 @@ default {
         }
         if (iM == COMMAND_SAFEWORD) release(kM,iL);
     }
-    
+
 /*
     changed(integer iChange) {
         if (iChange & CHANGED_REGION) {

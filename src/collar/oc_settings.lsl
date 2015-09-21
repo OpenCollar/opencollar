@@ -357,7 +357,7 @@ default {
                                     n = n+2;
                                 } while (n < llGetListLength(lTest));
                                 sValue = llDumpList2String(lOut,",");
-                            } 
+                            }
                         }
                         g_lSettings = SetSetting(g_lSettings, sID + sToken, sValue);
                     }

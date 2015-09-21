@@ -195,17 +195,17 @@ UserCommand(integer iAuth, string sStr, key kID, integer remenu)
     }
     else if (iAuth == CMD_OWNER)
     {
-        list lParams = llParseString2List(sStr, [" "], []);        
+        list lParams = llParseString2List(sStr, [" "], []);
         if (llList2String(lParams,0) != "shocker") return;
         if (llGetListLength(lParams) < 2) return;
-        
+
         string sCommand = llList2String(lParams, 1);
         string sValue = llList2String(lParams, 2);
 
         if (sCommand == "help") DialogHelp(kID, iAuth);
         else if (sCommand == "animation")
         {
-            Stop();             
+            Stop();
             string sAnim = llStringTrim(sValue, STRING_TRIM);
             if (sAnim)
             {

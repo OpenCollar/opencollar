@@ -115,7 +115,7 @@ string g_sSettingToken = "camera_";
 integer g_iProfiled=1;
 Debug(string sStr) {
     //if you delete the first // from the preceeding and following  lines,
-    //  profiling is off, debug is off, and the compiler will remind you to 
+    //  profiling is off, debug is off, and the compiler will remind you to
     //  remove the debug calls from the code, we're back to production mode
     if (!g_iProfiled){
         g_iProfiled=1;
@@ -126,9 +126,9 @@ Debug(string sStr) {
 */
 
 //changed the mode handles to a Json object with json arrays, one issue remains:
-//vectors get converted into strings and need to be reconverted to vectors. 
+//vectors get converted into strings and need to be reconverted to vectors.
 //For this to work easiest seems to just put for any mode which contains a vector,
-//the vector as last entry (if there shall be a mode which contains 2 vectors, 
+//the vector as last entry (if there shall be a mode which contains 2 vectors,
 //this needs to be addressed and handles as excetion in the list lJsonModes function
 string JsonModes() {
     string sDefault =   llList2Json(JSON_ARRAY, [CAMERA_ACTIVE,FALSE]);
@@ -158,7 +158,7 @@ string JsonModes() {
     string sWorm =      llList2Json(JSON_ARRAY,[CAMERA_ACTIVE,TRUE,
                                                 CAMERA_PITCH,-15.0,
                                                 CAMERA_FOCUS_OFFSET, <0.0,0.0,-0.75>]);
-                                            
+
     return llList2Json(JSON_OBJECT,["default",sDefault,"human", sHuman, "1stperson",s1stperson,"ass",sAss,"far",sFar,"god",sGod,"ground",sGround,"worm",sWorm]);
 
 }
@@ -179,7 +179,7 @@ Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPa
     integer iIndex = llListFindList(g_lMenuIDs, [kID]);
     if (~iIndex) g_lMenuIDs = llListReplaceList(g_lMenuIDs, [kID, kMenuID, sName], iIndex, iIndex + g_iMenuStride - 1);
     else g_lMenuIDs += [kID, kMenuID, sName];
-} 
+}
 
 ConfirmDeleteMenu(key kAv, integer iAuth) {
     string sPrompt = "\nAre you sure you want to delete the "+g_sSubMenu+" App?\n";
@@ -193,7 +193,7 @@ CamMode(string sMode) {
 
 ClearCam() {
     if (llGetPermissions()&PERMISSION_CONTROL_CAMERA) llClearCameraParams();
-    g_iLastNum = 0;    
+    g_iLastNum = 0;
     g_iSync2Me = FALSE;
     llMessageLinked(LINK_RLV, RLV_CMD, "camunlock=y", "camera");
     llMessageLinked(LINK_RLV, RLV_CMD, "camdistmax:0=y", "camera");
@@ -201,7 +201,7 @@ ClearCam() {
 }
 
 CamFocus(vector g_vCamPos, rotation g_rCamRot) {
-    vector vStartPose = llGetCameraPos();    
+    vector vStartPose = llGetCameraPos();
     rotation rStartRot = llGetCameraRot();
     float fSteps = 8.0;
     //Keep fSteps a float, but make sure its rounded off to the nearest 1.0
@@ -235,7 +235,7 @@ CamFocus(vector g_vCamPos, rotation g_rCamRot) {
     }
    // Debug("Focus set");
 }
- 
+
 rotation Slerp( rotation a, rotation b, float f ) {
     float fAngleBetween = llAngleBetween(a, b);
     if ( fAngleBetween > PI )
@@ -255,7 +255,7 @@ CamMenu(key kID, integer iAuth) {
     string sPrompt = "\nCurrent camera mode is " + g_sCurrentMode + ".\n\nwww.opencollar.at/camera\n\nNOTE: Full functionality only on RLV API v2.9 and greater.";
     list lButtons = ["CLEAR","FREEZE","MOUSELOOK"];
     integer n;
-    integer stop = llGetListLength(llJson2List(g_sJsonModes)); 
+    integer stop = llGetListLength(llJson2List(g_sJsonModes));
     for (n = 0; n < stop; n +=2)
         lButtons += [Capitalize(llList2String(llJson2List(g_sJsonModes),n))];
     Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth, "camera");
@@ -298,10 +298,10 @@ SaveSetting(string sToken) {
 ChatCamParams(integer iChannel, key kID) {
     g_vCamPos = llGetCameraPos();
     g_rCamRot = llGetCameraRot();
-    string sPosLine = StrReplace((string)g_vCamPos, " ", "") + " " + StrReplace((string)g_rCamRot, " ", ""); 
-    //if not channel 0, say to whole region.  else just say locally   
+    string sPosLine = StrReplace((string)g_vCamPos, " ", "") + " " + StrReplace((string)g_rCamRot, " ", "");
+    //if not channel 0, say to whole region.  else just say locally
     if (iChannel)
-        llRegionSayTo(kID, iChannel, sPosLine);                    
+        llRegionSayTo(kID, iChannel, sPosLine);
     else
         llMessageLinked(LINK_ROOT,NOTIFY,"1"+sPosLine,kID);
 }
@@ -314,7 +314,7 @@ UserCommand(integer iNum, string sStr, key kID) { // here iNum: auth value, sStr
     if (sStr == "menu " + g_sSubMenu) {
         CamMenu(kID, iNum);
     } else if (sCommand == "cam" || sCommand == "camera") {
-        //Debug("g_iLastNum=" + (string)g_iLastNum);  
+        //Debug("g_iLastNum=" + (string)g_iLastNum);
         if (sValue == "")//they just said *cam.  give menu
             CamMenu(kID, iNum);
         else if (!(llGetPermissions() & PERMISSION_CONTROL_CAMERA))
@@ -327,13 +327,13 @@ UserCommand(integer iNum, string sStr, key kID) { // here iNum: auth value, sStr
         } else if (sValue == "freeze") {
             LockCam();
             llMessageLinked(LINK_ROOT,NOTIFY,"0"+"Freezing current camera position.", kID);
-            g_iLastNum = iNum;                    
-            SaveSetting("freeze");                          
+            g_iLastNum = iNum;
+            SaveSetting("freeze");
         } else if (sValue == "mouselook") {
             llMessageLinked(LINK_ROOT,NOTIFY,"1"+"Enforcing mouselook.", kID);
-            g_iLastNum = iNum; 
-            llMessageLinked(LINK_RLV, RLV_CMD, "camdistmax:0=n", "camera");                   
-            SaveSetting("mouselook");                          
+            g_iLastNum = iNum;
+            llMessageLinked(LINK_RLV, RLV_CMD, "camdistmax:0=n", "camera");
+            SaveSetting("mouselook");
             //Debug("newiNum=" + (string)iNum);
         } else {
             integer iIndex = llSubStringIndex(g_sJsonModes, sValue);//llListFindList(g_lModes, [sValue]);
@@ -349,7 +349,7 @@ UserCommand(integer iNum, string sStr, key kID) { // here iNum: auth value, sStr
     } else if (sCommand == "camto") {
         if (!g_iLastNum || iNum <= g_iLastNum) {
             CamFocus((vector)sValue, (rotation)sValue2);
-            g_iLastNum = iNum;                    
+            g_iLastNum = iNum;
         } else
             llMessageLinked(LINK_ROOT,NOTIFY,"0"+"Sorry, cam settings have already been set by someone outranking you.", kID);
     } else if (sCommand == "camdump") {
@@ -374,21 +374,21 @@ UserCommand(integer iNum, string sStr, key kID) { // here iNum: auth value, sStr
 default {
     on_rez(integer iNum) {
         llResetScript();
-    }    
-    
+    }
+
     state_entry() {
-       // llSetMemoryLimit(36864);  
+       // llSetMemoryLimit(36864);
         g_kWearer = llGetOwner();
         g_sJsonModes = JsonModes();
         if (llGetAttached()) llRequestPermissions(g_kWearer, PERMISSION_CONTROL_CAMERA | PERMISSION_TRACK_CAMERA);
         //Debug("Starting");
     }
-    
+
     run_time_permissions(integer iPerms) {
         if (iPerms & (PERMISSION_CONTROL_CAMERA | PERMISSION_TRACK_CAMERA))
             llClearCameraParams();
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (iNum == NOTIFY || iNum == SAY) return;
         //only respond to owner, secowner, group, wearer
@@ -407,19 +407,19 @@ default {
                 sToken = llGetSubString(sToken, i + 1, -1);
                 if (llGetPermissions() & PERMISSION_CONTROL_CAMERA) {
                     if (sToken == "freeze") LockCam();
-                    else if (sToken == "mouselook") llMessageLinked(LINK_RLV, RLV_CMD, "camdistmax:0=n", "camera"); 
+                    else if (sToken == "mouselook") llMessageLinked(LINK_RLV, RLV_CMD, "camdistmax:0=n", "camera");
                     else if (~llSubStringIndex(g_sJsonModes, sToken)) CamMode(sToken);
                     g_iLastNum = (integer)sValue;
                 }
-            }           
+            }
         } else if (iNum == DIALOG_RESPONSE) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-            if (iMenuIndex != -1) { 
+            if (iMenuIndex != -1) {
                 //got a menu response meant for us.  pull out values
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
-                key kAv = (key)llList2String(lMenuParams, 0);          
-                string sMessage = llList2String(lMenuParams, 1);                                         
-                // integer iPage = (integer)llList2String(lMenuParams, 2); 
+                key kAv = (key)llList2String(lMenuParams, 0);
+                string sMessage = llList2String(lMenuParams, 1);
+                // integer iPage = (integer)llList2String(lMenuParams, 2);
                 integer iAuth = (integer)llList2String(lMenuParams, 3);
                 string sMenuType = llList2String(g_lMenuIDs, iMenuIndex + 1);
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
@@ -436,16 +436,16 @@ default {
                         llMessageLinked(LINK_ROOT, NOTIFY, "1"+"Removing "+g_sSubMenu+" App...\nYou can re-install it with an OpenCollar Updater.", kAv);
                     if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
                     } else llMessageLinked(LINK_ROOT, NOTIFY, "0"+"Removing "+g_sSubMenu+" App aborted.", kAv);
-                }                      
+                }
             }
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                        
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
         } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
-    
-    timer() {       
-        //handle cam pos/rot changes 
+
+    timer() {
+        //handle cam pos/rot changes
         if (g_iSync2Me) {
             vector vNewPos = llGetCameraPos();
             rotation rNewRot = llGetCameraRot();
@@ -456,7 +456,7 @@ default {
             llSetTimerEvent(0.0);
         }
     }
-/*    
+/*
     changed(integer iChange) {
         if (iChange & CHANGED_REGION) {
             if (g_iProfiled) {

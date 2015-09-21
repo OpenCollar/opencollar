@@ -174,7 +174,7 @@ integer g_iMenuStride = 3;
 integer g_iProfiled;
 Debug(string sStr) {
     //if you delete the first // from the preceeding and following  lines,
-    //  profiling is off, debug is off, and the compiler will remind you to 
+    //  profiling is off, debug is off, and the compiler will remind you to
     //  remove the debug calls from the code, we're back to production mode
     if (!g_iProfiled){
         g_iProfiled=1;
@@ -193,7 +193,7 @@ Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPa
     else g_lMenuIDs += [kID, kMenuID, sName];
 
     //Debug("Made "+sName+" menu.");
-} 
+}
 
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer) {
     if (kID == g_kWearer) llOwnerSay(sMsg);
@@ -217,7 +217,7 @@ Menu(key kID, integer iAuth, string sMenuName) {
     integer n;
     string sPrompt;
     list lButtons;
-    
+
     n=llListFindList(g_lMenuHelpMap,[sMenuName]);
     if (~n){
         sPrompt="\nwww.opencollar.at/"+llList2String(g_lMenuHelpMap,n+1)+"\n";
@@ -320,7 +320,7 @@ SaveSettings() {    //save to DB
         }
         if (llGetListLength(lCategorySettings)>0) llMessageLinked(LINK_SET, LM_SETTING_SAVE, llList2String(g_lChangedCategories,-1) + "List=" + llDumpList2String(lCategorySettings, ","), "");
         else llMessageLinked(LINK_SET, LM_SETTING_DELETE, llList2String(g_lChangedCategories,-1) + "List", "");
-        
+
         g_lChangedCategories=llDeleteSubList(g_lChangedCategories,-1,-1);
     }
 }
@@ -343,7 +343,7 @@ UserCommand(integer iNum, string sStr, key kID, string fromMenu) {
     if (iNum > COMMAND_WEARER) return;  //nothing for lower than wearer here
     sStr=llStringTrim(sStr,STRING_TRIM);
     string sStrLower=llToLower(sStr);
-    
+
     if (sStrLower == "sitmenu" || sStrLower == "menu sit") Menu(kID, iNum, "rlvsit_");
     else if (sStrLower == "rlvtp" || sStrLower == "menu travel") Menu(kID, iNum, "rlvtp_");
     else if (sStrLower == "rlvtalk" || sStrLower == "menu talk") Menu(kID, iNum, "rlvtalk_");
@@ -361,7 +361,7 @@ UserCommand(integer iNum, string sStr, key kID, string fromMenu) {
             string sName="FindSeatMenu";
             key kMenuID = llGenerateKey();
             llMessageLinked(LINK_THIS, SENSORDIALOG, (string)kID + "|Pick the object on which you want the sub to sit.  If it's not in the list, have the sub move closer and try again.\n|0|``"+(string)(SCRIPTED|PASSIVE)+"`"+(string)g_fScanRange+"`"+(string)PI + "|BACK|" + (string)iNum, kMenuID);
-            
+
             integer iIndex = llListFindList(g_lMenuIDs, [kID]);
             if (~iIndex) g_lMenuIDs = llListReplaceList(g_lMenuIDs, [kID, kMenuID, sName], iIndex, iIndex + g_iMenuStride - 1); //we've alread given a menu to this user.  overwrite their entry
             else g_lMenuIDs += [kID, kMenuID, sName]; //we've not already given this user a menu. append to list
@@ -379,7 +379,7 @@ UserCommand(integer iNum, string sStr, key kID, string fromMenu) {
             string sThisItem = llList2String(lItems, n);
             string sBehavior = llList2String(llParseString2List(sThisItem, ["="], []), 0);
             integer iBehaviourIndex=llListFindList(g_lRLVcmds, [sBehavior]);
-            
+
             if (sStr == "standnow") {
                 if (iNum == COMMAND_WEARER) llOwnerSay("Sorry, but RLV commands may only be given by owner, secowner, or group (if set).");
                 else {
@@ -432,7 +432,7 @@ default {
         //llSetTimerEvent(1.0);  //timer will be called by recieved settings as necessary
         //Debug("Starting");
     }
-    
+
     timer() {
         if (!g_iRLVOn) return;  // Nothing to do if RLV isn't enabled
         if (GetSetting("rlvsit_","unsit")!="n") {  //we are allowed to stand, so switch off timer and return
@@ -440,9 +440,9 @@ default {
             g_sSitTarget = "";
             //Debug("we are allowed to stand, so switch off timer, remove tracked sit target");
         } else {  //banned from standing up
-            
+
             key kSitKey = llList2Key(llGetObjectDetails(g_kWearer, [OBJECT_ROOT]), 0);
-            
+
             if (g_iSitMode) {  // Restore mode.  Find the seat and sit in it
                 llSetTimerEvent(g_fRestoreDelay);
                 if (g_sSitTarget == "") {  //If we have no seat, go back to monitoring
@@ -474,7 +474,7 @@ default {
             }
         }
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu) {
             llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|Sit", "");
@@ -493,7 +493,7 @@ default {
             string sToken = llList2String(lParams, 0);
             string sValue = llList2String(lParams, 1);
             integer iChange = FALSE;
-            
+
             string category=llList2String(llParseString2List(sToken,["_"],[]),0)+"_";
             if (~llListFindList(g_lMenuHelpMap,[category])){
                 //Debug("got settings token: "+category);
@@ -525,22 +525,22 @@ default {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             if (~iMenuIndex) {    //it's one of our menus
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
-                key kAv = (key)llList2String(lMenuParams, 0);          
-                string sMessage = llList2String(lMenuParams, 1);                                         
-                integer iPage = (integer)llList2String(lMenuParams, 2);                
-                integer iAuth = (integer)llList2String(lMenuParams, 3);                
-                
+                key kAv = (key)llList2String(lMenuParams, 0);
+                string sMessage = llList2String(lMenuParams, 1);
+                integer iPage = (integer)llList2String(lMenuParams, 2);
+                integer iAuth = (integer)llList2String(lMenuParams, 3);
+
                 //remove stride from g_lMenuIDs
                 //we have to subtract from the index because the dialog id comes in the middle of the stride
                 string sMenu=llList2String(g_lMenuIDs, iMenuIndex + 1);
-                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                
-                
+                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+
                 if (sMenu == "FindSeatMenu") {
                     if (sMessage==UPMENU) Menu(kAv, iAuth, "rlvsit_");
                     else if ((key) sMessage) {
                         //Debug("Sending \""+"sit:" + sMessage + "=force\" to "+(string)kAv+" with auth "+(string)iAuth);
                         UserCommand(iAuth, "sit:" + sMessage + "=force", kAv, "rlvsit_");
-                    }                            
+                    }
                 } else {
                     if (sMessage == UPMENU) llMessageLinked(LINK_SET, iAuth, "menu " + g_sParentMenu, kAv);
                     else if (sMessage == "SitNow") UserCommand(iAuth, "sitnow", kAv, "rlvsit_");
@@ -548,7 +548,7 @@ default {
                     else {
                         //we got a command to enable or disable something, like "Enable LM"
                         //get the actual command name by looking up the pretty name from the message
-    
+
                         list lParams = llParseString2List(sMessage, [" "], []);
                         string sSwitch = llList2String(lParams, 0);
                         string sCmd = llDumpList2String(llDeleteSubList(lParams,0,0)," ");
@@ -559,7 +559,7 @@ default {
                             //decide whether we need to switch to "y" or "n"
                             if (sSwitch == TURNOFF) ONOFF = "n";  //enable all functions (ie, remove all restrictions
                             else if (sSwitch == TURNON) ONOFF = "y";
-    
+
                             //loop through rlvcmds to create list
                             string sOut;
                             integer n;
@@ -579,18 +579,18 @@ default {
                             //send rlv command out through auth system as though it were a chat command, just to make sure person who said it has proper authority
                             UserCommand(iAuth, sOut, kAv, sMenu);
                         }
-                    }                                       
+                    }
                 }
             }
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             //remove stride from g_lMenuIDs
             //we have to subtract from the index because the dialog id comes in the middle of the stride
-            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                        
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
         }
     }
-    
-/*        
+
+/*
     changed(integer iChange)
     {
         if (iChange & CHANGED_REGION) {
@@ -600,5 +600,5 @@ default {
             }
         }
     }
-*/        
+*/
 }

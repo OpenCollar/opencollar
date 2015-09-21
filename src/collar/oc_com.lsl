@@ -259,7 +259,7 @@ sendCommandFromLink(integer iLinkNumber, string sType, key kToucher) {
     }
     if (sType == "touchstart") {
         llMessageLinked(LINK_AUTH, CMD_ZERO, "menu", kToucher);
-        if (g_iTouchNotify && kToucher!=g_kWearer) Notify(g_kWearer,"\n\nsecondlife:///app/agent/"+(string)kToucher+"/about touched your "+g_sDeviceType+".\n",FALSE); 
+        if (g_iTouchNotify && kToucher!=g_kWearer) Notify(g_kWearer,"\n\nsecondlife:///app/agent/"+(string)kToucher+"/about touched your "+g_sDeviceType+".\n",FALSE);
     }
 }
 
@@ -390,7 +390,7 @@ UserCommand(key kID, integer iAuth, string sStr) {
             }
         }
     }
-} 
+}
 
 default {
     on_rez(integer iParam) {
@@ -455,7 +455,7 @@ default {
      //message structure:   llGetOwner()|LMV2|RequestPoint|anchor_name
                 if(g_iLeashPrim)
                     llRegionSayTo(kID, g_iLockMeisterChan, (string)g_kWearer+"|LMV2|ReplyPoint|collar|"+(string)llGetLinkKey(g_iLeashPrim));
-                else 
+                else
                     llRegionSayTo(kID, g_iLockMeisterChan, (string)g_kWearer+"|LMV2|ReplyPoint|collar|"+(string) llGetKey());
             }
             return;

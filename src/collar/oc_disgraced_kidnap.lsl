@@ -155,7 +155,7 @@ doCapture(key kKidnapper, string sKidnapper, integer iIsConfirmed) {
         llMessageLinked(LINK_ROOT,NOTIFY,"0"+"%WEARERNAME% is already kidnapped, try another time.",kKidnapper);
         return;
     }
-    if (llVecDist(llList2Vector(llGetObjectDetails( kKidnapper,[OBJECT_POS] ),0),llGetPos()) > 10 ) { 
+    if (llVecDist(llList2Vector(llGetObjectDetails( kKidnapper,[OBJECT_POS] ),0),llGetPos()) > 10 ) {
         llMessageLinked(LINK_ROOT,NOTIFY,"0"+"You could kidnap %WEARERNAME% if you get a bit closer.",kKidnapper);
         return;
     }

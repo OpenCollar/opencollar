@@ -230,7 +230,7 @@ integer g_iAllLocked = 0;  //1=all clothes are locked on
 integer g_iProfiled;
 Debug(string sStr) {
     //if you delete the first // from the preceeding and following  lines,
-    //  profiling is off, debug is off, and the compiler will remind you to 
+    //  profiling is off, debug is off, and the compiler will remind you to
     //  remove the debug calls from the code, we're back to production mode
     if (!g_iProfiled){
         g_iProfiled=1;
@@ -246,7 +246,7 @@ key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integ
     llMessageLinked(LINK_SET, DIALOG, (string)kRCPT + "|" + sPrompt + "|" + (string)iPage + "|" + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kID);
     //Debug("Made menu.");
     return kID;
-} 
+}
 
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
@@ -500,14 +500,14 @@ integer UserCommand(integer iNum, string sStr, key kID) // here iNum: auth value
     {
         if(iNum==COMMAND_OWNER || iNum == COMMAND_WEARER)
         {
-            
+
             string sOpt=llList2String(lParams,1);
             if(sOpt == "on")
             {
                 g_iSmartStrip=TRUE;
                 llMessageLinked(LINK_SET,LM_SETTING_SAVE, g_sScript + g_sSmartToken +"=1","");
-                
-                
+
+
             }
             else
             {
@@ -523,7 +523,7 @@ integer UserCommand(integer iNum, string sStr, key kID) // here iNum: auth value
         string sOpt=llList2String(lParams,1);
         if(sOpt=="all")
         {
-           
+
            if(g_iSmartStrip==TRUE)
             {
                 integer x=14; //let's not strip tattoos and physics layers;
@@ -533,10 +533,10 @@ integer UserCommand(integer iNum, string sStr, key kID) // here iNum: auth value
                     --x;
                     string sItem=llToLower(llList2String(DETACH_CLOTH_POINTS,x));
                     llMessageLinked(LINK_SET, RLV_CMD, "detachallthis:"+ sItem +"=force",NULL_KEY);
-                    
+
                  }
             }
-           
+
            llMessageLinked(LINK_SET, RLV_CMD,  "remoutfit=force", NULL_KEY);
             return TRUE;
         }
@@ -547,7 +547,7 @@ integer UserCommand(integer iNum, string sStr, key kID) // here iNum: auth value
         if(g_iSmartStrip==TRUE) llMessageLinked(LINK_SET, RLV_CMD , "detachallthis:" + sOpt + "=force", NULL_KEY);
         llMessageLinked(LINK_SET, RLV_CMD,  "remoutfit:" + sOpt + "=force", NULL_KEY); //yes, this isn't an else. We do it in case the item isn't in #RLV.
     }
-        
+
     else if (llListFindList(g_lRLVcmds, [sCommand]) != -1)
     {    //we've received an RLV command that we control.  only execute if not sub
         if (iNum == COMMAND_WEARER)
@@ -763,7 +763,7 @@ default {
     on_rez(integer iParam) {
         llResetScript();
     }
-    
+
     state_entry() {
         //llSetMemoryLimit(65536);  //this script needs to be profiled, and its memory limited
         g_sScript = "rlvundress_";
@@ -890,26 +890,26 @@ default {
                 {
                     if (sMessage == UPMENU) MainMenu(kAv, iAuth);
                     else if (sMessage == "Attachments") QueryAttachments(kAv, iAuth);
-                    else if (sMessage == ALL) 
+                    else if (sMessage == ALL)
                     // SA:Â we can count ourselves lucky that all people who can see the menu have sufficient privileges for remoutfit commands!
                     //    Note for people looking for the auth check: it would have been here, look no further!
                     { //send the RLV command to remove it.
-                    
+
                         UserCommand(iAuth,"strip all",kAv); //See stuff in UserCommand. If we use smartstrip for all, then we'd jump to that here to save duplication, but otherwise it's a single LM, better to do it here than hit UserCommand.
-                                            
+
                        // llMessageLinked(LINK_SET, RLV_CMD,  "remoutfit=force", NULL_KEY);
                         //Return menu
                         //sleep fof a sec to let things detach
                         llSleep(0.5);
                         QueryClothing(kAv, iAuth);
                     }
-                    else 
+                    else
                     {
                         UserCommand(iAuth,"strip "+sMessage,kAv);
                         llSleep(0.5);
                         QueryClothing(kAv, iAuth);
                     }
-                        
+
                     /* Moving this to UserCommand to allow "strip" chat command
                     else
                     { //we got a cloth point.

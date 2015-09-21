@@ -122,12 +122,12 @@ default
             StartParticles();
         }
     }
-    
+
     on_rez(integer iRez)
     {
         llResetScript();
     }
-    
+
     listen(integer c, string n, key k, string s)
     {
         if (c == HUD_CHANNEL)

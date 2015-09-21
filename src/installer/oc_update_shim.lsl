@@ -123,7 +123,7 @@ default {
         // let mama know we're ready
         llWhisper(g_iStartParam, "reallyready");
     }
-    
+
     listen(integer iChannel, string sName, key kID, string sMsg) {
         debug("heard: " + sMsg);
         if (llGetOwnerKey(kID) != llGetOwner()) return;
@@ -167,7 +167,7 @@ default {
                         // we don't have item. get it.
                         sCmd = "GIVE";
                     }
-                }                
+                }
             } else if (sMode == "REMOVE" || sMode == "DEPRECATED") {
                 debug("remove: " + sMsg);
                 if (sType == "SCRIPT") {
@@ -185,20 +185,20 @@ default {
             Check4Core5Script();
             string sResponse = llDumpList2String([sType, sName, sCmd], "|");
             //debug("responding: " + response);
-            llRegionSayTo(kID, iChannel, sResponse);     
+            llRegionSayTo(kID, iChannel, sResponse);
         } else if (sMsg == "Core5Done") Check4Core5Script();
         else if (!llSubStringIndex(sMsg, "DONE")){
-            //restore settings 
+            //restore settings
             if (g_iIsUpdate) {
                 integer n;
-                integer iStop = llGetListLength(g_lSettings); 
+                integer iStop = llGetListLength(g_lSettings);
                 list lDeprecatedSplitSettingTokenForTest;
                 for (n = 0; n < iStop; n++) {
                     string sSetting = llList2String(g_lSettings, n);
                     //Look through deprecated settings to see if we should ignore any...
                     // Settings look like rlvmain_on=1, we want to deprecate the token ie. rlvmain_on <--store
                     lDeprecatedSplitSettingTokenForTest = llList2List(llParseString2List(sSetting,["="],[]),0,0);
-    
+
                     if (llListFindList(g_lDeprecatedSettingTokens,lDeprecatedSplitSettingTokenForTest) < 0) { //If it doesn't exist in our list
                         llMessageLinked(LINK_SET, LM_SETTING_SAVE, sSetting, "");
                         debug("SP - Saving :"+sSetting);
@@ -220,9 +220,9 @@ default {
             llRemoveInventory(llGetScriptName());
         }
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
-        // The settings script will dump all its settings when an inventory change happens, so listen for that and remember them 
+        // The settings script will dump all its settings when an inventory change happens, so listen for that and remember them
         // so they can be restored when we're done.
         if (iNum == LM_SETTING_RESPONSE) {
             if (sStr != "settings=sent") {

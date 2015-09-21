@@ -52,56 +52,56 @@
 
  Below is a complete list of available commands, of which you should prefix with the
  sub's initials, of course. Chat commands are only available to primary owners.
-  
+
  chhere
    Makes sub's current position the Cage Home Location.
    Valid when not caged.
-   
+
  charm
    Arms the Cage Home plugin. The primary that issues this command will become
    Cage Owner, to distinguish them from other primary owners. The on/offline state
    of the Cage Owner will be monitored.
    Valid when a Home Location has been set and not already armed.
-   
+
  chdisarm
    Disarms the Cage Home plugin. Any primary owner may disarm.
    Valid when armed, but not caged.
-   
+
  chrelease
    Release the sub from the Cage Home. Any primary owner may release. If the
    primary owner that releases the sub is not the Cage Owner, the Cage Owner will
    also be notified about this release.
-   
+
  chsettings
    Shows current settings. There is also a menu button for this action.
-   
+
  chcommands
    Shows available chat commands. This list is unprefixed. There is also a menu
    button for this action.
-   
+
  chwarntime <seconds>
    Specifies the duration, in seconds, between a warning is issued and the actual
    capturing (teleport). If this value is 0 or lower, no warning will be issued.
-   
+
  chradius <meters>
    Specifies the radius of the Cage Home, in meters.
-   
+
  chcagetime <minutes>
    Specifies the duration of the timer, after which the sub will be auto released,
    if not released manually earlier. If this value is 0 or less, no timer will be
    activated (use with care!).
-   
+
  chnotifychannel <channel number>
    Specifies the channel number on which capturing (arrival) and releasing must
    be announced. If this value is 0 (public chat), no announcements will be made.
-   
+
  chnotifyarrive <arrive string>
    Specifies the word or phrase that will be said upon capture (teleport
    arrival) of the sub.
-   
+
  chnotifyrelease <release string>
    Specifies the word or phrase that will be said upon release of the sub.
-   
+
  chwarnmessage <warning message>
    Specifies the word or phrase that will be said in public chat, that will
    announce the sub being summoned. The following tokens may be used:
@@ -153,7 +153,7 @@
 |                   |         v
 |                    ----> released                                                 armed_released
 |                             |
- ----------------------------- 
+ -----------------------------
 
 Notes:
   - Can only set location while not armed
@@ -395,16 +395,16 @@ DoMenu(key kID, integer iAuth) {
     integer bIsArmed = (STATE_ARMED_IDLE <= g_iCurrentState);
     string sPrompt = "\n";
     list lMyButtons = [];
-    
+
     if (COMMAND_OWNER == iAuth) {
-        sPrompt += 
+        sPrompt +=
             "Have your sub auto teleport and caged the moment you log on again. The sub will be released if:" +
             "\n\tYou approach the cage" +
             "\n\tYou summon the sub" +
             "\n\tThe timer runs out" +
             "\n" +
             "\nUse chat commands to tweak settings.";
-  
+
         if (g_iCurrentState <= STATE_DISARMED) {
             lMyButtons += [BUT_CAGE_HERE];
         }
@@ -423,7 +423,7 @@ DoMenu(key kID, integer iAuth) {
         else {
             lMyButtons += [BUT_DISARM];
         }
-        
+
         lMyButtons += [BUT_BLANK, BUT_SETTINGS, BUT_COMMANDS];
     }
     else {
@@ -437,8 +437,8 @@ DoMenu(key kID, integer iAuth) {
             sSub = "the sub";
             sOwner = "the";
         }
-        sPrompt += 
-            "This feature will teleport " + sSub + " to a predefined location, set by " + 
+        sPrompt +=
+            "This feature will teleport " + sSub + " to a predefined location, set by " +
             sOwner + " owner, once " + sOwner + " owner logs on again." +
             "\n\nThis AddOn is controlled by " + sOwner + " owner.";
     }
@@ -452,17 +452,17 @@ DoMenu(key kID, integer iAuth) {
     else {
         sPrompt += "not set yet";
     }
-    sPrompt += 
+    sPrompt +=
         "\n" +
         "\n";
 
     g_kMenuID = llGenerateKey();
 
-    llMessageLinked(LINK_THIS, DIALOG, 
-        (string)kID + 
-        "|" + sPrompt + 
+    llMessageLinked(LINK_THIS, DIALOG,
+        (string)kID +
+        "|" + sPrompt +
         "|" + (string)0 +  // iPage
-        "|" + llDumpList2String(lMyButtons + g_lButtons, "`") + 
+        "|" + llDumpList2String(lMyButtons + g_lButtons, "`") +
         "|" + llDumpList2String([BUT_UPMENU], "`") +
         "|" + (string)iAuth, g_kMenuID);
 }
@@ -484,7 +484,7 @@ SaveSettings() {
     string sSaveString = LM_SETTING_TOKEN + "=" +
         llDumpList2String([
             g_sCageRegion,
-            g_vCagePos,        
+            g_vCagePos,
             g_sCageHomeRlv,
             g_iCageRadius,
             g_iWarningTime,
@@ -494,7 +494,7 @@ SaveSettings() {
             g_sCageNotifyRelease,
             g_sCageWarningMessage
         ], "|");
-    
+
     llMessageLinked(LINK_THIS, LM_SETTING_SAVE, sSaveString, NULL_KEY);
 }
 
@@ -515,7 +515,7 @@ ParseSettings(string sValue) {
         g_sCageNotifyArrive   = llList2String(lValues, 7);
         g_sCageNotifyRelease  = llList2String(lValues, 8);
         g_sCageWarningMessage = llList2String(lValues, 9);
-        
+
         g_sCagePosSlashed = Vector2UrlCoordinates(g_vCagePos);
     }
     else {
@@ -585,10 +585,10 @@ SetRlvRestrictions() {
 
 ClearRlvRestrictions() {
     SendRlvCommands([
-        "tplm=y", 
-        "tploc=y", 
-        "tplure=y", 
-        "sittp=y", 
+        "tplm=y",
+        "tploc=y",
+        "tplure=y",
+        "sittp=y",
         "rez=y"
         // ,"standtp=y"
     ]);
@@ -665,7 +665,7 @@ integer Event_changed(integer iChange) {
 //
 integer Event_link_message(integer iSender, integer iNum, string sStr, key kID) {
     integer iLinkResult = g_iCurrentState; // default result
-    
+
     if (iNum == RLV_REFRESH) {
         if (STATE_ARMED_CAGED == g_iCurrentState) {
             SetRlvRestrictions();
@@ -736,7 +736,7 @@ integer Event_link_message(integer iSender, integer iNum, string sStr, key kID) 
                 sCommand = llDeleteSubString(sStr, iIndex, -1);
                 sValue = llDeleteSubString(sStr, 0, iIndex);
             }
-            
+
             iIndex = llListFindList(lChatCommands, [sCommand]); // re-use variable iIndex
             if (-1 < iIndex) {
                 if (iIndex < 1) { // chhere
@@ -797,7 +797,7 @@ integer Event_link_message(integer iSender, integer iNum, string sStr, key kID) 
                     // notify once, created with strings sDescr and sAppend:
                     string sDescr = "";
                     string sAppend = "";
-            
+
                     // within this else-block: things with an argument (and then save)
                     if (iIndex < 7) { // chwarntime
                         g_iWarningTime = (integer)sValue;
@@ -821,7 +821,7 @@ integer Event_link_message(integer iSender, integer iNum, string sStr, key kID) 
                     }
                     else {
                         // within this else-block: settings that may be enclosed within single quotes
-                
+
                         string sArg = llList2String(llParseString2List(sValue, ["'"], []), 1);
                         if (iIndex < 11) { // cagenotifyarrive
                             g_sCageNotifyArrive = sArg;
@@ -837,14 +837,14 @@ integer Event_link_message(integer iSender, integer iNum, string sStr, key kID) 
                         }
                         sAppend = "'" + sArg + "'";
                     }
-        
+
                     if ("" != sDescr) {
                         Notify(kID, sDescr + " set to " + sAppend, TRUE);
                     }
                     SaveSettings();
                 }
             }
-            
+
         } // else: iNum equals COMMAND_WEARER  // we accept no chat commands from the wearer, so ignore
     }
     else if (COMMAND_SAFEWORD == iNum) {
@@ -853,7 +853,7 @@ integer Event_link_message(integer iSender, integer iNum, string sStr, key kID) 
             NotifyCaptiveChange(g_kCageOwnerKey, STATE_ARMED_RELEASED);
         }
     }
-    
+
     // answer from menu system
     // careful, don't use the variable kID to identify the user.
     // you have to parse the answer from the dialog system and use the parsed variable kAv
@@ -911,7 +911,7 @@ integer Event_link_message(integer iSender, integer iNum, string sStr, key kID) 
     }
 
     // ignoring DIALOG_TIMEOUT msg
-        
+
     return iLinkResult;
 }
 
@@ -934,40 +934,40 @@ DebugCurrentStateFreeMemory() {
 // (primary) owner sets cage home location
 //
 default {
-    
+
     state_entry() {
         g_iCurrentState = STATE_DEFAULT;
-        
+
         lChatCommands = [
             "chhere", "charm", "chdisarm", "chrelease", "chsettings", "chcommands", // no-arg commands
             "chwarntime", "chradius", "chcagetime", "chnotifychannel",              // integer-arg commands
             "chnotifyarrive", "chnotifyrelease", "chwarnmessage"                    // string-arg commands
         ];
-        
+
         g_kWearer = llGetOwner();
         g_sWearer = StripResident(llKey2Name(g_kWearer));
-        
+
         ParseSettings(DEFAULT_SETTINGS); // default settings do not include the home location
-        
+
         // sleep a second to allow other scripts to be initialized
         llSleep(1);
-        
+
         // send request to main menu and ask other menus if they want to register with us
         //llMessageLinked(LINK_THIS, MENUNAME_REQUEST, SUBMENU_BUTTON, NULL_KEY);
         //RegisterSubMenu(LINK_THIS);
 
         llMessageLinked(LINK_THIS, LM_SETTING_REQUEST, LM_SETTING_TOKEN, NULL_KEY);
-        
+
         DebugCurrentStateFreeMemory();
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         Event_link_message(iSender, iNum, sStr, kID);
         if ("" != g_sCageHomeRlv) {
             state disarmed;
         }
     }
-    
+
     dataserver(key kQueryid, string data) {
         if (kQueryid == g_kSimPosRequestHandle) {
             g_sCageHomeRlv = Vector2UrlCoordinates((vector)data + g_vCagePos);
@@ -979,7 +979,7 @@ default {
     changed(integer iChange) {
         Event_changed(iChange);
     }
-    
+
 }
 
 
@@ -988,17 +988,17 @@ default {
 // purpose: wait for (primary) owner to arm the plugin. this primary owner becomes "cage owner"
 //
 state disarmed {
-    
+
     state_entry() {
         g_iCurrentState = STATE_DISARMED;
         g_sArmedState = "Disarmed";
         DebugCurrentStateFreeMemory();
     }
-    
+
     on_rez(integer iParam) {
         Event_on_rez(iParam);
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (STATE_ARMED_IDLE == Event_link_message(iSender, iNum, sStr, kID)) {
             state armed_idle;
@@ -1015,7 +1015,7 @@ state disarmed {
     changed(integer iChange) {
         Event_changed(iChange);
     }
-    
+
 }
 
 
@@ -1025,21 +1025,21 @@ state disarmed {
 // purpose: wait for cage owner to go offline
 //
 state armed_idle {
-    
+
     state_entry() {
         g_iCurrentState = STATE_ARMED_IDLE;
         g_sArmedState = "Armed";
         llSetTimerEvent(DELAY_CHECK_OWNER_ONLINE);
         DebugCurrentStateFreeMemory();
     }
-    
+
     on_rez(integer iParam) {
         Event_on_rez(iParam);
         // if user comes online while owner already is, cage the sub. by switching
         // to armed_alert state we make this behaviour true.
         state armed_alert;
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (Event_link_message(iSender, iNum, sStr, kID) == STATE_DISARMED) {
             state disarmed;
@@ -1049,7 +1049,7 @@ state armed_idle {
     timer() {
         g_kOwnerRequestHandle = llRequestAgentData(g_kCageOwnerKey, DATA_ONLINE);
     }
-    
+
     dataserver(key kQueryid, string data) {
         if (kQueryid == g_kOwnerRequestHandle) {
             if (FALSE == (integer)data) {
@@ -1058,11 +1058,11 @@ state armed_idle {
             }
         }
     }
-    
+
     changed(integer iChange) {
         Event_changed(iChange);
     }
-    
+
     state_exit() {
         llSetTimerEvent(0);
     }
@@ -1073,29 +1073,29 @@ state armed_idle {
 // state armed_alert:
 // how we got here: cage owner went offline
 // purpose: wait for cage owner to come online again
-// 
+//
 state armed_alert {
-    
+
     state_entry() {
         g_iCurrentState = STATE_ARMED_WARNING;
         llSetTimerEvent(DELAY_CHECK_OWNER_ONLINE);
         DebugCurrentStateFreeMemory();
     }
-    
+
     on_rez(integer iParam) {
         Event_on_rez(iParam);
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (Event_link_message(iSender, iNum, sStr, kID) == STATE_DISARMED) {
             state disarmed;
         }
     }
-    
+
     timer() {
         g_kOwnerRequestHandle = llRequestAgentData(g_kCageOwnerKey, DATA_ONLINE);
     }
-    
+
     dataserver(key kQueryid, string data) {
         if (kQueryid == g_kOwnerRequestHandle) {
             if (TRUE == (integer)data) {
@@ -1104,11 +1104,11 @@ state armed_alert {
             }
         }
     }
-    
+
     changed(integer iChange) {
         Event_changed(iChange);
     }
-    
+
     state_exit() {
         llSetTimerEvent(0);
     }
@@ -1121,7 +1121,7 @@ state armed_alert {
 // purpose: warn sub about being teleported soon (and wait for designated period)
 //
 state armed_issue_warning {
-    
+
     state_entry() {
         g_iCurrentState = STATE_ARMED_WARNING;
         DebugCurrentStateFreeMemory();
@@ -1132,20 +1132,20 @@ state armed_issue_warning {
         else {
             llSetTimerEvent(g_iWarningTime);
         }
-        
+
         string sMsg = StrReplace(g_sCageWarningMessage, "@", g_sWearer);
         sMsg = StrReplace(sMsg, "#", (string)g_iWarningTime);
-        
+
         string sObjectName = llGetObjectName();
         llSetObjectName(PLUGIN_TITLE);
         llSay(0, sMsg);
         llSetObjectName(sObjectName);
     }
-    
+
     on_rez(integer iParam) {
         Event_on_rez(iParam);
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (Event_link_message(iSender, iNum, sStr, kID) == STATE_DISARMED) {
             state disarmed;
@@ -1155,11 +1155,11 @@ state armed_issue_warning {
     timer() {
         state armed_teleport;
     }
-    
+
     changed(integer iChange) {
         Event_changed(iChange);
     }
-    
+
     state_exit() {
         llSetTimerEvent(0);
     }
@@ -1171,7 +1171,7 @@ state armed_issue_warning {
 // purpose: teleport sub to cage home location
 //
 state armed_teleport {
-    
+
     state_entry() {
         g_iCurrentState = STATE_ARMED_TELEPORT;
         DebugCurrentStateFreeMemory();
@@ -1192,16 +1192,16 @@ state armed_teleport {
             // already at or near cage position, skip tp
             state armed_caged;
         }
-        else {        
+        else {
             g_iTpTries = 0;
             llSetTimerEvent(0.2); // let the timer event do the TP thing
         }
     }
-    
+
     on_rez(integer iParam) {
         Event_on_rez(iParam);
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         integer iLinkResult = Event_link_message(iSender, iNum, sStr, kID);
         if (iLinkResult == STATE_DISARMED) {
@@ -1219,11 +1219,11 @@ state armed_teleport {
             state armed_caged;
         }
         llSetTimerEvent(TP_RETRY_DELAY); // try tp every ... seconds
-        
+
         SendRlvCommands(["tploc=y", "unsit=y"]);
         llOwnerSay("@tpto:" + g_sCageHomeRlv + "=force");
     }
-    
+
     changed(integer iChange) {
         if (!Event_changed(iChange)) {
             if (iChange & CHANGED_TELEPORT) {
@@ -1231,7 +1231,7 @@ state armed_teleport {
             }
         }
     }
-    
+
     state_exit() {
         llSetTimerEvent(0);
     }
@@ -1243,25 +1243,25 @@ state armed_teleport {
 // purpose: wait for sub to be released
 //
 state armed_caged {
-    
+
     state_entry() {
         g_iCurrentState = STATE_ARMED_CAGED;
         DebugCurrentStateFreeMemory();
         SetRlvRestrictions();
-        Notify(g_kCageOwnerKey, "Your sub " + g_sWearer + " has just been teleported by the " + PLUGIN_TITLE + 
+        Notify(g_kCageOwnerKey, "Your sub " + g_sWearer + " has just been teleported by the " + PLUGIN_TITLE +
             " feature and is now waiting for you at http://maps.secondlife.com/secondlife/" +
             llEscapeURL(llGetRegionName()) + "/" + Vector2UrlCoordinates(llGetPos()), FALSE);
-            
+
         llSensorRepeat("", g_kCageOwnerKey, AGENT_BY_LEGACY_NAME, g_iCageRadius + 1, PI, DELAY_CHECK_OWNER_NEAR);
-        
-        if (g_iCageNotifyChannel != PUBLIC_CHANNEL) {        
+
+        if (g_iCageNotifyChannel != PUBLIC_CHANNEL) {
             llSay(g_iCageNotifyChannel, g_sCageNotifyArrive);
         }
         llMessageLinked(LINK_THIS, CAGEHOME_NOTIFY_NUM, g_sCageNotifyArrive, NULL_KEY);
 
         g_vLocalPos = llGetPos();
         g_iTargetHandle = llTarget(g_vLocalPos, (float)g_iCageRadius);
-        
+
         string sMsg = PLUGIN_TITLE + " now active ";
         if (0 < g_iCageWait) {
             llSetTimerEvent(g_iCageWait * 60); // g_iCageWait is in minutes now
@@ -1276,7 +1276,7 @@ state armed_caged {
     on_rez(integer iParam) {
         Event_on_rez(iParam);
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         integer iLinkMsgResult = Event_link_message(iSender, iNum, sStr, kID);
         if (STATE_ARMED_RELEASED == iLinkMsgResult) {
@@ -1284,24 +1284,24 @@ state armed_caged {
         }
     }
 
-    sensor(integer iNum) {     
+    sensor(integer iNum) {
         Notify(g_kCageOwnerKey, g_sWearer + " released from " + PLUGIN_TITLE, TRUE);
         state armed_released;
     }
-    
+
     not_at_target() {
         llMoveToTarget(g_vLocalPos, 0.5);
     }
-    
+
     at_target(integer iNum, vector vTargetPos, vector vOurPos) {
-        llStopMoveToTarget();    
+        llStopMoveToTarget();
     }
-    
+
     timer() {
         Notify(g_kCageOwnerKey, "Time's up! " + g_sWearer + " released from " + PLUGIN_TITLE, TRUE);
         state armed_released;
     }
-    
+
     changed(integer iChange) {
         Event_changed(iChange);
         if (iChange & CHANGED_TELEPORT) {
@@ -1310,7 +1310,7 @@ state armed_caged {
             state armed_released;
         }
     }
-    
+
     state_exit() {
         llSensorRemove();
         llTargetRemove(g_iTargetHandle);
@@ -1326,26 +1326,26 @@ state armed_caged {
 // purpose: remove restrictions and change to armed_idle
 //
 state armed_released {
-    
+
     state_entry() {
         g_iCurrentState = STATE_ARMED_RELEASED;
         DebugCurrentStateFreeMemory();
         ClearRlvRestrictions();
 
-        if (g_iCageNotifyChannel != PUBLIC_CHANNEL) {        
+        if (g_iCageNotifyChannel != PUBLIC_CHANNEL) {
             llSay(g_iCageNotifyChannel, g_sCageNotifyRelease);
         }
         llMessageLinked(LINK_THIS, CAGEHOME_NOTIFY_NUM, g_sCageNotifyRelease, NULL_KEY);
-        
+
         state armed_idle;
     }
-    
+
     on_rez(integer iParam) {
         Event_on_rez(iParam);
     }
-    
+
     changed(integer iChange) {
         Event_changed(iChange);
     }
-    
+
 }

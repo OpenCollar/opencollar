@@ -76,7 +76,7 @@ integer CMD_OWNER = 500;
 integer CMD_WEARER = 503;
 integer CMD_EVERYONE = 504;
 //integer CMD_RLV_RELAY = 507;
-//integer CMD_SAFEWORD = 510; 
+//integer CMD_SAFEWORD = 510;
 //integer CMD_RELAY_SAFEWORD = 511;
 //integer CMD_BLOCKED = 520;
 
@@ -106,7 +106,7 @@ string g_sGlobalToken = "global_";
 integer g_iProfiled;
 Debug(string sStr) {
     //if you delete the first // from the preceeding and following  lines,
-    //  profiling is off, debug is off, and the compiler will remind you to 
+    //  profiling is off, debug is off, and the compiler will remind you to
     //  remove the debug calls from the code, we're back to production mode
     if (!g_iProfiled){
         g_iProfiled=1;
@@ -122,7 +122,7 @@ key Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integ
     llMessageLinked(LINK_SET, DIALOG, (string)kRCPT + "|" + sPrompt + "|" + (string)iPage + "|" + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kID);
     //Debug("Made menu.");
     return kID;
-} 
+}
 /*
 Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 {
@@ -146,7 +146,7 @@ DoMenu(key keyID, integer iAuth)
         return;
     }
     //Debug("timeremaning:"+(string)(g_iOnTimeUpAt-g_iOnTime));
-    
+
     string sPrompt = "\n A frozen pizza takes ~12 min to bake.\n";
     list lMyButtons = g_lLocalButtons + lButtons;
 
@@ -208,10 +208,10 @@ DoMenu(key keyID, integer iAuth)
     else if (g_iRealSetTime || g_iOnSetTime)
     {
         lMyButtons += ["START"];
-        lMyButtons += ["RESET"];    
+        lMyButtons += ["RESET"];
     }
         sPrompt+="\n\nwww.opencollar.at/timer";
-        
+
     llListSort(g_lLocalButtons, 1, TRUE);
 
     g_kMenuID = Dialog(keyID, sPrompt, lMyButtons, [UPMENU], 0, iAuth);
@@ -220,7 +220,7 @@ DoMenu(key keyID, integer iAuth)
 DoOnMenu(key keyID, integer iAuth)
 {
     if (keyID == NULL_KEY) return;
-    
+
     string sPrompt = "\n Online Time Settings\n";
     sPrompt += "\n Online Timer: "+Int2Time(g_iOnSetTime);
     if (g_iOnRunning)
@@ -260,7 +260,7 @@ string Int2Time(integer sTime)
     sTime = (sTime-iMins)/60;
     integer iHours=sTime%24;
     integer iDays = (sTime-iHours)/24;
-    
+
     //this is the onley line that needs changing...
     return ( (string)iDays+" days "+
         llGetSubString("0"+(string)iHours,-2,-1) + ":"+
@@ -300,7 +300,7 @@ TimerFinish()
     g_iWhoCanChangeTime=504;
     llMessageLinked(LINK_SET,NOTIFY,"0"+"Yay! Timer expired!",g_kWearer);
     //llOwnerSay("Yay! Timer expired!");
-    
+
     llMessageLinked(LINK_THIS, TIMER_EVENT, "end", "");
 }
 
@@ -324,7 +324,7 @@ TimerStart(integer perm)
         g_iOnTimeUpAt=g_iOnTime+g_iOnSetTime;
         llMessageLinked(LINK_THIS, WEARERLOCKOUT, "on", "");
         llMessageLinked(LINK_THIS, TIMER_EVENT, "START", "Online");
-        
+
         g_iOnRunning=1;
     }
     else
@@ -347,7 +347,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
         else if (sMsg == "Online") DoOnMenu(kID, iNum);
         else if (sMsg == "START")
         {
-            TimerStart(iNum);            
+            TimerStart(iNum);
             if(kID != g_kWearer) DoMenu(kID, iNum);
         }
         else if (sMsg == "STOP")
@@ -438,7 +438,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
         }
         else if(llGetSubString(sMsg, 0, 5) == "Online")
         {
-            sMsg="on" + llStringTrim(llGetSubString(sMsg, 6, -1), STRING_TRIM_HEAD);                    
+            sMsg="on" + llStringTrim(llGetSubString(sMsg, 6, -1), STRING_TRIM_HEAD);
         }
         if(llGetSubString(sMsg, 0, 1) == "on")
         {
@@ -562,7 +562,7 @@ integer UserCommand(integer iNum, string sStr, key kID)
                 else if (llGetSubString(sMsg, 0, 0) == "=")
                 {
                     g_iTimeChange=llList2Integer(lTimes,0)*60*60+llList2Integer(lTimes,1)*60;
-                    if (g_iTimeChange <= 0) return TRUE; // Not handled.                    
+                    if (g_iTimeChange <= 0) return TRUE; // Not handled.
                     g_iRealSetTime = g_iTimeChange;
                     if (g_iRealRunning==1) g_iRealTimeUpAt = g_iCurrentTime+g_iRealSetTime;
                     else if(g_iRealRunning==3)
@@ -704,7 +704,7 @@ default {
             string sValue = llList2String(lParams, 1);
             if (sToken == g_sGlobalToken+"locked") g_iCollarLocked=(integer)sValue;
         }
-        else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)           
+        else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
         { // our parent menu requested to receive buttons, so send ours
             llMessageLinked(LINK_THIS, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
             lButtons = [] ; // flush submenu buttons
@@ -744,13 +744,13 @@ default {
             if (llListFindList([g_kMenuID, g_kOnMenuID, g_kRealMenuID], [kID]) != -1)
             {//this is one of our menus
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
-                key kAv = (key)llList2String(lMenuParams, 0);          
-                string sMsg = llList2String(lMenuParams, 1);                                         
-                integer iPage = (integer)llList2String(lMenuParams, 2);                 
-                integer iAuth = (integer)llList2String(lMenuParams, 3);                 
+                key kAv = (key)llList2String(lMenuParams, 0);
+                string sMsg = llList2String(lMenuParams, 1);
+                integer iPage = (integer)llList2String(lMenuParams, 2);
+                integer iAuth = (integer)llList2String(lMenuParams, 3);
                 if (kID == g_kMenuID)
-                {            
-                    
+                {
+
                     if (sMsg == UPMENU)
                     {
                         llMessageLinked(LINK_THIS, iAuth, "menu "+g_sParentMenu, kAv);
@@ -774,8 +774,8 @@ default {
                 {
                     if (sMsg == UPMENU) DoMenu(kAv, iAuth);
                     else UserCommand(iAuth, "timer real"+sMsg, kAv);
-                }                  
-            }          
+                }
+            }
         }
     }
 
@@ -795,7 +795,7 @@ default {
             //could store which is need but if both are trigered it will have to send both anyway I prefer not to check for that.
             g_sMessage="timer|timeis|"+(string)ON_TIME+"|"+(string)g_iOnTime;
             llRegionSayTo(g_kWearer, g_iInterfaceChannel, g_sMessage);
-            
+
             g_iFirstOnTime=MAX_TIME;
             g_iTimesLength=llGetListLength(g_lTimes);
             for(n = 0; n < g_iTimesLength; n = n + 2)// send notice and find the next time.
@@ -819,7 +819,7 @@ default {
             //could store which is need but if both are trigered it will have to send both anyway I prefer not to check for that.
             g_sMessage="timer|timeis|"+(string)REAL_TIME+"|"+(string)g_iCurrentTime;
             llRegionSayTo(g_kWearer, g_iInterfaceChannel, g_sMessage);
-             
+
             g_iFirstRealTime=MAX_TIME;
             g_iTimesLength=llGetListLength(g_lTimes);
             for(n = 0; n < g_iTimesLength; n = n + 2)// send notice and find the next time.
@@ -850,7 +850,7 @@ default {
         }
         g_iLastTime=g_iCurrentTime;
     }
-    
+
 /*
     changed(integer iChange) {
         if (iChange & CHANGED_REGION) {

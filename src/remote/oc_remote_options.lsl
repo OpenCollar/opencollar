@@ -321,7 +321,7 @@ default
                         lButtons = ["Orange","Yellow","Pink","Purple","Sky Blue","Light Green","Cyan","Mint"];
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [UPMENU], iPage);
                     }
-                } else if (g_sCurrentMenu == g_sSubMenu2) {   
+                } else if (g_sCurrentMenu == g_sSubMenu2) {
                     if (sButton == UPMENU)
                         llMessageLinked(LINK_SET, SUBMENU, g_sHudMenu, kID);
                     else if (sButton == "Menu") {
@@ -463,7 +463,7 @@ default
             }
         }
     }
-    
+
     changed(integer iChange)
     {
         if (iChange & CHANGED_OWNER) {

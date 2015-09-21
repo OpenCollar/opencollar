@@ -96,7 +96,7 @@ StatusBar(float fCount) {
 }
 
 SetStatus(string sName) {
-    // use card name, item type, and item name to set a nice 
+    // use card name, item type, and item name to set a nice
     // text status message
     g_iItemCounter++;
     string sMsg = "Installing: " + sName+ "\n \n \n";
@@ -110,10 +110,10 @@ debug(string sMsg) {
 }
 
 default
-{   
+{
     state_entry() {
         llSetLinkPrimitiveParamsFast(4,[PRIM_TEXT,"", <1,1,1>, 1.0]);
-        g_iTotalItems = llGetInventoryNumber(INVENTORY_ALL) - llGetInventoryNumber(INVENTORY_NOTECARD) - 3;    
+        g_iTotalItems = llGetInventoryNumber(INVENTORY_ALL) - llGetInventoryNumber(INVENTORY_NOTECARD) - 3;
     }
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (iNum == DO_BUNDLE) {
@@ -135,7 +135,7 @@ default
         }
         if (iNum == INSTALLION_DONE) llResetScript();
     }
-    
+
     dataserver(key kID, string sData) {
         if (kID == g_kLineID) {
             if (sData != EOF) {
@@ -151,25 +151,25 @@ default
                     string sName = llStringTrim(llList2String(lParts, 1), STRING_TRIM);
                     key kUUID;
                     string sMsg;
-                
+
                     SetStatus(sName);
-                
+
                     kUUID = llGetInventoryKey(sName);
                     sMsg = llDumpList2String([sType, sName, kUUID, g_sMode], "|");
-                    debug("querying: " + sMsg);             
+                    debug("querying: " + sMsg);
                     llRegionSayTo(g_kRCPT, g_iTalkChannel, sMsg);
                 }
             } else {
                 debug("finished bundle: " + g_sCard);
                 // all done reading the card. send link msg to main script saying we're done.
-                
+
                 llListenRemove(g_iListener);
-                
+
                 llMessageLinked(LINK_SET, BUNDLE_DONE, llDumpList2String([g_iTalkChannel, g_kRCPT, g_sCard, g_iPin, g_sMode], "|"), "");
             }
         }
     }
-    
+
     listen(integer iChannel, string sName, key kID, string sMsg) {
         debug("heard: " + sMsg);
         // let's live on the edge and assume that we only ever listen with a uuid filter so we know it's safe
@@ -178,7 +178,7 @@ default
         if (llGetListLength(lParts) == 3) {
             string sType = llList2String(lParts, 0);
             string sItemName = llList2String(lParts, 1);
-            string sCmd = llList2String(lParts, 2);            
+            string sCmd = llList2String(lParts, 2);
             if (sCmd == "SKIP" || sCmd == "OK") {
                 // move on to the next item by reading the next notecard line
                 g_iLine++;
@@ -198,11 +198,11 @@ default
             }
         }
     }
-    
+
     on_rez(integer iStart) {
         llResetScript();
     }
-    
+
     changed(integer iChange) {
         if (iChange & CHANGED_INVENTORY) {
             llResetScript();

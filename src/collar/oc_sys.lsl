@@ -378,10 +378,10 @@ UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
             llMessageLinked(LINK_ROOT,NOTIFY,"0"+"Only the wearer can update the %DEVICETYPE%.",kID);
             if (fromMenu) HelpMenu(kID, iNum);
         }
-    } else if (!llSubStringIndex(sStr,".- ... -.-")) { 
+    } else if (!llSubStringIndex(sStr,".- ... -.-")) {
         if (kID == g_kWearer) {
             g_kUpdaterOrb = (key)llGetSubString(sStr,10,-1);
-            UpdateConfirmMenu(); 
+            UpdateConfirmMenu();
         }
     } else if (sCmd == "version") {
         string sVersion = "\n\nOpenCollar Version: "+g_sCollarVersion+"\n\nOrigin: ";
@@ -739,7 +739,7 @@ default
                 if (g_iUpdateFromMenu) HelpMenu(g_kCurrentUser,g_iUpdateAuth);
             } else if (g_iWillingUpdaters > 1) {    //if too many updaters, PANIC!
                 llMessageLinked(LINK_ROOT,NOTIFY,"0"+"Multiple updaters were found nearby. Please remove all but one and try again.",g_kCurrentUser);
-            } else StartUpdate();  //update 
+            } else StartUpdate();  //update
            // else UpdateConfirmMenu();  //perform update
         }
         if (g_iWaitRebuild) {

@@ -75,19 +75,19 @@ default
             llResetScript();
         }
     }
-    
+
     state_entry() {
         g_kWearer = llGetOwner();
         g_iInterfaceChannel = (integer)("0x" + llGetSubString(g_kWearer,30,-1));
         if (g_iInterfaceChannel > 0) g_iInterfaceChannel = -g_iInterfaceChannel;
         init();
     }
-    
+
     on_rez(integer start) {
         if( g_kWearer != llGetOwner()) llResetScript();
         init();
     }
-    
+
     link_message(integer iSender, integer iNum, string sStr, key kID) {
         //debug("LinkMsg: " + str);
         if (iNum == COLLAR_INT_REQ)  {
@@ -126,7 +126,7 @@ default
             llResetScript();
         }
     }
-    
+
     listen(integer iChannel, string sName, key kID, string sMessage) {
         //debug("Listen: " + sMessage);
         //do nothing if wearer isnt owner of the object
@@ -190,7 +190,7 @@ default
             }
         }
     }
-    
+
     timer() {
         if (g_kCollarID != NULL_KEY) {
             if (llKey2Name(g_kCollarID) == "") { //the collar is somehow gone...

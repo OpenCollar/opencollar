@@ -173,9 +173,9 @@ Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPa
     llMessageLinked(LINK_DIALOG, DIALOG, (string)kID + "|" + sPrompt + "|" + (string)iPage + "|" + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kMenuID);
 
     integer iIndex = llListFindList(g_lMenuIDs, [kID]);
-    if (~iIndex) 
+    if (~iIndex)
         g_lMenuIDs = llListReplaceList(g_lMenuIDs, [kID, kMenuID, sMenuName], iIndex, iIndex + g_iMenuStride - 1);
-    else 
+    else
         g_lMenuIDs += [kID, kMenuID, sMenuName];
 }
 
@@ -353,7 +353,7 @@ SetTexture(string sIn, key kIn) {
         if (llToLower(llGetSubString(sIn,0,6)) == "!ribbon") L_RIBBON_TEX = llGetSubString(sIn, 8, -1);
         else L_RIBBON_TEX = sIn;
         if (GetSetting("R_TextureID")) g_sParticleTextureID = GetSetting("R_TextureID");
-        if (kIn) 
+        if (kIn)
             llMessageLinked(LINK_ROOT,NOTIFY,"0"+"Leash texture set to " + L_RIBBON_TEX,kIn);
     }
     else if (g_sParticleMode == "Classic") {
@@ -626,7 +626,7 @@ default {
             if (sMessage == "leash_leashedto") StopParticles(TRUE);
         }*/
     }
-    
+
     timer() {
         if (llGetOwnerKey(g_kParticleTarget) == g_kParticleTarget) {
             if(g_kLeashedTo) {
@@ -635,9 +635,9 @@ default {
                 StartParticles(g_kParticleTarget);
             }
             else if(!g_iLeashActive) llSetTimerEvent(0.0);
-        } 
+        }
     }
-    
+
     listen(integer iChannel, string sName, key kID, string sMessage) {
         if (iChannel == LOCKMEISTER) {
             //leash holder announced it got detached... send particles to avi
@@ -664,7 +664,7 @@ default {
                     list lTemp = llParseString2List(sMessage,["|"],[""]);
                     // lTemp should look like [g_kLeashto,"LMV2","ReplyPoint","handle",g_kParticleTarget]
                     // is it a v2 style LM reply?
-                    if(llList2String(lTemp,1)=="LMV2" && llList2String(lTemp,2)=="ReplyPoint") {   
+                    if(llList2String(lTemp,1)=="LMV2" && llList2String(lTemp,2)=="ReplyPoint") {
                         g_kParticleTarget = (key)llList2String(lTemp,4);
                         StartParticles(g_kParticleTarget);
                     }

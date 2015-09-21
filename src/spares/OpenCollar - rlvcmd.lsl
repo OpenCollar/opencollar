@@ -542,7 +542,7 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu)
             ProcessCommand(kID, llList2String(g_lActions, iToken), llList2Integer(g_lActions, iToken + 1), sParam1, sParam2);
             return TRUE;
         }  else {Notify(kID, "Invalid command", FALSE);} //TODO - Use GETCOMMAND to match partial string
-    } 
+    }
     if(remenu) {
         DoMenu(kID, iNum);
     }

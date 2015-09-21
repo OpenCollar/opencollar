@@ -72,9 +72,9 @@ default {
         g_sResponse = g_sWearerID + "handle ok";
         llListen(g_iMychannel, "", NULL_KEY, g_sListenfor);
         AnnounceLeashHolder();
-        llSetTimerEvent(2.0);         
+        llSetTimerEvent(2.0);
     }
-    
+
     listen(integer channel, string name, key id, string message) {
         g_kLeashed = llGetOwnerKey(id);
         AnnounceLeashHolder();

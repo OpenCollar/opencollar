@@ -1,13 +1,13 @@
 // Submissive AO 3.960
 // Anyway. This version has Wendy's request to offer a menu when the
-// ao is reset/has a new owner, asking the user to pick the correct notecard. MD 
+// ao is reset/has a new owner, asking the user to pick the correct notecard. MD
 
 // ZHAO-II-core - Ziggy Puff, 07/07
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // Main engine script - receives link messages from any interface script. Handles the core AO work
 //
-// Interface definition: The following link_message commands are handled by this script. All of 
+// Interface definition: The following link_message commands are handled by this script. All of
 // these are sent in the string field. All other fields are ignored
 //
 // ZHAO_RESET                          Reset script
@@ -50,7 +50,7 @@
 //
 //   llMessageLinked(LINK_SET, 0, "ZHAO_AOON", NULL_KEY);
 //
-// This script uses a listener on channel -91234. If other scripts are added to the ZHAO, make sure 
+// This script uses a listener on channel -91234. If other scripts are added to the ZHAO, make sure
 // they don't use the same channel
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -58,27 +58,27 @@
 // New notecard format
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-// Lines starting with a / are treated as comments and ignored. Blank lines are ignored. Valid lines 
+// Lines starting with a / are treated as comments and ignored. Blank lines are ignored. Valid lines
 // look like this:
 //
 // [ Walking ]SexyWalk1|SexyWalk2|SexyWalk3
 //
-// The token (in this case, [ Walking ]) identifies the animation to be overridden. The rest is a 
-// list of animations, separated by the '|' (pipe) character. You can specify multiple animations 
-// for Stands, Walks, Sits, and GroundSits. Multiple animations on any other line will be ignored. 
-// You can have up to 12 animations each for Walks, Sits and GroundSits. There is no hard limit 
-// on the number of stands, but adding too many stands will make the script run out of memory and 
-// crash, so be careful. You can repeat tokens, so you can split the Stands up across multiple lines. 
+// The token (in this case, [ Walking ]) identifies the animation to be overridden. The rest is a
+// list of animations, separated by the '|' (pipe) character. You can specify multiple animations
+// for Stands, Walks, Sits, and GroundSits. Multiple animations on any other line will be ignored.
+// You can have up to 12 animations each for Walks, Sits and GroundSits. There is no hard limit
+// on the number of stands, but adding too many stands will make the script run out of memory and
+// crash, so be careful. You can repeat tokens, so you can split the Stands up across multiple lines.
 // Use the [ Standing ] token in each line, and the script will add the animation lists together.
 //
-// Advanced: Each 'animation name' can be a comma-separated list of animations, which will be played 
+// Advanced: Each 'animation name' can be a comma-separated list of animations, which will be played
 // together. For example:
 //
 // [ Walking ]SexyWalk1UpperBody,SexyWalk1LowerBody|SexyWalk2|SexyWalk3
 //
-// Note the ',' between SexyWalk1UpperBody and SexyWalk1LowerBody - this tells ZHAO-II to treat these 
-// as a single 'animation' and play them together. The '|' between this 'animation' and SexyWalk2 tells 
-// ZHAO-II to treat SexyWalk2 and SexyWalk3 as separate walk animations. You can use this to layer 
+// Note the ',' between SexyWalk1UpperBody and SexyWalk1LowerBody - this tells ZHAO-II to treat these
+// as a single 'animation' and play them together. The '|' between this 'animation' and SexyWalk2 tells
+// ZHAO-II to treat SexyWalk2 and SexyWalk3 as separate walk animations. You can use this to layer
 // animations on top of each other.
 //
 // Do not add any spaces around animation names!!!
@@ -115,7 +115,7 @@
 // Ziggy, 07/16/07 - Warning instead of error on 'no animation in inventory', that way SL's built-in
 //                   anims can be used
 //
-// Ziggy, 07/14/07 - 2 bug fixes. Listens aren't being reset on owner change, and a typo in the 
+// Ziggy, 07/14/07 - 2 bug fixes. Listens aren't being reset on owner change, and a typo in the
 //                   ground sit animation code
 //
 // Ziggy, 06/07:
@@ -124,12 +124,12 @@
 //          Remove scripted texture changes, to simplify customization by animation sellers
 
 // Fennec Wind, January 18th, 2007:
-//          Changed Walk/Sit/Ground Sit dialogs to show animation name (or partial name if too long) 
+//          Changed Walk/Sit/Ground Sit dialogs to show animation name (or partial name if too long)
 //          and only show buttons for non-blank entries.
 //          Fixed minor bug in the state_entry, ground sits were not being initialized.
 //
 
-// Dzonatas Sol, 09/06: Fixed forward walk override (same as previous backward walk fix). 
+// Dzonatas Sol, 09/06: Fixed forward walk override (same as previous backward walk fix).
 
 
 // Based on Francis Chung's Franimation Overrider v1.8
@@ -175,10 +175,10 @@ list autoDisableList = [
     "eefc79be-daae-a239-8c04-890f5d23654a"  // punch_onetwo
 ];
 
-// Logic change - we now have a list of tokens. The 'overrides' list is the same length as this, 
-// i.e. it has one entry per token, *not* one entry per animation. Multiple options for a token 
-// are stored as | separated strings in a single list entry. This was done to save memory, and 
-// allow a larger number of stands etc. All the xxxIndex variables now refer to the token index, 
+// Logic change - we now have a list of tokens. The 'overrides' list is the same length as this,
+// i.e. it has one entry per token, *not* one entry per animation. Multiple options for a token
+// are stored as | separated strings in a single list entry. This was done to save memory, and
+// allow a larger number of stands etc. All the xxxIndex variables now refer to the token index,
 // since that's how long 'overrides' is.
 
 // List of internal tokens. This *must* be in the same sequence as the animState list. Note that
@@ -496,15 +496,15 @@ animOverride() {
     underwaterAnimIndex = llListFindList( underwaterAnim, [curAnimIndex] );
 
     // For all the multi-anims, we know the animation name to play. Send
-    // in the actual overrides index, since that's what this function 
+    // in the actual overrides index, since that's what this function
     // expects, not the index into the multi-anim list
     if ( curAnimIndex == standingIndex ) {
         if (( standOverride == FALSE ) && !sitAnywhereOn ) {
             startNewAnimation( EMPTY, noAnimIndex, curAnimState );
-        }        
+        }
         else if (!sitAnywhereOn) { // Sity Anywhere is ON
             startNewAnimation( curStandAnim, standingIndex, curAnimState );
-             
+
         }
         else if (sitAnywhereOn) {
             startNewAnimation( curGsitAnim, sitgroundIndex, curAnimState );
@@ -512,7 +512,7 @@ animOverride() {
     }
     else if ( curAnimIndex == sittingIndex ) {
         // Check if sit override is turned off
-        if (( sitOverride == FALSE ) && ( curAnimState == "Sitting" )&&(CheckSit()!=TRUE)) {// Seamless Sit 
+        if (( sitOverride == FALSE ) && ( curAnimState == "Sitting" )&&(CheckSit()!=TRUE)) {// Seamless Sit
             startNewAnimation( EMPTY, noAnimIndex, curAnimState );
         }
         else {
@@ -551,7 +551,7 @@ doNextStand(integer fromUI) {
         }
 
         curStandAnim = findMultiAnim( standingIndex, curStandIndex );
-        if ( lastAnimState == "Standing" && standOverride)        
+        if ( lastAnimState == "Standing" && standOverride)
             startNewAnimation( curStandAnim, standingIndex, lastAnimState );
 
         if ( fromUI == TRUE ) {
@@ -568,7 +568,7 @@ doNextStand(integer fromUI) {
 
 // Start or stop typing animation
 typingOverride(integer isTyping) {
-    if(isTyping) {  
+    if(isTyping) {
         integer curTypingIndex = 0;
         if(numTyping > 1) {
             curTypingIndex = llFloor( llFrand(numTyping) );
@@ -577,7 +577,7 @@ typingOverride(integer isTyping) {
         startAnimationList(curTypingAnim);
     }
     else
-    {  
+    {
         stopAnimationList(curTypingAnim);
     }
 }
@@ -606,14 +606,14 @@ doMultiAnimMenu(key _id, integer _animIndex, string _animType, string _currentAn
     if ( animNames == EMPTY ) {
         animNames = "\n\nNo overrides have been configured.";
     }
-    
-    string text = "Select the " + _animType + " animation to use:\n\nCurrently: " + _currentAnim + animNames + "\n"; 
+
+    string text = "Select the " + _animType + " animation to use:\n\nCurrently: " + _currentAnim + animNames + "\n";
     list utility = [UPMENU];
     key menuid = Dialog(_id, text, buttons, utility, 0);
-    
+
     // UUID , Menu ID, Menu
     list newstride = [_id, menuid, MULTIANIM];
-    
+
     // Check dialogs for previous entry and update if needed
     integer index = llListFindList(menuids, [_id]);
     if (index == -1)
@@ -623,7 +623,7 @@ doMultiAnimMenu(key _id, integer _animIndex, string _animType, string _currentAn
     else
     { //this person is already in the dialog list.  replace their entry
         menuids = llListReplaceList(menuids, newstride, index, index - 1 + menustride);
-    }  
+    }
 }
 
 // Returns an animation from the multiAnims
@@ -686,8 +686,8 @@ loadNoteCard() {
 
     if ( llGetInventoryKey(notecardName) == NULL_KEY ) {
         Notify(whoid, "Notecard '" + notecardName + "' does not exist, or does not have full permissions. Please correct this.", FALSE );
-        
-        
+
+
         loadInProgress = FALSE;
         notecardName = EMPTY;
         return;
@@ -730,11 +730,11 @@ endNotecardLoad()
 }
 
 // Initialize listeners, and reset some status variables
-initialize() 
+initialize()
 {
     Owner = llGetOwner();
     whoid=Owner;
-    
+
     //added for issue 895
     g_iJustRezed = TRUE;
 
@@ -749,7 +749,7 @@ initialize()
     lastAnimIndex = noAnimIndex;
     lastAnimState = EMPTY;
     gotPermission = FALSE;
-    
+
     //removed per issue 895
     //printFreeMemory();
 }
@@ -766,20 +766,20 @@ Notify(key id, string msg, integer alsoNotifyWearer) {
         }
         else {
             llOwnerSay(msg);
-        }  
+        }
     }
     else {
         llOwnerSay(msg+"\n whoid:"+(string)whoid+"\n There was an error sending a message. Please report it at http://code.google.com/p/opencollar/issues/list");
-    }    
+    }
 }
 
 
-askDefault() //added to provide a menu to ask for default notecard and 
+askDefault() //added to provide a menu to ask for default notecard and
 {
     list animSets;
     integer n = llGetInventoryNumber( INVENTORY_NOTECARD );
     integer i;
-    for ( i = 0; i < n; i++ ) 
+    for ( i = 0; i < n; i++ )
     {
         string notecardName = llGetInventoryName( INVENTORY_NOTECARD, i );
         if ( notecardName != helpNotecard && notecardName != license)
@@ -796,8 +796,8 @@ default {
         integer i;
 
         Owner = llGetOwner();
-        
-        
+
+
         if ( llGetAttached() )
             llRequestPermissions( llGetOwner(), PERMISSION_TRIGGER_ANIMATION|PERMISSION_TAKE_CONTROLS );
 
@@ -848,14 +848,14 @@ default {
     link_message( integer _sender, integer _num, string _message, key _id) {
         if(_num == DIALOG_RESPONSE)
         {
-            
+
             integer menuindex = llListFindList(menuids, [_id]);
             if (menuindex != -1)
             {
                 //got a menu response meant for us.  pull out values
                 list menuparams = llParseString2List(_message, ["|"], []);
-                _id = (key)llList2String(menuparams, 0);          
-                _message = llList2String(menuparams, 1);                                         
+                _id = (key)llList2String(menuparams, 0);
+                _message = llList2String(menuparams, 1);
                 integer page = (integer)llList2String(menuparams, 2);
                 string menutype = llList2String(menuids, menuindex + 1);
                 //remove stride from menuids
@@ -915,7 +915,7 @@ default {
                     // old listen system
                     return;
                 }
-                
+
             }
             else if(_id==g_kSetDefault)
             {
@@ -926,7 +926,7 @@ default {
                     _id=Owner;
                     defaultNoteCard=_message;
                     _message="ZHAO_LOAD|"+_message;
-                    
+
                 }
                 else return; //shouldn't ever get here.
             }
@@ -939,24 +939,24 @@ default {
                     _id=Owner;
                     llOwnerSay("Menu timed out whilst asking for your default notecard. Setting it to "+defaultNoteCard+" for now. Select load from the AO menu to change.");
             }
-                
+
             integer menuindex = llListFindList(menuids, [_id]);
             // if it's greater than 0, we know it's for us (this script)
             if (menuindex != -1)
             {
                 llInstantMessage(llGetOwner(),"SubAO Menu has timed out. Pressing a menu entry will not do anything.");
             }
-           
+
         }
-        
+
         if ( llGetSubString(_message, 0, 4) == "ZHAO_" )
         // now process zhao messages
         {
-               
+
 
              // thius line cause the IM error, as it was called when ANY LinkedMessage was received,, i hope it is fixed when we oly react on "ZHAO" messages
             if (_id) whoid = _id;
-        
+
             // Coming from an interface script
             if ( _message == "ZHAO_RESET" ) {
                 Notify(whoid, "Resetting...", FALSE );
@@ -971,13 +971,13 @@ default {
                 // -- End change
                 llSleep(1);
                 llResetScript();
-    
+
             } else if ( _message == "ZHAO_AOON" && _num == 42) {
                     // AO On
                     llSetTimerEvent( timerEventLength );
                 animOverrideOn = TRUE;
                 checkAndOverride();
-    
+
             } else if ( _message == "ZHAO_AOOFF" && _num == 42 ) {
                     llSetTimerEvent( 0 );
                 animOverrideOn = FALSE;
@@ -986,7 +986,7 @@ default {
                 lastAnimSet = EMPTY;
                 lastAnimIndex = noAnimIndex;
                 lastAnimState = EMPTY;
-    
+
                 // Added for OCCuffs: Pause mode to wake AO from sleep
             } else if ( _message == "ZHAO_UNPAUSE" ) {
                     animOverridePause=FALSE;
@@ -996,7 +996,7 @@ default {
                     checkAndOverride();
                 }
                 animOverridePause=FALSE;
-    
+
             } else if ( _message == "ZHAO_PAUSE" ) {
                     // Added for OCCuffs: Pause mode to wake AO from sleep
                     animOverridePause=TRUE;
@@ -1010,13 +1010,13 @@ default {
                     lastAnimState = EMPTY;
                 }
                 // end of OCCuffs
-    
+
             } else if ( _message == "ZHAO_STANDON" ) {
                     // Turning on sit override
                     standOverride = TRUE;
                 if ( lastAnimState == "Standing" )
                     startNewAnimation( curStandAnim, sittingIndex, lastAnimState );
-    
+
             } else if ( _message == "ZHAO_STANDOFF" ) {
                     // Turning off sit override
                     standOverride = FALSE;
@@ -1026,21 +1026,21 @@ default {
                 }
                 if ( lastAnimState == "Standing" )
                     startNewAnimation( EMPTY, noAnimIndex, lastAnimState );
-    
+
             } else if ( _message == "ZHAO_SITON" ) {
                     // Turning on sit override
                     sitOverride = TRUE;
                 Notify(whoid, "Sit override: On", FALSE );
                 if ( lastAnimState == "Sitting" )
                     startNewAnimation( curSitAnim, sittingIndex, lastAnimState );
-    
+
             } else if ( _message == "ZHAO_SITOFF" ) {
                     // Turning off sit override
                     sitOverride = FALSE;
                 Notify(whoid, "Sit override: Off", FALSE );
                 if ( lastAnimState == "Sitting" )
                     startNewAnimation( EMPTY, noAnimIndex, lastAnimState );
-    
+
             } else if ( _message == "ZHAO_SITANYWHERE_ON" ) {
                     // Turning on sit anywhre mod
                     sitAnywhereOn = TRUE;
@@ -1048,7 +1048,7 @@ default {
                 //llOwnerSay( S_SIT_AW + "On" );
                 if ( lastAnimState == "Standing" )
                     startNewAnimation( curGsitAnim, sitgroundIndex, lastAnimState );
-    
+
             } else if ( _message == "ZHAO_SITANYWHERE_OFF" ) {
                     // Turning off sit anywhere mod
                     sitAnywhereOn = FALSE;
@@ -1056,13 +1056,13 @@ default {
                 //llOwnerSay( S_SIT_AW + "Off" );
                 if ( lastAnimState == "Standing" )
                     startNewAnimation( curStandAnim, standingIndex, lastAnimState );
-    
+
             } else if ( _message == "ZHAO_TYPEAO_ON" ) {
                 // Turning on typing override
                 typingOverrideOn = TRUE;
-                llOwnerSay( S_TYPING + "On" );                    
+                llOwnerSay( S_TYPING + "On" );
                 typingStatus = FALSE;
-                
+
             } else if ( _message == "ZHAO_TYPEAO_OFF" ) {
                 // Turning off typing override
                 typingOverrideOn = FALSE;
@@ -1070,17 +1070,17 @@ default {
                 if ( typingStatus ) {
                     stopAnimationList(curTypingAnim);
                     typingStatus = FALSE;
-                }   
+                }
             } else if ( _message == "ZHAO_RANDOMSTANDS" ) {
                     // Cycling to next stand - sequential or random
                     randomStands = TRUE;
                 Notify(whoid, "Stand cycling: Random", FALSE );
-    
+
             } else if ( _message == "ZHAO_SEQUENTIALSTANDS" ) {
                     // Cycling to next stand - sequential or random
                     randomStands = FALSE;
                 Notify(whoid, "Stand cycling: Sequential", FALSE );
-    
+
             } else if ( _message == "ZHAO_SETTINGS" ) {
                     // Print settings
                     string notifymessage;
@@ -1106,7 +1106,7 @@ default {
                 }
                 notifymessage += "\n" + "Stand cycle time: " + (string)standTime + " seconds";
                 Notify(whoid, notifymessage,FALSE);
-    
+
             } else if ( _message == "ZHAO_NEXTSTAND" ) {
                     // Cycling to next stand - sequential or random. This is from UI, so we
                     // want feedback
@@ -1114,54 +1114,54 @@ default {
                 doNextStand( TRUE );
                 // -- Quick hack for Remenu
                 llMessageLinked(LINK_THIS, 500, "ZHAO_MENU", whoid);
-    
+
             } else if ( llGetSubString(_message, 0, 14) == "ZHAO_STANDTIME|" ) {
                 // Stand time change
                 standTime = (integer)llGetSubString(_message, 15, -1);
                 Notify(whoid, "Stand cycle time: " + (string)standTime + " seconds", FALSE );
                 // -- Quick hack for Remenu
                 llMessageLinked(LINK_THIS, 500, "ZHAO_MENU", whoid);
-    
-            } 
-            
+
+            }
+
             else if ( llGetSubString(_message, 0, 9) == "ZHAO_LOAD|" ) {
-                   
+
                     // Can't load while we're in the middle of a load
                     if ( loadInProgress == TRUE ) {
                         Notify(whoid, "Cannot load new notecard, still reading notecard '" + notecardName + "'", FALSE );
                         return;
                     }
-    
+
                 // Notecard menu
                 g_iJustRezed = FALSE;
                 loadInProgress = TRUE;
                 notecardName = llGetSubString(_message, 10, -1);
                 whoid=_id;
                 loadNoteCard();
-                
-    
+
+
             }
              else if ( _message == "ZHAO_SITS" ) {
                     // Selecting new sit anim
-    
+
                     // Move these to a common function
                     doMultiAnimMenu(_id, sittingIndex, "Sitting", curSitAnim );
-    
+
                 listenState = 1;
-    
+
             } else if ( _message == "ZHAO_WALKS" ) {
                     // Same thing for the walk
-    
+
                     // Move these to a common function
                     doMultiAnimMenu(_id, walkingIndex, "Walking", curWalkAnim );
-    
+
                 listenState = 2;
             } else if ( _message == "ZHAO_GROUNDSITS" ) {
                     // And the ground sit
-    
+
                     // Move these to a common function
                     doMultiAnimMenu(_id, sitgroundIndex, "Sitting On Ground", curGsitAnim );
-    
+
                 listenState = 3;
             }
         }
@@ -1193,10 +1193,10 @@ default {
 
             // Reset stand, walk, sit and ground-sit anims to first entry
             curStandIndex = 0;
-            numStands = llGetListLength( llParseString2List(llList2String(overrides, standingIndex), 
+            numStands = llGetListLength( llParseString2List(llList2String(overrides, standingIndex),
                                          [SEPARATOR], []) );
-                                         
-            numTyping = llGetListLength( llParseString2List(llList2String(overrides, typingIndex), 
+
+            numTyping = llGetListLength( llParseString2List(llList2String(overrides, typingIndex),
                                              [SEPARATOR], []) );
 
             curStandAnim = findMultiAnim( standingIndex, 0 );
@@ -1210,7 +1210,7 @@ default {
             lastAnimSet = EMPTY;
             lastAnimIndex = noAnimIndex;
             lastAnimState = EMPTY;
-            
+
             if (g_iJustRezed)
             {
                 g_iJustRezed = FALSE;
@@ -1221,7 +1221,7 @@ default {
                 Notify(whoid, "Finished reading notecard '" + notecardName + "'.", FALSE );
                 printFreeMemory();
             }
-            
+
 
             endNotecardLoad();
             return;
@@ -1239,7 +1239,7 @@ default {
         for ( i=0; i<numOverrides; i++ ) {
             string token = llList2String( tokens, i );
             // We have some blank entries in 'tokens' to get it to line up with animState... make
-            // sure we don't match on a blank. 
+            // sure we don't match on a blank.
             if (( token != EMPTY ) && ( llGetSubString( _data, 0, llStringLength(token) - 1 ) == token )) {
                 // We found a token on this line, so we don't have to throw an error or keep
                 // trying to match tokens
@@ -1285,9 +1285,9 @@ default {
         } // End search for tokens
 
         @done;
-        
+
         if ( !found ) {
-            Notify(whoid, "Could not recognize token on line " + (string)notecardIndex + ": " + 
+            Notify(whoid, "Could not recognize token on line " + (string)notecardIndex + ": " +
                         _data + ". " + TRYAGAIN, FALSE );
 
             endNotecardLoad();
@@ -1336,7 +1336,7 @@ default {
 
     timer() {
         // Typing AO ported from MB2.
-        if(numTyping > 0 && typingOverrideOn) {            
+        if(numTyping > 0 && typingOverrideOn) {
             integer typingTemp = llGetAgentInfo(Owner) & AGENT_TYPING; // are we typing?
             if (typingTemp != typingStatus) { //status changed since last checked?
                 typingOverride(typingTemp);
@@ -1347,14 +1347,14 @@ default {
             // Is it time to switch stand animations?
             // Stand cycling can be turned off
             if ( (standTime != 0) && (llGetTime() > standTime) ) {
-                // Don't interrupt the typing animation with a stand change. 
+                // Don't interrupt the typing animation with a stand change.
                 // Not from UI, no feedback
                 if ( !typingStatus )
                     doNextStand( FALSE );
             }
         }
     }
-    
+
     changed (integer change)
     {
         if(change&CHANGED_OWNER) askDefault();

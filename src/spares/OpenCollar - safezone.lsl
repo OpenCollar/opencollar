@@ -30,7 +30,7 @@ integer g_iStealth = FALSE; //hide/show collar when inactive
 
 list g_lRegions;
 
-string CTYPE                        = "collar";    // designer can set in notecard to appropriate word for their item        
+string CTYPE                        = "collar";    // designer can set in notecard to appropriate word for their item
 string WEARERNAME;
 
 string TICKED = "☒ ";
@@ -51,7 +51,7 @@ integer LM_SETTING_SAVE            = 2000; // scripts send messages on this chan
 integer LM_SETTING_REQUEST         = 2001;
 integer LM_SETTING_RESPONSE        = 2002; // the settings script will send responses on this channel
 integer LM_SETTING_DELETE          = 2003; // delete token from settings store
-integer LM_SETTING_EMPTY           = 2004; 
+integer LM_SETTING_EMPTY           = 2004;
 
 // messages for creating OC menu structure
 integer MENUNAME_REQUEST           = 3000;
@@ -107,7 +107,7 @@ CheckRegion() {
                 if (g_iStealth) llMessageLinked(LINK_THIS, COMMAND_OWNER, "show", g_kWearer);
             }
             else {
-                llMessageLinked(LINK_THIS, COMMAND_OWNER, "unsetopenaccess", g_kWearer); 
+                llMessageLinked(LINK_THIS, COMMAND_OWNER, "unsetopenaccess", g_kWearer);
                 if (g_iStealth) llMessageLinked(LINK_THIS, COMMAND_OWNER, "hide", g_kWearer);
             }
         }
@@ -158,10 +158,10 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
     string sParam2;
     if (llGetListLength(lParams) > 2) sParam2 = llDumpList2String(llList2List(lParams,2,-1)," ");
     sStr=llToLower(sStr);
-    if (!(iNum >= COMMAND_OWNER && iNum <= COMMAND_GROUP)) { 
+    if (!(iNum >= COMMAND_OWNER && iNum <= COMMAND_GROUP)) {
         return FALSE;
     } else if (sStr == g_sAppName || sStr == "menu "+g_sAppName) {
-        // an authorized user requested the plugin menu by typing the menus chat command 
+        // an authorized user requested the plugin menu by typing the menus chat command
         DoMenu(kID, iNum);
     } else if (sStr == g_sAppName+" off")  {
         Notify(kID,SUBMENU_BUTTON+" plugin OFF!",TRUE);
@@ -255,12 +255,12 @@ default {
         CheckRegion();
     }
 
-    link_message(integer iSender, integer iNum, string sStr, key kID) { 
+    link_message(integer iSender, integer iNum, string sStr, key kID) {
        // llOwnerSay(sStr+" | "+(string)iNum+ "|"+(string)kID);
         if (iNum == MENUNAME_REQUEST && sStr == COLLAR_PARENT_MENU) {
             // our parent menu requested to receive buttons, so send ours
             llMessageLinked(LINK_THIS, MENUNAME_RESPONSE, COLLAR_PARENT_MENU + "|" + SUBMENU_BUTTON, "");
-        } /* 
+        } /*
         else if ((iNum == LM_SETTING_DELETE) || (iNum == LM_SETTING_SAVE) || (iNum == LM_SETTING_RESPONSE)) { //listen for changes to auth_openaccess and takeme_takeme
             if (llSubStringIndex(sStr, "auth_openaccess") == 0) {
                 if (iNum == LM_SETTING_DELETE) g_iOpenAccess = FALSE;
@@ -271,7 +271,7 @@ default {
                 else { if (g_iTakeMe == FALSE) g_iTakeMe = TRUE; CheckRegion(); }
             }
         } */
-        else if ((iNum == LM_SETTING_RESPONSE || iNum == LM_SETTING_DELETE) 
+        else if ((iNum == LM_SETTING_RESPONSE || iNum == LM_SETTING_DELETE)
                 && llSubStringIndex(sStr, "Global_WearerName") == 0 ) {
             integer iInd = llSubStringIndex(sStr, "=");
             string sValue = llGetSubString(sStr, iInd + 1, -1);
@@ -282,7 +282,7 @@ default {
                 WEARERNAME = llGetDisplayName(g_kWearer);
                 if (WEARERNAME == "???" || WEARERNAME == "") WEARERNAME == llKey2Name(g_kWearer);
             }
-        }        
+        }
         else if (iNum == LM_SETTING_RESPONSE) {
             // response from setting store have been received, parse the answer
             list lParams = llParseString2List(sStr, ["="], []);
@@ -290,19 +290,19 @@ default {
             string sValue = llList2String(lParams, 1);
             integer i = llSubStringIndex(sToken, "_");
             // and check if any values for use are received
-            if (sToken == g_sScript+g_sAppName) g_iSafeZoneOn = TRUE; 
+            if (sToken == g_sScript+g_sAppName) g_iSafeZoneOn = TRUE;
             else if (sToken == g_sScript+"allow") g_iAllowList = TRUE;
-            else if (sToken == g_sScript+"deny") g_iDenyList = TRUE; 
+            else if (sToken == g_sScript+"deny") g_iDenyList = TRUE;
             else if (sToken == g_sScript+"stealth") g_iStealth = TRUE;
             else if (sToken == "Global_CType") CTYPE = sValue;
             else if (llGetSubString(sToken, 0, i) == g_sScript) { //hack up the token to pull the region name from "script_regionname=1"
                 string sTmpRegion = llGetSubString(sToken, llSubStringIndex(sToken, "_") + 1, llSubStringIndex(sToken, "="));
                 if(llListFindList(g_lRegions, [sTmpRegion]) < 0) { //make sure we don't have this yet in our list
-                    g_lRegions += sTmpRegion; 
+                    g_lRegions += sTmpRegion;
                 }
             }
         }
-        else if (iNum == COMMAND_SAFEWORD) { 
+        else if (iNum == COMMAND_SAFEWORD) {
             // Safeword has been received, release any restricitions that should be released
             // We're not really doing something that would warrant steps here
         }
@@ -322,7 +322,7 @@ default {
                 if (sMessage == UPMENU) {
                     //give av the parent menu
                     llMessageLinked(LINK_THIS, iAuth, "menu "+COLLAR_PARENT_MENU, kAv);
-                } 
+                }
 
                 else if (sMessage == "OFF") {
                     UserCommand(iAuth,g_sAppName+" off",kAv,TRUE);
@@ -360,7 +360,7 @@ default {
                 if (sMessage == UPMENU) {
                     //give av the parent menu
                     llMessageLinked(LINK_THIS, iAuth, "menu "+SUBMENU_BUTTON, kAv);
-                } 
+                }
                  else if(~llListFindList(g_lRegions, [sMessage])) {
                     UserCommand(iAuth, g_sAppName + " remove " + sMessage, kAv,FALSE);
                     DoMenuRemove(kAv,iAuth);
@@ -371,7 +371,7 @@ default {
    }
     changed(integer change)
     {
-        if (change & CHANGED_REGION) 
+        if (change & CHANGED_REGION)
         {
             CheckRegion();
         }

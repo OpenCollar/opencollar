@@ -6,7 +6,7 @@ string  COLLAR_PARENT_MENU          = "Apps"; // name of the menu, where the men
 key     g_kMenuID;                              // menu handler
 key     g_kWearer;                              // key of the current wearer to reset only on owner changes
 string  g_sScript="capture_";                              // part of script name used for settings
-string CTYPE                        = "collar";    // designer can set in notecard to appropriate word for their item        
+string CTYPE                        = "collar";    // designer can set in notecard to appropriate word for their item
 list g_lTempOwners;
 integer g_iCaptureOn=FALSE;
 // OpenCollar MESSAGE MAP
@@ -162,7 +162,7 @@ integer UserCommand(integer iNum, string sStr, key kID, integer remenu) {
         Notify(kID,"Capture game is OFF!",TRUE);
         g_iCaptureOn=FALSE;
     }
-    
+
     if (remenu) {
         DoMenu(kID, iNum);
     }
@@ -193,7 +193,7 @@ default {
             string sToken = llList2String(lParams, 0);
             string sValue = llList2String(lParams, 1);
             // and check if any values for use are received
-            
+
             if (sToken == "auth_tempowner") {
                 list lTempOwners = llParseString2List(sValue, [","], []); //store tempowners list
             }

@@ -299,7 +299,7 @@ default {
         if (iNum >= CMD_OWNER && iNum <= CMD_WEARER) {
             //the command was given by either owner, secowner, group member, or wearer
             list lParams = llParseString2List(sStr, [" "], []);
-            g_kCmdGiver = kID; 
+            g_kCmdGiver = kID;
             g_iCmdAuth = iNum;
             string sCommand = llToLower(llList2String(lParams, 0));
             string sValue = llToLower(llList2String(lParams, 1));

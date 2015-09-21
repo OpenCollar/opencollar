@@ -210,7 +210,7 @@ integer LabelsCount() {
         }
     }
     if (!ok) {
-        if (~llSubStringIndex(llGetObjectName(),"Installer") && ~llSubStringIndex(llGetObjectName(),"Updater")) 
+        if (~llSubStringIndex(llGetObjectName(),"Installer") && ~llSubStringIndex(llGetObjectName(),"Updater"))
             return 1;
     }
     return ok;
@@ -436,7 +436,7 @@ default
                 integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs
             } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
-        } 
+        }
     }
 
     timer() {

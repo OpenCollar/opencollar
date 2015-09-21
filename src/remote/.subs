@@ -3,5 +3,5 @@
 # The subid is their Key which can be obtained from their profile
 # This only adds the names to your hud, it does not mean you have access to their collar
 # Empty lines and lines beginning with '#' are ignored
-subname =  
-subid = 
+subname =
+subid =

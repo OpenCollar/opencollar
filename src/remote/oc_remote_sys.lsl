@@ -92,7 +92,7 @@ key     g_kVictimID;
 /*integer g_iProfiled=1;
 Debug(string sStr) {
     //if you delete the first // from the preceeding and following  lines,
-    //  profiling is off, debug is off, and the compiler will remind you to 
+    //  profiling is off, debug is off, and the compiler will remind you to
     //  remove the debug calls from the code, we're back to production mode
     if (!g_iProfiled){
         g_iProfiled=1;
@@ -134,7 +134,7 @@ SendCmd(key kID, string sCmd) {
     }
 }
 
-SendAllCmd(string sCmd) { 
+SendAllCmd(string sCmd) {
     integer i;
     for (; i < llGetListLength(g_lSubs); i+=2) {
         key kID = (key)llList2String(g_lSubs, i);
@@ -213,7 +213,7 @@ QuickLeashMenu(key kID) {
     Dialog(kID, sPrompt, lButtons, [], 0,"QuickLeash");
 }
 
-ConfirmSubRemove(key kID) { 
+ConfirmSubRemove(key kID) {
     string sPrompt = "\nAre you sure you want to remove "+NameURI(kID)+"?\n\nNOTE: This will also remove you as their owner.";
     Dialog(kID, sPrompt, ["Yes", "No"], [UPMENU], 0,"RemoveSubMenu");
 }
@@ -279,14 +279,14 @@ default
 {
     state_entry() {
         g_kWearer = llGetOwner();  //Who are we
-        g_sWearerName = llKey2Name(g_kWearer);  
+        g_sWearerName = llKey2Name(g_kWearer);
         g_iListener=llListen(getPersonalChannel(g_kWearer,1111),"",NULL_KEY,""); //lets listen here
         SetCmdListener();
         //llSleep(1.0);//giving time for others to reset before populating menu
         llMessageLinked(LINK_SET,MENUNAME_REQUEST, g_sMainMenu,"");
         //Debug("started.");
     }
-    
+
     touch_start(integer iNum)
     {
         key kID = llDetectedKey(0);
@@ -307,11 +307,11 @@ default
                 PickSubCmd("couples");
             else if (sButton == "Leash")
                 QuickLeashMenu(kID);
-            else if (llSubStringIndex(sButton,"Owner")>=0) 
+            else if (llSubStringIndex(sButton,"Owner")>=0)
                 llMessageLinked(LINK_SET, CMD_TOUCH,"hide","");
         }
     }
-    
+
     listen(integer iChannel, string sName, key kID, string sMessage) {
         if (iChannel == g_iChannel) {
             list lParams = llParseString2List(sMessage, [" "], []);
@@ -337,7 +337,7 @@ default
     }
 
     link_message(integer iSender, integer iNum, string sStr, key kID) {
-    
+
         if (iNum == MENUNAME_RESPONSE) {
             list lParams = llParseString2List(sStr, ["|"], []);
             if (llList2String(lParams,0) == g_sMainMenu)
@@ -386,7 +386,7 @@ default
                     } else sText += "nobody";
                     llOwnerSay(sText);
                     ManageMenu(kID); //return to ManageMenu
-                } else if (sMessage == g_sRemoveSub) 
+                } else if (sMessage == g_sRemoveSub)
                     RemoveSubMenu(kID,iPage);
                 else if (sMessage == g_sLoadCard) {
                     if (llGetInventoryType(g_sCard) != INVENTORY_NOTECARD) {
@@ -395,7 +395,7 @@ default
                     }
                     g_iLineNr = 0;
                     g_kLineID = llGetNotecardLine(g_sCard, g_iLineNr);
-                    ManageMenu(kID); 
+                    ManageMenu(kID);
                 } else if (sMessage == g_sScanSubs) {
                      // Ping for auth OpenCollars in the parcel
                      g_lAgents = llGetAgentList(AGENT_LIST_PARCEL, []); //scan for who is in the parcel
@@ -452,7 +452,7 @@ default
             } else if (sMenuType == "Main") {
                 if (sMessage == "MANAGE")
                     ManageMenu(kID);
-                else if (sMessage == "Collar") 
+                else if (sMessage == "Collar")
                     PickSubCmd("menu");
                 else if (sMessage == "Cage") {
                     llOwnerSay("Scanning for possible cagees within "+(string)g_iScanRange+"m with RLV-Relay...");
@@ -470,7 +470,7 @@ default
                     PickSubCmd("unleash");
                 } else if (sMessage == "Follow")
                     PickSubCmd("follow me");
-                else 
+                else
                     PickSubCmd(llToLower(sMessage));
             } else if (sMenuType == "CageMenu") {
                 if (sMessage == UPMENU) {
@@ -495,7 +495,7 @@ default
                     key kNewSubID;
                     do {
                         kNewSubID = llList2Key(g_lNewSubIDs,i);
-                        if (kNewSubID) 
+                        if (kNewSubID)
                             AddSub(kNewSubID,llKey2Name(kNewSubID));
                     } while (i++ < llGetListLength(g_lNewSubIDs));
                     g_lNewSubIDs = [];
@@ -516,7 +516,7 @@ default
                     g_lNewSubIDs = [];
                     ManageMenu(kID);
                 }
-            }    
+            }
         }
 //        else if (iNum == DIALOG_URL)
 //            g_sDialogUrl = sStr;
@@ -535,7 +535,7 @@ default
     no_sensor(){
         llOwnerSay("nobody found");
     }
-            
+
 //  clear things after ping
     timer() {
         //Debug ("timer expired" + (string)llGetListLength(g_lCageVictims));
@@ -564,7 +564,7 @@ default
                         string sValue = llStringTrim(llGetSubString(sData, index + 1, -1),STRING_TRIM);
                         if (sName == "subname") g_sSubName = sValue;
                         else if (sName == "subid") g_kSubID = sValue;
-                    } 
+                    }
                 }
                 if (g_sSubName!="" && g_kSubID!="")
                     AddSub(g_kSubID,g_sSubName);
@@ -576,7 +576,7 @@ default
         llSleep(0.5); // make sure object is rezzed and listens
         llRegionSayTo(kID,g_iCageChannel,"fetch"+(string)g_kVictimID);
     }
-    
+
     changed(integer iChange) {
         if (iChange & CHANGED_INVENTORY) {
             //llOwnerSay("\n\nReloading the "+g_sCard+" card\n!");

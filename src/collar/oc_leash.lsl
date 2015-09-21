@@ -272,7 +272,7 @@ integer LeashTo(key kTarget, key kCmdGiver, integer iAuth, list lPoints, integer
         return FALSE;
     }
     if (!CheckCommandAuth(kCmdGiver, iAuth)) return FALSE;
-    //if (g_kLeashedTo==kTarget) return TRUE; 
+    //if (g_kLeashedTo==kTarget) return TRUE;
     if (g_kLeashedTo) DoUnleash();
 
     integer bCmdGiverIsAvi=llGetAgentSize(kCmdGiver) != ZERO_VECTOR;
@@ -593,7 +593,7 @@ UserCommand(integer iAuth, string sMessage, key kMessageID, integer bFromMenu) {
                 //debug("leash target is key");//could be a post, or could be we specified an av key
                 //g_kLeashTargetDialogID = "";
                 LeashTo((key)sVal, kMessageID, iAuth, lPoints, FALSE);
-            } else 
+            } else
                 SensorDialog(g_kCmdGiver, "\nWho shall we pass the leash?\n", sVal,iAuth,"LeashTarget", AGENT);
         } else if (sComm == "length") {
             integer iNewLength = (integer)sVal;
@@ -625,7 +625,7 @@ UserCommand(integer iAuth, string sMessage, key kMessageID, integer bFromMenu) {
                 if (llGetAgentSize((key)sVal)) g_iPassConfirmed = FALSE;
                 else g_iPassConfirmed = TRUE;
                 LeashTo((key)sVal, kMessageID, iAuth, lPoints, FALSE);
-            } else 
+            } else
                 SensorDialog(g_kCmdGiver, "\n\nWhat's going to serve us as a post? If the desired object isn't on the list, please try moving closer.\n", "",iAuth,"PostTarget", PASSIVE|ACTIVE);
         }
     }
@@ -726,7 +726,7 @@ default {
                     g_iStrictRank = (integer)llList2String(lParam, 1);
                     ApplyRestrictions();
                 } else if (sToken == "turn") g_iTurnModeOn = (integer)sValue;
-            } 
+            }
         } else if (iNum == RLV_ON) {
             g_iRLVOn = TRUE;
             ApplyRestrictions();
@@ -787,7 +787,7 @@ default {
             }
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kMessageID]);
-            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                        
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
         } else if (iNum == REBOOT && sMessage == "reboot") llResetScript();
     }
 

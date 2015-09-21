@@ -518,7 +518,7 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
                 //if key provided use that, else read current group
                 if ((key)(llList2String(lParams, -1))) g_kGroup = (key)llList2String(lParams, -1);
                 else g_kGroup = (key)llList2String(llGetObjectDetails(llGetKey(), [OBJECT_GROUP]), 0); //record current group key
-    
+
                 if (g_kGroup != "") {
                     llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken + "group=" + (string)g_kGroup, "");
                     g_iGroupEnabled = TRUE;
@@ -587,7 +587,7 @@ RunAway() {
     llMessageLinked(LINK_ROOT,NOTIFY_OWNERS,"%WEARERNAME% ran away!","");
     llMessageLinked(LINK_ALL_OTHERS, LM_SETTING_RESPONSE, g_sSettingToken + "owner=", "");
     llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken + "owner", "");
-    llMessageLinked(LINK_ALL_OTHERS, LM_SETTING_RESPONSE, g_sSettingToken + "tempowner=", "");    
+    llMessageLinked(LINK_ALL_OTHERS, LM_SETTING_RESPONSE, g_sSettingToken + "tempowner=", "");
     llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken + "tempowner", "");
     // moved reset request from settings to here to allow noticifation of owners.
     llMessageLinked(LINK_ALL_OTHERS, CMD_OWNER, "clear", g_kWearer);
@@ -663,7 +663,7 @@ default {
                     g_iFirstRun = FALSE;
                 }
             }
-        } else if (iNum == AUTH_REQUEST) //The reply is: "AuthReply|UUID|iAuth" we rerute this to com to have the same prim ID 
+        } else if (iNum == AUTH_REQUEST) //The reply is: "AuthReply|UUID|iAuth" we rerute this to com to have the same prim ID
             llMessageLinked(iSender,AUTH_REPLY, "AuthReply|"+(string)kID+"|"+(string)Auth(kID, TRUE), llGetSubString(sStr,0,35));
         else if (iNum == DIALOG_RESPONSE) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);

@@ -157,7 +157,7 @@ string g_sScript;
 integer g_iProfiled;
 Debug(string sStr) {
     //if you delete the first // from the preceeding and following  lines,
-    //  profiling is off, debug is off, and the compiler will remind you to 
+    //  profiling is off, debug is off, and the compiler will remind you to
     //  remove the debug calls from the code, we're back to production mode
     if (!g_iProfiled){
         g_iProfiled=1;
@@ -340,7 +340,7 @@ Dequeue()
     string sPrompt=llKey2Name(kCurID)+", owned by "+sOwner+" wants to control your viewer.";
     if (llGetSubString(sCommand,0,6)=="!x-who/")
     {
-        key kUser = SanitizeKey(llGetSubString(sCommand,7,42));        
+        key kUser = SanitizeKey(llGetSubString(sCommand,7,42));
         lButtons+=["Trust User","Ban User"];
         sPrompt+="\n" + Name(kUser) + " is currently using this device.";
     }
@@ -547,7 +547,7 @@ PListsMenu(key kID, string sMsg, integer iAuth)
     g_sListType=sMsg;
 
     list lButtons=[ALL];
-    
+
     integer i;
     for (i=0;i<(lOList!=[]);++i)
     {
@@ -555,7 +555,7 @@ PListsMenu(key kID, string sMsg, integer iAuth)
         //Notify(kID, (string)(i+1)+": "+llList2String(lOListNames,i)+", "+llList2String(lOList,i), FALSE );
         Notify(kID, (string)(i+1)+": "+llList2String(lOListNames,i), FALSE );
     }
-    
+
     sPrompt+="\n\nMake a choice:";
     g_kListID = Dialog(kID, sPrompt, lButtons, [UPMENU], 0, iAuth);
 }

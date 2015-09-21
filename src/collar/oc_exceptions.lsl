@@ -284,9 +284,9 @@ SetAllExs() {
         if (llListFindList(g_lSettings, [sTmpOwner]) == -1 && sTmpOwner!=g_kWearer) {
             for (i = 0; i<iStop; i++) {
                 if (g_iTrustedDefault & llList2Integer(g_lBinCmds, i) )
-                    sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=n"; 
-                else 
-                    sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=y"; 
+                    sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=n";
+                else
+                    sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=y";
                 llOwnerSay(sRLVCmd);
                 sRLVCmd = "@";
             }
@@ -297,9 +297,9 @@ SetAllExs() {
         string sTmpOwner = llList2String(g_lOwners+g_lTempOwners, n);
         if (llListFindList(g_lSettings, [sTmpOwner]) == -1 && sTmpOwner!=g_kWearer) {
             for (i = 0; i<iStop; i++) {
-                if (g_iOwnerDefault & llList2Integer(g_lBinCmds, i) ) 
+                if (g_iOwnerDefault & llList2Integer(g_lBinCmds, i) )
                     sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=n";
-                else 
+                else
                     sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=y";
                 llOwnerSay(sRLVCmd);
                 sRLVCmd = "@";
@@ -312,9 +312,9 @@ SetAllExs() {
         if(sTmpOwner!=g_kWearer) {
             integer iTmpOwner = llList2Integer(g_lSettings, n+1);
             for (i = 0; i<iStop; i++) {
-                if (iTmpOwner & llList2Integer(g_lBinCmds, i) ) 
+                if (iTmpOwner & llList2Integer(g_lBinCmds, i) )
                     sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=n";
-                else 
+                else
                     sRLVCmd += llList2String(g_lRLVcmds, i) + ":" + sTmpOwner + "=y";
             }
             llOwnerSay(sRLVCmd);
@@ -476,7 +476,7 @@ default {
                 sToken = llGetSubString(sToken, i + 1, -1);
                 if (sToken == "owner") g_iOwnerDefault = (integer)sValue;
                 else if (sToken == "trusted") g_iTrustedDefault = (integer)sValue;
-            } else if (llGetSubString(sToken, 0, i) == "auth_") { 
+            } else if (llGetSubString(sToken, 0, i) == "auth_") {
                 if (sToken == "auth_owner") g_lOwners = llParseString2List(sValue, [","], []);
                 else if (sToken == "auth_trust") g_lSecOwners = llParseString2List(sValue, [","], []);
                 else if (sToken == "auth_tempowner") g_lTempOwners = llParseString2List(sValue, [","], []);
@@ -484,7 +484,7 @@ default {
                 SetAllExs();
             } else if (sToken == "settings") {
                 if (sValue == "sent") SetAllExs();//sendcommands
-            } //else if 
+            } //else if
         } else if (iNum == RLV_CLEAR) {
             llSleep(2.0);
             SetAllExs();
@@ -496,13 +496,13 @@ default {
             SetAllExs();//send the settings as we did notbefore
         } else if (iNum == DIALOG_RESPONSE) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-            if (~iMenuIndex) { 
+            if (~iMenuIndex) {
                 //Debug("dialog response: " + sStr);
                 list lMenuParams = llParseString2List(sStr, ["|"], []);
-                key kAv = (key)llList2String(lMenuParams, 0);          
-                string sMessage = llList2String(lMenuParams, 1);                                         
-                integer iPage = (integer)llList2String(lMenuParams, 2); 
-                integer iAuth = (integer)llList2String(lMenuParams, 3); 
+                key kAv = (key)llList2String(lMenuParams, 0);
+                string sMessage = llList2String(lMenuParams, 1);
+                integer iPage = (integer)llList2String(lMenuParams, 2);
+                integer iAuth = (integer)llList2String(lMenuParams, 3);
                 string sMenu=llList2String(g_lMenuIDs, iMenuIndex+1);
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
                 if (sMenu == "main") {
