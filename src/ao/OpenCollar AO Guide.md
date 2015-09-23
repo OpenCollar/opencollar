@@ -20,10 +20,10 @@ Right-click the OpenCollar Sub AO in your inventory and select `Wear`. It should
 The 4 HUD Buttons: (Top to bottom when at default setting)
 
 1. Main Menu - (square menu sheet) Opens up the SUB AOs menu. (* See Below)
-2. Sit Anywhere - Allows you to sit anywhere.  White means on, gray means off.
+2. Sit Anywhere - Allows you to sit anywhere. White means on, gray means off.
 3. The 'Power' button - Turns OpenCollar Sub AO on and off. White means on, gray means off. When OpenCollar Sub AO is off, it won't override your animations
 4. Dock/Hide - (nadu girl) Docks/hides the three buttons. Pressing it again will undock/show the buttons.
-  * If the user has collar integration enabled, a menu to select the AO Menu, Collar Menu, Couples Animations, and  HUD Options pops up.  If collar integration is off the menu will default to the standard AO Menu.
+    * If the user has collar integration enabled, a menu to select the AO Menu, Collar Menu, Couples Animations, and HUD Options pops up. If collar integration is off the menu will default to the standard AO Menu.
 
 ## Menus
 
@@ -54,17 +54,17 @@ The AO menu: or ` AO `
 
 Collar Menu
 
-This is a shortcut to your collar.  It's so you don't have to manually click your collar or type xxmenu.
+This is a shortcut to your collar. It's so you don't have to manually click your collar or type xxmenu.
 
 Couples Animation
-This is your standard couples animation menu.  See the collar documentaion if help is needed.
+This is your standard couples animation menu. See the collar documentaion if help is needed.
 
 HUD Options
 
 * `[Horizontal]` - Aligns the buttons in a horizontal layout.
 * `[Vertical]` - Aligns the buttons in a Vertical layout. It will position the buttons in a horizontal plane when attached to the "top" or "bottom" HUD attach point automatically.
 * `[Textures]` - Opens a sub menu to select textures for the buttons.
-* `[Tint]` - Shows up when the non-glossy white texture is selected.  Works like the coloring on cuffs/collars. May also reset to default.
+* `[Tint]` - Shows up when the non-glossy white texture is selected. Works like the coloring on cuffs/collars. May also reset to default.
 * `[Order]` - Allows re-ordering of the buttons. May also reset to default.
 
 
@@ -81,7 +81,7 @@ This section tells you how to add/change animations.
 * Drag the animation(s) you want to add, from your own inventory, into the OpenCollar Sub AO's inventory. Wait for the to animations show up in the OpenCollar Sub AO's inventory. If you take the OpenCollar Sub AO back into your inventory too soon, you may lose animations due to SL inventory issues.
 * Find the notecard for the set you want to edit, and drag it from the OpenCollar Sub AO's inventory into your inventory.
 * In your inventory, rename this notecard. Call it "My Anims" or something like that. Keep the name small, it needs to fit on a dialog menu button.
-* Open up the notecard. You'll see  lines in it that look like the following:
+* Open up the notecard. You'll see lines in it that look like the following:
 
 ```text
 [ Walking ]
@@ -131,9 +131,9 @@ All the scripts are provided open source, under the GNU General Public License V
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307, USA.
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 ## Original ZHAO-II Documentation
 

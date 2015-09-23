@@ -14,7 +14,7 @@ Items contained in this folder can be searched, attached and detached by RLV. It
 
 a. Make subfolders! Rather than throwing everything directly in #RLV divide things up into usefully labeled subfolders. For example, you might have subfolders for: Clothes, Cuffs, Gags, Binders, Pony Gear, Toys, Misc. Or you ight have them for: Casual Wear, Latex, Costumes, Formal, Restraints. Think about what makes sense for the things you're putting into your #RLV, and don't be scared to rearrange things.
 
-b. Be clever with naming folders! Keep your folder names as short as possible, but be descriptive. The first 8-10 letters of the folder name are the most important, so you are better having "cuffs metal black" and "cuffs leather black" and "cuffs leather red" than "red leather cuffs" and "red leather skirt". 
+b. Be clever with naming folders! Keep your folder names as short as possible, but be descriptive. The first 8-10 letters of the folder name are the most important, so you are better having "cuffs metal black" and "cuffs leather black" and "cuffs leather red" than "red leather cuffs" and "red leather skirt".
 
 c. It helps to give a clue if something is a category of things that ought not to be attached or if it's a thing that should be attached. ">" at the start of a folder name is a good way to do this. For example:
 #RLV
@@ -28,14 +28,14 @@ c. It helps to give a clue if something is a category of things that ought not t
     >Outfits
     >Toys
     >Etc..
-    
+
 2. Advanced Tricks and Special Folder Names
 
 There are several ways you can alter the behaviour of folders by the way you name them.
 
 a. Nostrip (nostrip). If you have an item in #RLV you don't want to be removed by accident, add (nostrip) to the folder name. For example, if you are wearing your hair in a folder called "Ponytail (nostrip)" then something that attempts to remove everything from you will ignore this.
 
-b. Add (+).  You can add a + at the start of a folder name to make sure that the contents of the folder are added rather than replacing whatever is already worn on the same layer/attachpoint. For example, if someone tries to make you wear a folder called "Owned tattoo" with a tattoo layer in it, it will remove whatever tattoo you are currently wearing, but if the folder is called "+Owned tattoo", the tatoo will be added instead.    
+b. Add (+).  You can add a + at the start of a folder name to make sure that the contents of the folder are added rather than replacing whatever is already worn on the same layer/attachpoint. For example, if someone tries to make you wear a folder called "Owned tattoo" with a tattoo layer in it, it will remove whatever tattoo you are currently wearing, but if the folder is called "+Owned tattoo", the tatoo will be added instead.
 
  c.  Hide (.) Starting a folder name with a full stop / period means that that folder will not show up when your #RLV folder is browsed. This can be particularly useful when combined with nostrip. For example, a folder called ".hidden (nostrip)" can be placed into your #RLV and you can put your huds, eyelashes, mesh eyes, mesh avatar body, tail etc. into it and they won't show up in RLV menus or get removed.
 
@@ -49,7 +49,7 @@ b. Mesh and prim only clothing can be removed by the same commands. Just put an 
 
  ****Example outfit layout****
  numbered lines are folders, subfolders are numbered beneath... so 1.2 is subfolder 2 of folder 1. Lines without numbers are items within the folder
- 
+
 1   >French Maid Outfit
 1.1         Dress
                     French Maid Dress Base (jacket layer)
@@ -75,15 +75,15 @@ b. Mesh and prim only clothing can be removed by the same commands. Just put an 
                     French Maid Heels right (right foot)
                     French Maid shoebase (shoes)
                     French Maid Heels Alpha (alpha)
-                    
+
 It's easy to see how this outfit can work. If someone wants to remove everything, they can strip the top folder, French maid outfit. However, by going further down, they can make it more exciting! Hitting the "Dress" folder will remove the various layers and prims that make up a single item of clothing, the dress. You'll notice that inside the dress folder there's a dummy layer skirt. This means if someone attempts to strip your skirt while this outfit is worn, the dress comes off... cos that makes sense! As they get further down, they could remove all your underwear with a click by hitting the ">Underwear" folder, but if they want to be slower about it, they can dig down deeper and take off panties, bra and stockings one at a time. Like the "Dress" folder, the "Shoes" folder is all in one, which means if someone tries to remove your shoes, the shoe prims, shoe base and alpha will all come off... because it's almost always better to take off all of these than just some.
 
-                                
+
 4.Dummy Clothing Layers
 
-Got a mesh jacket or a prim skirt you'd like to be removed when someone tries to strip your jacket or skirt? Simple, just drop the matching one of these items into the same #RLV folder as the mesh/prim item, and activate smart strip. These items of clothing are completely invisible, but RLV will find them. Just drag from the notecard into your inventory and use!                 
-                                        
-                                                                                                                                                                                                                                                                                                                                              
+Got a mesh jacket or a prim skirt you'd like to be removed when someone tries to strip your jacket or skirt? Simple, just drop the matching one of these items into the same #RLV folder as the mesh/prim item, and activate smart strip. These items of clothing are completely invisible, but RLV will find them. Just drag from the notecard into your inventory and use!
+
+
 
 
 

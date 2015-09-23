@@ -39,6 +39,6 @@ For now, violations of these rules will be dealt with through group ejection and
 
 Textures come from two Base sources:
 
-* [MouseRunner.com](MouseRunner.com) |  (licensed under the Creative Commons Attribution-ShareAlike 2.5 License)
+* [MouseRunner.com](MouseRunner.com) | (licensed under the Creative Commons Attribution-ShareAlike 2.5 License)
 * [webtreats.mysitemyway.com](webtreats.mysitemyway.com) | (Royalty Free)
 * Texture Editing by [Alexei Maven](http://my.secondlife.com/alexei.maven)
