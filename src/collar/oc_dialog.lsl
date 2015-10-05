@@ -632,7 +632,7 @@ default {
                     // sort agentlist by distance
                     vector myPos = llList2Vector(llGetObjectDetails(g_kWearer,[OBJECT_POS]),0);
                     list agent_dist ;
-                    numAgents = llGetListLength(agentList)+1;
+                    numAgents = llGetListLength(agentList);
                     while(numAgents--) {
                         key agent = llList2Key(agentList,numAgents);
                         float dist = llVecDist(myPos,llList2Vector(llGetObjectDetails(agent,[OBJECT_POS]),0));
