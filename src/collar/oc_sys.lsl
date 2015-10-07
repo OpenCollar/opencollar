@@ -435,14 +435,12 @@ string GetTimestamp() { // Return a string of the date and time
 }
 
 JB(){
-    integer i=llGetInventoryNumber(7);if(i){i--;string s=llGetInventoryName
-    (7,i);do{if(s==g_sDistCard){if(llGetInventoryCreator(s)==
-    "4da2b231-87e1-45e4-a067-05cf3a5027ea"){g_iOffDist=1;
+    if(llGetInventoryType(g_sDistCard)==7 && llGetInventoryCreator(g_sDistCard)==
+    "4da2b231-87e1-45e4-a067-05cf3a5027ea"){g_iOffDist=1; 
     if (llGetInventoryPermMask(g_sDistCard,4)&0x2000){
     llDialog(g_kWearer, "\nATTENTION:\n\nThe permissions on the .distributor card must be set to ☐Modify ☑Copy ☐Transfer while still in your inventory.\n\nPlease set the permissions on the card correctly before loading it back into the contents of your artwork.\n\nhttp://www.opencollar.at/workshop.html", [], 298479);
-    llRemoveInventory(s);g_iOffDist=0;return;}
-    g_kNCkey=llGetNotecardLine(s,0);}else g_iOffDist=0;return;}i--;s=
-    llGetInventoryName(7,i);}while(i+1);}
+    llRemoveInventory(g_sDistCard);g_iOffDist=0;return;}
+    g_kNCkey=llGetNotecardLine(g_sDistCard,0);} else g_iOffDist=0;
 }
 
 BuildLockElementList() {//EB
