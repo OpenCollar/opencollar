@@ -190,7 +190,7 @@ integer LabelsCount() {
         if(sLabel == "MeshLabel") {
             g_lLabelLinks += [0]; // fill list witn nulls
             //change prim description
-            llSetLinkPrimitiveParamsFast(iLink,[PRIM_DESC,"Label~notexture~nocolor~nohide~noshiny"]);
+            llSetLinkPrimitiveParamsFast(iLink,[PRIM_DESC,"Label"]);
         }
     }
     g_iCharLimit = llGetListLength(g_lLabelLinks) * 6;
