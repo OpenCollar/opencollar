@@ -57,6 +57,9 @@
 // Compatible with OpenCollar API 4.0
 // and/or minimum Disgraced Version 1.9.7
 
+// new way of prims descriptions!
+// prim desc will be 'elementtype~texture~color~shiny~glow~hide'
+
 list g_lElements;  //list of element types, built on script start.  Changed event restarts script on link set change
 list g_lElementFlags;
 list g_lTextureDefaults;  //default textures for each element, actually the last textures sent out by the settings script, so not so much "default settings", closer to "what wa set when worn"
@@ -115,11 +118,6 @@ integer TOUCH_RESPONSE      = -9502;
 
 key g_kWearer;
 
-integer ELEMENT_NOTEXTURE   =  1;
-integer ELEMENT_NOCOLOR     =  2;
-integer ELEMENT_NOSHINY     =  4;
-integer ELEMENT_NOGLOW      =  8;
-//integer ELEMENT_NOHIDE      = 16;
 
 list g_lShiny = ["none","low","medium","high"];
 list g_lHide = ["Hide","Show"];
@@ -151,7 +149,8 @@ Debug(string sStr) {
         llScriptProfiler(1);
     }
     llOwnerSay(llGetScriptName() + "(min free:"+(string)(llGetMemoryLimit()-llGetSPMaxMemory())+")["+(string)llGetFreeMemory()+"] :\n" + sStr);
-}*/
+}
+*/
 
 Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth, string sName) {
     key kMenuID = llGenerateKey();
@@ -215,24 +214,24 @@ ElementMenu(key kAv, integer iPage, integer iAuth, string sType) {
     string sTypeNice;
     sType=llToLower(sType);
     if (sType == "texture") {
-        iMask=ELEMENT_NOTEXTURE;
+        iMask=1;
         sTypeNice = "Texture";
+    } else if (sType == "color") {
+        iMask=2;
+        sTypeNice = "Color";
     } else if (sType == "shiny") {
-        iMask=ELEMENT_NOSHINY;
+        iMask=4;
         sTypeNice = "Shininess";
     } else if (sType == "glow") {
-        iMask=ELEMENT_NOGLOW;
+        iMask=8;
         sTypeNice = "Glow";
-    } else if (sType == "color") {
-        iMask=ELEMENT_NOCOLOR;
-        sTypeNice = "Color";
     }
     string sPrompt = "\nSelect an element of the %DEVICETYPE% who's "+sTypeNice+" should be changed.\n\nChoose *Touch* if you want to select the part by directly clicking on the %DEVICETYPE%.";
 
     list lButtons;
     integer numElements = g_iNumElements;
     while(numElements--) {
-        if ( ~llList2Integer(g_lElementFlags,numElements) & iMask) {  //if the flags fit the mask
+        if (llList2Integer(g_lElementFlags,numElements) & iMask) {  //if the flags fit the mask
             string sElement=llList2String(g_lElements,numElements);
             lButtons += sElement;
         }
@@ -243,12 +242,10 @@ ElementMenu(key kAv, integer iPage, integer iAuth, string sType) {
 
 string LinkType(integer iLinkNum, string sSearchString) {
     string sDesc = llList2String(llGetLinkPrimitiveParams(iLinkNum, [PRIM_DESC]),0);
-    //prim desc will be elementtype~notexture(maybe)
+    if (sDesc == "" || sDesc == "(No Description)") return "";
     list lParams = llParseString2List(llStringTrim(sDesc,STRING_TRIM), ["~"], []);
-
-    if (~llListFindList(lParams,[sSearchString])) return "immutable";
-    else if (sDesc == "" || sDesc == "(No Description)") return "";
-    else return llList2String(lParams, 0);
+    if (~llListFindList(lParams,[sSearchString])) return llList2String(lParams, 0);
+    else return "immutable";
 }
 
 BuildStylesList() {
@@ -301,31 +298,26 @@ BuildElementsList(){
         if (~llSubStringIndex(llToLower(sElement),"floattext") || ~llSubStringIndex(llToLower(sElement),"leashpoint")) {
              } //do nothing, these are alwasys no-anything
         else if (sElement != "" && sElement != "(No Description)") {  //element has a description, so parse it
-            //prim desc will be elementtype~notexture(maybe)
             list lParams = llParseString2List(llStringTrim(sElement,STRING_TRIM), ["~"], []);
             string sElementName=llList2String(lParams,0);
-            integer iLinkFlags=0;  //bitmask. 1=notexture, 2=nocolor, 4=noshiny, 8=noglow
-            if (~llListFindList(lParams,["notexture"])) iLinkFlags = iLinkFlags | 1;
-            if (~llListFindList(lParams,["nocolor"])) iLinkFlags = iLinkFlags | 2;
-            if (~llListFindList(lParams,["noshiny"])) iLinkFlags = iLinkFlags | 4;
-            if (~llListFindList(lParams,["noglow"])) iLinkFlags = iLinkFlags | 8;
-            if (~llListFindList(lParams,["nohide"])) iLinkFlags = iLinkFlags | 16;
+            integer iLinkFlags=0;  //bitmask. 1=texture, 2=color, 4=shiny, 8=glow, 16=hide
+            if (~llListFindList(lParams,["texture"])) iLinkFlags = iLinkFlags | 1;
+            if (~llListFindList(lParams,["color"])) iLinkFlags = iLinkFlags | 2;
+            if (~llListFindList(lParams,["shiny"])) iLinkFlags = iLinkFlags | 4;
+            if (~llListFindList(lParams,["glow"])) iLinkFlags = iLinkFlags | 8;
+            if (~llListFindList(lParams,["hide"])) iLinkFlags = iLinkFlags | 16;
 
             integer iElementIndex=llListFindList(g_lElements, [sElementName]);
             if (! ~iElementIndex ) {  //it's a new element, store it, and its flags, and a default texture
                 g_lElements += sElementName;
                 g_lElementFlags += iLinkFlags;
-                if (! (iLinkFlags & 16)) {
-                    g_iNumHideableElements++;
-                }
+                if (iLinkFlags & 16) g_iNumHideableElements++;                
                 g_iNumElements++;
             } else {  //we already know this element, so "bitwise not" its flags with the new one.  if any element of a type is e.g. texturable, notextures bit should be 0 so it shows in textures menu
                 integer iOldFlags=llList2Integer(g_lElementFlags,iElementIndex);
                 iLinkFlags = iLinkFlags & iOldFlags;
                 g_lElementFlags = llListReplaceList(g_lElementFlags,[iLinkFlags],iElementIndex, iElementIndex);
-                if (iLinkFlags & 16 & ~iOldFlags) {
-                    g_iNumHideableElements++;
-                }
+                if (iLinkFlags & 16 & ~iOldFlags) g_iNumHideableElements++;
             }
         }
     }
@@ -370,8 +362,8 @@ UserCommand(integer iNum, string sStr, key kID, integer reMenu) {
                 //do the actual hiding and re/de-glowing of elements
                 integer iLinkCount = llGetNumberOfPrims()+1;
                 while (iLinkCount-- > 1) {
-                    string sLinkType=LinkType(iLinkCount, "nohide");
-                    if (sLinkType == sElement || sElement==g_sDeviceType) {
+                    string sLinkType=LinkType(iLinkCount, "hide");
+                    if (sLinkType == sElement || sElement == g_sDeviceType) {
                         if (!g_iCollarHidden || sElement == g_sDeviceType ) {
                             //don't change things if collar is set hidden, unless we're doing the hiding now
                             llSetLinkAlpha(iLinkCount,(float)(iCurrentlyShown),ALL_SIDES);
@@ -403,7 +395,7 @@ UserCommand(integer iNum, string sStr, key kID, integer reMenu) {
                 else if (iShiny || sShiny=="0") {  //if we have a value, or if 0 was passed in as a string value
                     integer iLinkCount = llGetNumberOfPrims()+1;
                     while (iLinkCount-- > 2) {
-                        string sLinkType=LinkType(iLinkCount, "no"+sCommand);
+                        string sLinkType=LinkType(iLinkCount, "shiny");
                         if (sLinkType == sElement || (sLinkType != "immutable" && sLinkType != "" && sElement=="ALL")) {
                             llSetLinkPrimitiveParamsFast(iLinkCount,[PRIM_BUMP_SHINY,ALL_SIDES,iShiny,0]);
                         }
@@ -425,7 +417,7 @@ UserCommand(integer iNum, string sStr, key kID, integer reMenu) {
                 } else if ((fGlow >= 0.0 && fGlow <= 1.0)|| sGlow=="0") {  //if we have a value, or if 0 was passed in as a string value
                     integer iLinkCount = llGetNumberOfPrims()+1;
                     while (iLinkCount-- > 2) {
-                        string sLinkType=LinkType(iLinkCount, "no"+sCommand);
+                        string sLinkType=LinkType(iLinkCount, "glow");
                         if (sLinkType == sElement || (sLinkType != "immutable" && sLinkType != "" && sElement=="ALL")) {
                            //Debug("Setting Glow for link "+(string)iLinkCount+" to "+(string)fGlow);
                             llSetLinkPrimitiveParamsFast(iLinkCount,[PRIM_GLOW,ALL_SIDES,fGlow]);
@@ -441,7 +433,7 @@ UserCommand(integer iNum, string sStr, key kID, integer reMenu) {
                     integer iLinkCount = llGetNumberOfPrims()+1;
                     vector vColorValue=(vector)sColor;
                     while (iLinkCount-- > 2) {
-                        string sLinkType=LinkType(iLinkCount, "nocolor");
+                        string sLinkType=LinkType(iLinkCount, "color");
                         if (sLinkType == sElement || (sLinkType != "immutable" && sLinkType != "" && sElement=="ALL")) {
                             llSetLinkColor(iLinkCount, vColorValue, ALL_SIDES);  //set link to new color
                         }
@@ -480,7 +472,7 @@ UserCommand(integer iNum, string sStr, key kID, integer reMenu) {
                     //loop through prims and apply texture key
                     integer iLinkCount = llGetNumberOfPrims()+1;
                     while (iLinkCount-- > 2) {
-                        string sLinkType=LinkType(iLinkCount, "notexture");
+                        string sLinkType=LinkType(iLinkCount, "texture");
                         if (sLinkType == sElement || (sLinkType != "immutable" && sLinkType != "" && sElement=="ALL")) {
                             //Debug("Applying texture to element number "+(string)iLinkCount);
                             // update prim texture for each face with save texture repeats, offsets and rotations
@@ -595,11 +587,11 @@ default {
                  //remove stride from g_lMenuIDs.  We have to subtract from the index because the dialog id comes in the middle of the stride
                 string sTouchType=llList2String(g_lMenuIDs, iMenuIndex + 1);
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
-                string sElement = LinkType(iLinkNumber, "no"+sTouchType);
-                if (sElement == "immutable") {
+                string sElement = LinkType(iLinkNumber, sTouchType);
+                if (sElement == "immutable" || sElement == "") {
                     llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"You can't change the "+sTouchType+" of the part you selected. You can try again.", kAv);
                     //Debug("calling usercommand with: "+sTouchType);
-                    UserCommand(iAuth, sTouchType, kAv, TRUE);
+                    UserCommand(iAuth, "menu "+sTouchType, kAv, TRUE);
                 } else {
                     //Debug("calling usercommand with: "+sTouchType+" "+sElement);
                     UserCommand(iAuth, sTouchType+" "+sElement, kAv, TRUE);
