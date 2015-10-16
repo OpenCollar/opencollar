@@ -58,56 +58,19 @@
 string g_sSubMenu = "Un/Dress";
 string g_sParentMenu = "RLV";
 
-//MESSAGE MAP
-//integer CMD_ZERO = 0;
-integer CMD_OWNER = 500;
-//integer CMD_TRUSTED = 501;
-//integer CMD_GROUP = 502;
-integer CMD_WEARER = 503;
-//integer CMD_EVERYONE = 504;
-
-//integer POPUP_HELP = 1001;
-integer NOTIFY = 1002;
-//integer NOTIFY_OWNERS = 1003;
-//integer LOADPIN = -1904;
-integer REBOOT  = -1000;
-integer LINK_DIALOG = 3;
-integer LINK_RLV    = 4;
-integer LINK_SAVE   = 5;
-
-integer LM_SETTING_SAVE = 2000;//scripts send messages on this channel to have settings saved to httpdb
-//str must be in form of "token=value"
-//integer LM_SETTING_REQUEST = 2001;//when startup, scripts send requests for settings on this channel
-integer LM_SETTING_RESPONSE = 2002;//the httpdb script will send responses on this channel
-integer LM_SETTING_DELETE = 2003;//delete token from DB
-//integer LM_SETTING_EMPTY = 2004;//sent by httpdb script when a token has no value in the db
-
-integer MENUNAME_REQUEST = 3000;
-integer MENUNAME_RESPONSE = 3001;
-integer MENUNAME_REMOVE = 3003;
-
-integer RLV_CMD = 6000;
-integer RLV_REFRESH = 6001;//RLV plugins should reinstate their restrictions upon receiving this message.
-integer RLV_CLEAR = 6002;//RLV plugins should clear their restriction lists upon receiving this message.
-integer RLV_VERSION = 6003; //RLV Plugins can recieve the used rl viewer version upon receiving this message..
-integer RLV_OFF = 6100; // send to inform plugins that RLV is disabled now, no message or key needed
-integer RLV_ON = 6101; // send to inform plugins that RLV is enabled now, no message or key needed
-
-integer DIALOG = -9000;
-integer DIALOG_RESPONSE = -9001;
-integer DIALOG_TIMEOUT = -9002;
-
-string UPMENU = "BACK";
-
-string ALL = " ALL";
-string TICKED = "☒ ";
-string UNTICKED = "☐ ";
-
-
-//***********************
+//list g_lChildren = ["Rem Clothing"]; //,"LockClothing","LockAttachment"];//,"LockClothing","UnlockClothing"];
+list g_lSubMenus = [];
 string SELECT_CURRENT = "*InFolder";
 string SELECT_RECURS= "*Recursively";
 list g_lRLVcmds = ["attach","detach","remoutfit", "addoutfit","remattach","addattach"];
+
+integer g_iSmartStrip=FALSE; //use @detachallthis isntead of remove
+//string SMARTHELP = "Help";
+//string g_sSmartHelpCard = "OpenCollar Guide";
+//string g_sSmartToken="smartstrip";
+//key g_kSmartUser; //we store the last person to select if they are not wearer/owner, so that it can be switched on for current user without changing setting.
+
+list g_lSettings;//2-strided list in form of [option, param]
 
 list LOCK_CLOTH_POINTS = [
     "Gloves",
@@ -191,16 +154,61 @@ list ATTACH_POINTS = [//these are ordered so that their indices in the list corr
     "Avatar Center"
         ];
 
+//MESSAGE MAP
+//integer CMD_ZERO = 0;
+integer CMD_OWNER = 500;
+//integer CMD_TRUSTED = 501;
+//integer CMD_GROUP = 502;
+integer CMD_WEARER = 503;
+//integer CMD_EVERYONE = 504;
+
+//integer POPUP_HELP = 1001;
+integer NOTIFY = 1002;
+//integer NOTIFY_OWNERS = 1003;
+//integer LOADPIN = -1904;
+integer REBOOT  = -1000;
+integer LINK_DIALOG = 3;
+integer LINK_RLV    = 4;
+integer LINK_SAVE   = 5;
+
+integer LM_SETTING_SAVE = 2000;//scripts send messages on this channel to have settings saved to httpdb
+//str must be in form of "token=value"
+//integer LM_SETTING_REQUEST = 2001;//when startup, scripts send requests for settings on this channel
+integer LM_SETTING_RESPONSE = 2002;//the httpdb script will send responses on this channel
+integer LM_SETTING_DELETE = 2003;//delete token from DB
+//integer LM_SETTING_EMPTY = 2004;//sent by httpdb script when a token has no value in the db
+
+integer MENUNAME_REQUEST = 3000;
+integer MENUNAME_RESPONSE = 3001;
+integer MENUNAME_REMOVE = 3003;
+
+integer RLV_CMD = 6000;
+integer RLV_REFRESH = 6001;//RLV plugins should reinstate their restrictions upon receiving this message.
+integer RLV_CLEAR = 6002;//RLV plugins should clear their restriction lists upon receiving this message.
+integer RLV_VERSION = 6003; //RLV Plugins can recieve the used rl viewer version upon receiving this message..
+integer RLV_OFF = 6100; // send to inform plugins that RLV is disabled now, no message or key needed
+integer RLV_ON = 6101; // send to inform plugins that RLV is enabled now, no message or key needed
+
+integer DIALOG = -9000;
+integer DIALOG_RESPONSE = -9001;
+integer DIALOG_TIMEOUT = -9002;
+
+string UPMENU = "BACK";
+
+string ALL = " ALL";
+string TICKED = "☒ ";
+string UNTICKED = "☐ ";
+
+list g_lMenuIDs;
+integer g_iMenuStride = 3;
+
 integer g_iRLVTimeOut = 60;
 
 integer g_iClothRLV = 78465;
 integer g_iAttachRLV = 78466;
 integer g_iListener;
-
 key g_kMenuUser; // id of the avatar who will get the next menu after asynchronous response from RLV
 integer g_iMenuAuth; // auth level of that user
-
-//key g_kSmartUser; //we store the last person to select if they are not wearer/owner, so that it can be switched on for current user without changing setting.
 
 integer g_iRLVOn = FALSE;
 
@@ -208,17 +216,7 @@ list g_lLockedItems; // list of locked clothes
 list g_lLockedAttach; // list of locked attachmemts
 
 key g_kWearer;
-
 integer g_iAllLocked = 0;  //1=all clothes are locked on
-
-list g_lMenuIDs;
-integer g_iMenuStride = 3;
-
-list g_lSubMenus = [];
-integer g_iSmartStrip=FALSE; //use @detachallthis isntead of remove
-
-list g_lSettings;//2-strided list in form of [option, param]
-
 
 /*
 integer g_iProfiled;
