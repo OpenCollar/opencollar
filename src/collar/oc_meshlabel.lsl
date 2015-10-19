@@ -351,7 +351,7 @@ default
             llMessageLinked(LINK_SET, MENUNAME_REMOVE, g_sParentMenu + "|" + g_sSubMenu, "");
             llRemoveInventory(llGetScriptName());
         }
-        SetLabel();
+        //SetLabel();
     }
 
     on_rez(integer iNum) {
