@@ -560,6 +560,8 @@ UserCommand(integer iNum, string sStr, key kID, integer bFromMenu) {
         if (iNum <= g_iStandRestricted || !g_iStandRestricted) {
             llMessageLinked(LINK_RLV,RLV_CMD,"unsit=y,unsit=force","vdRestrict");
             g_iSitting = FALSE;
+            g_iStandRestricted = 0;
+            llMessageLinked(LINK_SAVE,LM_SETTING_DELETE,"restrictions_stand","");
             //UserCommand(iNum, "allow stand", kID, FALSE);
             //llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\n%WEARERNAME% is allowed to stand once again.\n",kID);
             llSleep(0.5);
@@ -579,8 +581,9 @@ UserCommand(integer iNum, string sStr, key kID, integer bFromMenu) {
             if (CheckLastSit(g_kLastForcedSeat)==FALSE) return;
             llMessageLinked(LINK_RLV,RLV_CMD,"unsit=y,unsit=force","vdRestrict");
             llSleep(0.5);
-            llMessageLinked(LINK_RLV,RLV_CMD,"sit:"+(string)g_kLastForcedSeat+"=force","vdRestrict");
-            if (g_iStandRestricted) llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
+            llMessageLinked(LINK_RLV,RLV_CMD,"sit:"+(string)g_kLastForcedSeat+"=force,unsit=n","vdRestrict");
+            g_iStandRestricted = iNum;
+            llMessageLinked(LINK_SAVE,LM_SETTING_SAVE,"restrictions_stand="+(string)iNum,"");
             g_iSitting = TRUE;
             llSleep(0.5);
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0%NOACCESS%",kID);
@@ -594,8 +597,9 @@ UserCommand(integer iNum, string sStr, key kID, integer bFromMenu) {
                 llSleep(0.5);
                 g_kLastForcedSeat=(key)sLowerStr;
                 g_sLastForcedSeat=llKey2Name(g_kLastForcedSeat);
-                llMessageLinked(LINK_RLV,RLV_CMD,"sit:"+sLowerStr+"=force","vdRestrict");
-                if (g_iStandRestricted) llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
+                llMessageLinked(LINK_RLV,RLV_CMD,"sit:"+sLowerStr+"=force,unsit=n","vdRestrict");
+                g_iStandRestricted = iNum;
+                llMessageLinked(LINK_SAVE,LM_SETTING_SAVE,"restrictions_stand="+(string)iNum,"");
                 g_iSitting = TRUE;
                 llSleep(0.5);
             } else {
