@@ -19,7 +19,7 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//       Remote Options - 151231.1       .*' /  .*' ; .*`- +'  `*'          //
+//       Remote Options - 151231.3       .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2014 - 2015 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
@@ -89,9 +89,9 @@ list g_lAttachPoints = [
     ATTACH_HUD_CENTER_2
     ];
 
-list g_lPrimOrder = [0, 1, 2, 5, 4, 3, 6];
+list g_lPrimOrder = [0,1,2,3,4,5,6];
 //  List must always start with '0','1'
-//  0:Spacer, 1:Root, 2:Menu, 3:Beckon, 4:Bookmarks, 5:Couples, 6:Leash
+//  0:Spacer, 1:Root, 2:Menu, 3:Couples, 4:Bookmarks, 5:Leash, 6:Yank
 //  Spacer serves to even up the list with actual link numbers
 
 integer g_iLayout;
@@ -108,11 +108,20 @@ PlaceTheButton(float fYoff, float fZoff) {
 }
 
 DoButtons(string sStyle) {
-//  Texture Settings by Jessenia Mocha
-//  Texture UUID's [ Root, Menu, Teleport, Cage, Couples, Leash ]
-    list lLightTex=["b59f9932-5de4-fc23-b5aa-2ab46d22c9a6","52c3f4cf-e87e-dbdd-cf18-b2c4f6002a96","50f5c540-d0bb-00b0-ce6c-23eb7b70bfa4","1ac086de-3201-e526-e986-2e67d9de9202","38f0da26-b51c-477f-9071-bea17a6a3dac","752f586b-a110-b951-4c9e-23beb0f97d2f"];
 
-    list lDarkTex=["e1482c7e-8609-fcb0-56d8-18c3c94d21c0","f3ec1052-6ec4-04ba-d752-937a4d837bf8","c3343ece-30ae-5168-0cc2-b89f670b6826","193208ce-18e5-45f2-19ed-0ea1cbbf46ca","17fc7b38-9d1e-3646-956d-85ed96a977d9","b0c44ba4-ec7f-8cc6-7c26-44efa4bcd89c"];
+    list lLightTex =    ["b59f9932-5de4-fc23-b5aa-2ab46d22c9a6", //minimize
+                        "52c3f4cf-e87e-dbdd-cf18-b2c4f6002a96", //menu
+                        "38f0da26-b51c-477f-9071-bea17a6a3dac", //couples
+                        "1ac086de-3201-e526-e986-2e67d9de9202", //bookmarks
+                        "752f586b-a110-b951-4c9e-23beb0f97d2f", //leash
+                        "50f5c540-d0bb-00b0-ce6c-23eb7b70bfa4"]; //yank
+
+    list lDarkTex =     ["e1482c7e-8609-fcb0-56d8-18c3c94d21c0",
+                        "f3ec1052-6ec4-04ba-d752-937a4d837bf8",
+                        "17fc7b38-9d1e-3646-956d-85ed96a977d9",
+                        "193208ce-18e5-45f2-19ed-0ea1cbbf46ca",
+                        "b0c44ba4-ec7f-8cc6-7c26-44efa4bcd89c",
+                        "c3343ece-30ae-5168-0cc2-b89f670b6826"];
 
 //  Upon a texture change we should also reset the 'tint'
     llSetLinkPrimitiveParamsFast(LINK_SET, [PRIM_COLOR, ALL_SIDES, <1, 1, 1>, 1.0]);
@@ -200,7 +209,7 @@ DoReset() {   // -- Reset the entire HUD back to default
     g_iHidden = FALSE;
     DoButtons("Dark");
     llSleep(2.0);
-    g_lPrimOrder = [0, 1, 2, 5, 4, 3, 6];
+    g_lPrimOrder = [0,1,2,3,4,5,6];
     DoHide();
     llSleep(1.0);
     DefinePosition();
@@ -282,8 +291,8 @@ default
                             if (_pos == 2) lButtons += ["Menu"];
                             else if (_pos == 3) lButtons += ["Couples"];
                             else if (_pos == 4) lButtons += ["Bookmarks"];
-                            else if (_pos == 5) lButtons += ["Beckon"];
-                            else if (_pos == 6) lButtons += ["Leash"];
+                            else if (_pos == 5) lButtons += ["Leash"];
+                            else if (_pos == 6) lButtons += ["Yank"];
                         }
                         lButtons += ["RESET"];
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [UPMENU], iPage);
@@ -323,10 +332,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -339,10 +348,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -355,10 +364,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -373,10 +382,10 @@ default
                             {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -391,10 +400,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
