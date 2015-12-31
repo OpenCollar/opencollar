@@ -198,7 +198,7 @@ DoReset() {   // -- Reset the entire HUD back to default
     g_iSPosition = 69; // -- Don't we just love that position? *winks*
     g_iTintable = FALSE;
     g_iHidden = FALSE;
-    DoButtons("White");
+    DoButtons("Dark");
     llSleep(2.0);
     g_lPrimOrder = [0, 1, 2, 5, 4, 3, 6];
     DoHide();
@@ -457,7 +457,7 @@ default
     changed(integer iChange)
     {
         if (iChange & CHANGED_OWNER) {
-            DoButtons("White");
+            DoButtons("Dark");
             llResetScript();
         }
     }
