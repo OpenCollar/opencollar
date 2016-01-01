@@ -1,25 +1,55 @@
-////////////////////////////////////////////////////////////////////////////////////
-// ------------------------------------------------------------------------------ //
-//                           OpenCollarHUD - hudoptions                           //
-//                                 version 3.980                                  //
-// ------------------------------------------------------------------------------ //
-// Licensed under the GPLv2 with additional requirements specific to Second Life® //
-// and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
-// ------------------------------------------------------------------------------ //
-// ©   2008 - 2014  Individual Contributors and OpenCollar - submission set free™ //
-// ------------------------------------------------------------------------------ //
-////////////////////////////////////////////////////////////////////////////////////
-
-//  HudOptions (Alexei Maven + Jessenia Mocha)
-//  This script could be used to position all HUDs quite easy.  Please remember this is Open Source
-//  Thus you need to Credit Open Collar / Alexei Maven / Jessenia Mocha and not sell it!
-//  Special thanks to Betsy Hastings for her Cages!
-
-//  This script was intended to make the Open Collar Owners HUD as customizable as possible for the user.
-//  The second goal was to make it easy for the developers to make new add-ons, and minimize script changes.
-//  The code in this script reflects the two above goals. There is a reason for every line.
-
-//  Start Jess's OC modified menu injection
+//////////////////////////////////////////////////////////////////////////////
+//                                                                          //
+//       _   ___     __            __  ___  _                               //
+//      | | / (_)___/ /___ _____ _/ / / _ \(_)__ ___ ________ ________      //
+//      | |/ / / __/ __/ // / _ `/ / / // / (_-</ _ `/ __/ _ `/ __/ -_)     //
+//      |___/_/_/  \__/\_,_/\_,_/_/ /____/_/___/\_, /_/  \_,_/\__/\__/      //
+//                                             /___/                        //
+//                                                                          //
+//                                        _                                 //
+//                                        \`*-.                             //
+//                                         )  _`-.                          //
+//                                        .  : `. .                         //
+//                                        : _   '  \                        //
+//                                        ; *` _.   `*-._                   //
+//                                        `-.-'          `-.                //
+//                                          ;       `       `.              //
+//                                          :.       .        \             //
+//                                          . \  .   :   .-'   .            //
+//                                          '  `+.;  ;  '      :            //
+//                                          :  '  |    ;       ;-.          //
+//                                          ; '   : :`-:     _.`* ;         //
+//       Remote Options - 151231.3       .*' /  .*' ; .*`- +'  `*'          //
+//                                       `*-*   `*-*  `*-*'                 //
+// ------------------------------------------------------------------------ //
+//  Copyright (c) 2014 - 2015 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
+//  Master Starship, Wendy Starfall, North Glenwalker, Ray Zopf, Sumi Perl, //
+//  Kire Faulkes, Zinn Ixtar, Builder's Brewery, Romka Swallowtail et al.   //
+// ------------------------------------------------------------------------ //
+//  This script is free software: you can redistribute it and/or modify     //
+//  it under the terms of the GNU General Public License as published       //
+//  by the Free Software Foundation, version 2.                             //
+//                                                                          //
+//  This script is distributed in the hope that it will be useful,          //
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            //
+//  GNU General Public License for more details.                            //
+//                                                                          //
+//  You should have received a copy of the GNU General Public License       //
+//  along with this script; if not, see www.gnu.org/licenses/gpl-2.0        //
+// ------------------------------------------------------------------------ //
+//  This script and any derivatives based on it must remain "full perms".   //
+//                                                                          //
+//  "Full perms" means maintaining MODIFY, COPY, and TRANSFER permissions   //
+//  in Second Life(R), OpenSimulator and the Metaverse.                     //
+//                                                                          //
+//  If these platforms should allow more fine-grained permissions in the    //
+//  future, then "full perms" will mean the most permissive possible set    //
+//  of permissions allowed by the platform.                                 //
+// ------------------------------------------------------------------------ //
+//         github.com/OpenCollar/opencollar/tree/master/src/remote          //
+// ------------------------------------------------------------------------ //
+//////////////////////////////////////////////////////////////////////////////
 
 //Adjusted to OpenCollar name convention und format standards June 2015 Otto (garvin.twine)
 
@@ -34,7 +64,7 @@ integer DIALOG_TIMEOUT    = -9002;
 string UPMENU     = "BACK";
 string g_sParentMenu = "Main";
 string g_sHudMenu    = "HUD Style";
-string g_sSubMenu1   = "Textures";
+string g_sSubMenu1   = "Buttons";
 string g_sSubMenu2   = "Order";
 string g_sSubMenu3   = "Tint";
 string g_sCurrentMenu;
@@ -59,9 +89,9 @@ list g_lAttachPoints = [
     ATTACH_HUD_CENTER_2
     ];
 
-list g_lPrimOrder = [0, 1, 2, 5, 4, 3, 6];
+list g_lPrimOrder = [0,1,2,3,4,5,6];
 //  List must always start with '0','1'
-//  0:Spacer, 1:Root, 2:Menu, 3:Beckon, 4:Bookmarks, 5:Couples, 6:Leash
+//  0:Spacer, 1:Root, 2:Menu, 3:Couples, 4:Bookmarks, 5:Leash, 6:Yank
 //  Spacer serves to even up the list with actual link numbers
 
 integer g_iLayout;
@@ -77,43 +107,21 @@ PlaceTheButton(float fYoff, float fZoff) {
         llSetLinkPrimitiveParamsFast(llList2Integer(g_lPrimOrder,i), [PRIM_POSITION, <0.0, fYoff * (i - 1), fZoff * (i - 1)>]);
 }
 
-DoTextures(string sStyle) {
-//  Texture Settings by Jessenia Mocha
-//  Texture UUID's [ Root, Menu, Teleport, Cage, Couples, Leash ]
-    list lBlueTex        = ["fe7844f7-1179-5ba1-eb46-d44d3bed5837",
-                         "7d5ebb11-b3e2-4353-231b-c898c5645872",
-                         "db24ef0e-ca57-9f8c-ee1a-28fec74619ad",
-                         "520ae188-c472-ab7b-b1c6-d0fe53698c57",
-                         "2c52eb24-26a0-5110-089a-570b1602aaaa",
-                         "599c0404-5b79-a292-1c4f-83b655a81b43"];
+DoButtons(string sStyle) {
 
-    list lRedTex         = ["4d61335b-2b3d-e3d2-a6b9-e3fba73f9f8e",
-                         "917d6349-a01b-1c1e-7c49-1b889fd81217",
-                         "b75a0443-8f80-3889-f21d-8e895a34b2c0",
-                         "d3a0b432-fbb6-44bd-4019-4fe75f17d2c4",
-                         "c4ffeb2c-e779-b062-e254-b7afc9ca629e",
-                         "d1684d22-627e-1370-987e-95e23c8a81a8"];
+    list lLightTex =    ["b59f9932-5de4-fc23-b5aa-2ab46d22c9a6", //minimize
+                        "52c3f4cf-e87e-dbdd-cf18-b2c4f6002a96", //menu
+                        "38f0da26-b51c-477f-9071-bea17a6a3dac", //couples
+                        "1ac086de-3201-e526-e986-2e67d9de9202", //bookmarks
+                        "752f586b-a110-b951-4c9e-23beb0f97d2f", //leash
+                        "50f5c540-d0bb-00b0-ce6c-23eb7b70bfa4"]; //yank
 
-    list lGraySquareTex = ["0744de1c-a3bd-47db-b20f-2cb7b93a3ff1",
-                         "09b69dd4-eb80-e2de-7dba-70c8337d283c",
-                         "68ad78d3-8e7b-4025-d8b1-98560aa31123",
-                         "d6835f43-2477-d638-e203-8a22daee09fb",
-                         "e9a16c40-7561-5a69-f834-f2f613fde10a",
-                         "c72aef83-a0f0-fece-be02-295473986e79"];
-
-    list lGrayCircleTex = ["428f1dfc-251c-b204-da66-000082bee96f",
-                         "6df113f7-c667-106b-e276-31dc1be37513",
-                         "6b1a404f-db40-1aa2-7080-b4ab4235b963",
-                         "92087a5d-5009-5993-fed9-0274bfacd899",
-                         "e856db47-1017-6bc8-69be-525945fbdb08",
-                         "2a35bdf7-9744-aedf-ff60-5a49b04c356d"];
-
-    list lWhiteTintTex  = ["8408646f-2d35-3938-cba9-0808a12fcb80",
-                         "eb1f670d-c34f-23cb-3beb-f859c3c0278e",
-                         "a9245dc2-cca1-861e-c2da-e3cb071fb7a1",
-                         "1ff141eb-a448-b5c3-942d-6531b5c9d047",
-                         "a81b25f9-5ab1-dd02-5740-eb06ca5bf219",
-                         "cf5b070b-f672-9488-81a4-945243ebb47d"];
+    list lDarkTex =     ["e1482c7e-8609-fcb0-56d8-18c3c94d21c0",
+                        "f3ec1052-6ec4-04ba-d752-937a4d837bf8",
+                        "17fc7b38-9d1e-3646-956d-85ed96a977d9",
+                        "193208ce-18e5-45f2-19ed-0ea1cbbf46ca",
+                        "b0c44ba4-ec7f-8cc6-7c26-44efa4bcd89c",
+                        "c3343ece-30ae-5168-0cc2-b89f670b6826"];
 
 //  Upon a texture change we should also reset the 'tint'
     llSetLinkPrimitiveParamsFast(LINK_SET, [PRIM_COLOR, ALL_SIDES, <1, 1, 1>, 1.0]);
@@ -121,20 +129,11 @@ DoTextures(string sStyle) {
     if (sStyle != "White") g_iTintable = FALSE;
     integer iPrimNum = 5;
     integer i = 0;
-    if (sStyle == "Gray Square") {
-        do llSetLinkPrimitiveParamsFast(i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(lGraySquareTex,i), <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
+    if (sStyle == "Light") {
+        do llSetLinkPrimitiveParamsFast(i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(lLightTex,i), <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
         while((++i)<=iPrimNum);
-    } else if (sStyle == "Gray Circle") {
-        do llSetLinkPrimitiveParamsFast(i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(lGrayCircleTex,i), <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
-        while((++i)<=iPrimNum);
-    } else if (sStyle == "Red") {
-        do  llSetLinkPrimitiveParamsFast(i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(lRedTex,i), <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
-        while((++i)<=iPrimNum);
-    } else if (sStyle == "Blue") {
-        do  llSetLinkPrimitiveParamsFast(i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(lBlueTex,i), <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
-        while((++i)<=iPrimNum);
-    } else if (sStyle == "White") {
-        do  llSetLinkPrimitiveParamsFast(i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(lWhiteTintTex,i), <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
+    } else if (sStyle == "Dark") {
+        do llSetLinkPrimitiveParamsFast(i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(lDarkTex,i), <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
         while((++i)<=iPrimNum);
     }
 }
@@ -160,7 +159,7 @@ DefinePosition() {
         g_iSPosition = iPosition;
     }
     if (!g_iHidden) { // -- Fixes Issue 615: HUD forgets hide setting on relog.
-        float fYoff = 0.037; float fZoff = 0.037; // This is the space between buttons
+        float fYoff = 0.054; float fZoff = 0.054; // This is the space between buttons
         if (g_iLayout == 0 || iPosition == 1 || iPosition == 4) {// Horizontal + top and bottom are always horizontal
             if (iPosition == 2 || iPosition == 5) // Left side needs to push buttons right
                 fYoff = fYoff * -1;
@@ -208,9 +207,9 @@ DoReset() {   // -- Reset the entire HUD back to default
     g_iSPosition = 69; // -- Don't we just love that position? *winks*
     g_iTintable = FALSE;
     g_iHidden = FALSE;
-    DoTextures("White");
+    DoButtons("Dark");
     llSleep(2.0);
-    g_lPrimOrder = [0, 1, 2, 5, 4, 3, 6];
+    g_lPrimOrder = [0,1,2,3,4,5,6];
     DoHide();
     llSleep(1.0);
     DefinePosition();
@@ -246,8 +245,8 @@ default
             llMessageLinked(LINK_SET, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sHudMenu, "");
         else if (iNum == SUBMENU && sStr == g_sHudMenu) {
             g_sCurrentMenu = g_sHudMenu;
-            string sPrompt = "\nCustomize your Owner HUD!\n\nwww.opencollar.at/ownerhud";
-            list lButtons = ["Horizontal","Vertical","Textures","Order","RESET"];
+            string sPrompt = "\nCustomize your Remote!";
+            list lButtons = ["Horizontal","Vertical","RESET","Order","Buttons"];
             g_kMenuID = Dialog(llGetOwner(), sPrompt, lButtons, [UPMENU], 0);
         } else if (iNum == DIALOG_RESPONSE) {
             if (kID == g_kMenuID) {
@@ -268,7 +267,7 @@ default
                     } else if (sButton == "Vertical") {
                         g_iLayout = 69;
                         DefinePosition();
-                    } else if (sButton == "Textures") {
+                    } else if (sButton == "Buttons") {
                         g_sCurrentMenu = g_sSubMenu1;
                         sPrompt = "\nThis is the menu for styles.\n";
                         sPrompt += "Selecting one of these options will\n";
@@ -277,7 +276,7 @@ default
                             sPrompt+="Tint will allow you to change the HUD color\nto various shades via the 'Tint' menu.\n";
                         else
                             sPrompt += "If [White] is selected, an extra menu named 'Tint' will appear in this menu.\n";
-                        lButtons = ["Gray Square","Gray Circle","Blue","Red","White"];
+                        lButtons = ["Light","Dark"];
                         if (g_iTintable) lButtons += ["Tint","-","-"];
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [UPMENU], iPage);
                     } else if (sButton == "Order") {
@@ -292,8 +291,8 @@ default
                             if (_pos == 2) lButtons += ["Menu"];
                             else if (_pos == 3) lButtons += ["Couples"];
                             else if (_pos == 4) lButtons += ["Bookmarks"];
-                            else if (_pos == 5) lButtons += ["Beckon"];
-                            else if (_pos == 6) lButtons += ["Leash"];
+                            else if (_pos == 5) lButtons += ["Leash"];
+                            else if (_pos == 6) lButtons += ["Yank"];
                         }
                         lButtons += ["RESET"];
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [UPMENU], iPage);
@@ -307,11 +306,11 @@ default
                 } else if (g_sCurrentMenu == g_sSubMenu1) {// -- Inside the 'Texture' menu, or 'submenu1'
                     if (sButton == UPMENU)
                         llMessageLinked(LINK_SET, SUBMENU, g_sHudMenu, kID);
-                    else if ((sButton == "Gray Square") || (sButton == "Gray Circle") || (sButton == "Blue") || (sButton == "Red"))
-                        DoTextures(sButton);
+                    else if ((sButton == "Light") || (sButton == "Dark"))
+                        DoButtons(sButton);
                     else if (sButton == "White") {
                         g_iTintable = TRUE;
-                        DoTextures(sButton);
+                        DoButtons(sButton);
                     }
                     else if (sButton == "Tint") {
                         g_sCurrentMenu = g_sSubMenu3;
@@ -333,10 +332,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -349,10 +348,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -365,10 +364,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -383,10 +382,10 @@ default
                             {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -401,10 +400,10 @@ default
                             if (g_iOldPos != i) {
                                 integer iTemp = llList2Integer(g_lPrimOrder,i);
                                 if (iTemp == 2) lButtons += ["Menu:"+(string)i];
-                                else if (iTemp == 3) lButtons += ["Beckon:"+(string)i];
+                                else if (iTemp == 3) lButtons += ["Couples:"+(string)i];
                                 else if (iTemp == 4) lButtons += ["Bookmarks:"+(string)i];
-                                else if (iTemp == 5) lButtons += ["Couples:"+(string)i];
-                                else if (iTemp == 6) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 5) lButtons += ["Leash:"+(string)i];
+                                else if (iTemp == 6) lButtons += ["Yank:"+(string)i];
                             }
                         }
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
@@ -430,7 +429,7 @@ default
                         sPrompt += "change the color of the HUD buttons.\n";
                         if (g_iTintable) sPrompt+="Tint will allow you to change the HUD color\nto various shades via the 'Tint' menu.\n";
                         else sPrompt += "If [White] is selected, an extra menu named 'Tint' will appear in this menu.\n";
-                        lButtons = ["Gray Square","Gray Circle","Blue","Red","White"];
+                        lButtons = ["Light","Dark"];
                         if (g_iTintable) lButtons += ["Tint"," "," "];
                         g_kMenuID = Dialog(kID, sPrompt, lButtons, [], iPage);
                     } else if (sButton == "Orange")
@@ -467,7 +466,7 @@ default
     changed(integer iChange)
     {
         if (iChange & CHANGED_OWNER) {
-            DoTextures("White");
+            DoButtons("Dark");
             llResetScript();
         }
     }
