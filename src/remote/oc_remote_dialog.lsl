@@ -429,7 +429,10 @@ default {
         llMessageLinked(LINK_THIS,DIALOG,llDumpList2String(lParams,"|"),(key)llList2String(lSensorInfo,1));
         //if we have more sensors to run, run another one now, else unlock subsys and quite
         if (llGetListLength(g_lSensorDetails) > 0) dequeueSensor();
-        else g_bSensorLock=FALSE;
+        else {
+            g_bSensorLock=FALSE;
+            g_iSelectAviMenu = TRUE;
+        }
     }
 
     no_sensor() {
@@ -443,8 +446,8 @@ default {
         //if we have more sensors to run, run another one now, else unlock subsys and quit
         if (llGetListLength(g_lSensorDetails) > 0) dequeueSensor();
         else {
-            g_iSelectAviMenu = FALSE;
             g_bSensorLock=FALSE;
+            g_iSelectAviMenu = TRUE;
         }
     }
 
