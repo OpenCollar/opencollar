@@ -249,19 +249,14 @@ DoMenu(string sMenu) {
         lUtils = [];
     }
     else if (sMenu == g_sTextureMenu) { // textures
-        if (g_kStylesCardUUID) {
-            if (g_iThemesReady) {
-                sPrompt = "\nThis is the menu for styles.\n";
-                sPrompt += "Selecting one of these options will\n";
-                sPrompt += "change the color of the HUD buttons.\n";
-                lButtons = g_lStyles + [g_sTintMenu];
-            } else {
-                llOwnerSay("Themes still loading...");
-                sMenu = g_sHudMenu;
-            }
+        if (g_iThemesReady) {
+            sPrompt = "\nThis is the menu for styles.\n";
+            sPrompt += "Selecting one of these options will\n";
+            sPrompt += "change the color of the HUD buttons.\n";
+            lButtons = g_lStyles;
         } else {
+            llOwnerSay("Themes still loading...");
             sMenu = g_sHudMenu;
-            llOwnerSay("This Hud has no themes installed.");
         }
     }
     else if (sMenu == g_sOrderMenu) { // Order
@@ -284,7 +279,9 @@ DoMenu(string sMenu) {
 
     if (sMenu == g_sHudMenu) { // Main
         sPrompt = "\nCustomize your Remote!";
-        lButtons = ["Horizontal","Vertical","RESET",g_sOrderMenu,g_sTextureMenu];
+        lButtons = ["Horizontal","Vertical","RESET",g_sOrderMenu];
+        if (g_kStylesCardUUID) lButtons += [g_sTextureMenu];
+        lButtons += [g_sTintMenu];
     }
     g_sCurrentMenu = sMenu;
     g_kMenuID = Dialog(llGetOwner(), sPrompt, lButtons, lUtils, 0);
