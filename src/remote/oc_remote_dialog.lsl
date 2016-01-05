@@ -19,7 +19,7 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//       Remote Dialog - 151231.1        .*' /  .*' ; .*`- +'  `*'          //
+//       Remote Dialog - 160105.1        .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2014 - 2015 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
@@ -76,12 +76,12 @@ list g_lMenus;//11-strided list in form listenChan, dialogid, listener, starttim
 //and "page buttons" means utility buttons that will appear on every page, such as one saying "go up one level"
 //and "currentpage" is an integer meaning which page of the menu the user is currently viewing
 
-list g_lRemoteMenus;
+//list g_lRemoteMenus;
 integer g_iStrideLength = 12;
 
 // List of user keys who opt-out of chat-spammage, ie chose "off"
-list MRSBUN = []; // blatant monty python reference - list of those who do not like spam
-string SPAMSWITCH = "verbose"; // lowercase chat-command token
+//list MRSBUN = []; // blatant monty python reference - list of those who do not like spam
+//string SPAMSWITCH = "verbose"; // lowercase chat-command token
 
 key g_kWearer;
 
@@ -212,7 +212,7 @@ Dialog(key kRecipient, string sPrompt, list lMenuItems, list lUtilityButtons, in
     }
     //Debug("prompt:"+sThisPrompt);
     //unless asked not to, chat anything that wouldn't fit to menu user
-    if (! ~llListFindList(MRSBUN, [kRecipient])){
+    //if (! ~llListFindList(MRSBUN, [kRecipient])){
         integer iRemainingChatLen;
         while (iRemainingChatLen=llStringLength(sThisChat)){ //capture and compare in one go
             if(iRemainingChatLen<1015) {
@@ -224,7 +224,7 @@ Dialog(key kRecipient, string sPrompt, list lMenuItems, list lUtilityButtons, in
                 sThisChat=llGetSubString(sThisChat,llStringLength(sMessageChunk),-1);
             }
         }
-    }
+    //}
     //Debug("chat prompt:"+sThisChat);
     //calculate random channel number for dialog, inlined single use RandomUniqueChanel function
     integer iChan=llRound(llFrand(10000000)) + 100000;
@@ -343,6 +343,7 @@ ClearUser(key kRCPT) {
     //Debug(llDumpList2String(g_lMenus, ","));
 }
 
+/*
 integer UserCommand(integer iNum, string sStr, key kID) {
     list lParams = llParseString2List(llToLower(sStr), ["="], []);
     string sToken = llList2String(lParams, 0);
@@ -361,6 +362,7 @@ integer UserCommand(integer iNum, string sStr, key kID) {
     }
     return FALSE;
 }
+*/
 
 dequeueSensor() {
     //get sStr of first set of sensor details, unpack it and run the apropriate sensor
@@ -501,6 +503,7 @@ default {
 
             list lParams = llParseStringKeepNulls(sStr, ["|"], []);
             key kRCPT = llGetOwnerKey((key)llList2String(lParams, 0));
+            /*
             integer iIndex = llListFindList(g_lRemoteMenus, [kRCPT]);
             if (~iIndex) {
                 if (llKey2Name(kRCPT)=="") {
@@ -509,6 +512,7 @@ default {
                     return;
                 } else g_lRemoteMenus = llListReplaceList(g_lRemoteMenus, [], iIndex, iIndex+1);
             }
+            */
             string sPrompt = llList2String(lParams, 1);
             integer iPage = (integer)llList2String(lParams, 2);
             if (iPage < 0 ) {
@@ -527,7 +531,7 @@ default {
             //first clean out any strides already in place for that user. prevents having lots of listens open if someone uses the menu several times while sat
             ClearUser(kRCPT);
             Dialog(kRCPT, sPrompt, lButtons, ubuttons, iPage, kID, iDigits, iAuth,"");
-        } else if (llGetSubString(sStr, 0, 10) == "remotemenu:") {
+        } /* else if (llGetSubString(sStr, 0, 10) == "remotemenu:") {
             string sCmd = llGetSubString(sStr, 11, -1);
             //Debug("dialog cmd:" + sCmd);
             if (llGetSubString(sCmd, 0, 3) == "url:") {
@@ -546,7 +550,8 @@ default {
             else if (llGetSubString(sCmd, 0, 7) == "timeout:")
                 llMessageLinked(LINK_SET, DIALOG_TIMEOUT, "", llGetSubString(sCmd, 8, -1));
         }
-        else if (UserCommand(iNum, sStr, kID)) return;
+        */
+        //else if (UserCommand(iNum, sStr, kID)) return;
     }
 
     listen(integer iChan, string sName, key kID, string sMessage) {
