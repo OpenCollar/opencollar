@@ -139,13 +139,14 @@ PlaceTheButton(float fYoff, float fZoff) {
 }
 
 BuildStylesList() {
+    g_lStyles=[];
     if(llGetInventoryType(g_sStylesCard)==INVENTORY_NOTECARD) {
         g_kStylesCardUUID=llGetInventoryKey(g_sStylesCard);
-        g_lStyles=[];
         g_iStylesNotecardLine=0;
         g_sStylesNotecardReadType="initialize";
         g_kStylesNotecardRead=llGetNotecardLine(g_sStylesCard,g_iStylesNotecardLine);
-    }
+    } else g_kStylesCardUUID = "";
+
 }
 
 DoStyle(string style) {
@@ -404,8 +405,7 @@ default
         if (iChange & CHANGED_OWNER) llResetScript();
         if (iChange & CHANGED_LINK) llResetScript();
         if (iChange & CHANGED_INVENTORY) {
-            if (llGetInventoryType(g_sStylesCard)==INVENTORY_NOTECARD && llGetInventoryKey(g_sStylesCard)!=g_kStylesCardUUID) BuildStylesList();
-            else if (!llGetInventoryType(g_sStylesCard)==INVENTORY_NOTECARD) g_kStylesCardUUID = "";
+            if (llGetInventoryKey(g_sStylesCard)!=g_kStylesCardUUID) BuildStylesList();
         }
     }
 
