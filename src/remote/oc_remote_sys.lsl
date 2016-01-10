@@ -162,7 +162,8 @@ integer InSim(key kID) {
 list PartnersInSim() {
     list lTemp;
     integer i = llGetListLength(g_lPartners);
-     while (i) {
+    if (i==0) return [];
+    while (i) {
         string sTemp = llList2String(g_lPartners,--i);
         if (InSim(sTemp))
             lTemp += sTemp;
