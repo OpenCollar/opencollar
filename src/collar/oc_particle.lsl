@@ -502,7 +502,6 @@ default {
                         if (sButtonCheck == "☐")  g_iStrictMode = TRUE;
                         else g_iStrictMode = FALSE;
                         SaveSettings(sButtonType, (string)g_iStrictMode, FALSE, iAuth, kAv);
-                        return;
                     } else if(sButtonType == L_RIBBON_TEX) {
                         if (sButtonCheck == "☐") {
                             g_sParticleMode = "Ribbon";
@@ -609,7 +608,6 @@ default {
                     g_iStrictMode = (integer)sValue;
                     SaveSettings("Strict", sValue, FALSE,0,"");
                   //  SaveDefaultSettings("Strict", sValue);
-                    ConfigureMenu(kMessageID, iAuth);
                 } else if (sToken == "turn") {
                     g_iTurnMode = (integer)sValue;
                     SaveSettings("Turn", sValue, FALSE,0,"");
