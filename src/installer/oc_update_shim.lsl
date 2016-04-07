@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                         Update Shim - 151117.1                           //
+//                         Update Shim - 160321.1                           //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2011 - 2015 Nandana Singh, Satomi Ahn, Wendy Starfall,    //
+//  Copyright (c) 2011 - 2016 Nandana Singh, Satomi Ahn, Wendy Starfall,    //
 //  littlemousy, Sumi Perl, Garvin Twine et al.                             //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
@@ -74,7 +74,7 @@ list g_lSettings;
 integer g_iIsUpdate;
 
 // list of deprecated tokens to remove from previous collar scripts
-list g_lDeprecatedSettingTokens = ["collarversion"];
+list g_lDeprecatedSettingTokens = ["collarversion","global_integrity"];
 
 integer CMD_OWNER = 500;
 
@@ -125,7 +125,7 @@ default {
     }
     
     listen(integer iChannel, string sName, key kID, string sMsg) {
-        debug("heard: " + sMsg);
+       // debug("heard: " + sMsg);
         if (llGetOwnerKey(kID) != llGetOwner()) return;
         list lParts = llParseString2List(sMsg, ["|"], []);
         if (llGetListLength(lParts) == 4) {
@@ -143,7 +143,7 @@ default {
                         sCmd = "GIVE";
                     } else {
                         // it's in our list.  Check UUID.
-                        if (llGetInventoryKey(sName) == kUUID && sName != "oc_sys") {
+                        if (llGetInventoryKey(sName) == kUUID  && kUUID != NULL_KEY && sName != "oc_sys") {
                             // already have script.  skip
                             sCmd = "SKIP";
                         } else {
@@ -155,7 +155,7 @@ default {
                 } else if (sType == "ITEM") {
                     if (llGetInventoryType(sName) != INVENTORY_NONE) {
                         // item exists.  check uuid.
-                        if (llGetInventoryKey(sName) != kUUID) {
+                        if (llGetInventoryKey(sName) != kUUID || kUUID == NULL_KEY) {
                             // mismatch.  delete and report
                             llRemoveInventory(sName);
                             sCmd = "GIVE";
@@ -190,22 +190,33 @@ default {
         else if (!llSubStringIndex(sMsg, "DONE")){
             //restore settings 
             if (g_iIsUpdate) {
+                llMessageLinked(LINK_ALL_OTHERS, -10, "LINK_REQUEST","");
                 integer n;
                 integer iStop = llGetListLength(g_lSettings); 
-                list lDeprecatedSplitSettingTokenForTest;
                 for (n = 0; n < iStop; n++) {
                     string sSetting = llList2String(g_lSettings, n);
                     //Look through deprecated settings to see if we should ignore any...
                     // Settings look like rlvmain_on=1, we want to deprecate the token ie. rlvmain_on <--store
-                    lDeprecatedSplitSettingTokenForTest = llList2List(llParseString2List(sSetting,["="],[]),0,0);
-    
-                    if (llListFindList(g_lDeprecatedSettingTokens,lDeprecatedSplitSettingTokenForTest) < 0) { //If it doesn't exist in our list
+                   // debug("Settings: "+sSetting);
+                    list lTest = llParseString2List(sSetting,["="],[]);
+                    string sToken = llList2String(lTest,0);
+                    if (llListFindList(g_lDeprecatedSettingTokens,[sToken]) == -1) { //If it doesn't exist in our list
+                        if (~llListFindList(["auth_block","auth_trust","auth_owner"],[sToken])) {
+                            lTest = llParseString2List(llGetSubString(sSetting,llSubStringIndex(sSetting,"=")+1,-1),[","],[]);
+                            integer i;
+                            for (;i<llGetListLength(lTest);++i) {
+                                string sValue = llList2String(lTest,i);
+                                if ((key)sValue) {}
+                                else lTest = llDeleteSubList(lTest,i,i);
+                            }
+                            sSetting = sToken+"="+llDumpList2String(lTest,",");
+                        }
                         llMessageLinked(LINK_SET, LM_SETTING_SAVE, sSetting, "");
-                        debug("SP - Saving :"+sSetting);
+                       // debug("SP - Saving :"+sSetting);
                     } else {
                         //Debug("SP - Deleting :"+ llList2String(sDeprecatedSplitSettingTokenForTest,0));
                          //remove it if it's somehow persistent still
-                        llMessageLinked(LINK_SET, LM_SETTING_DELETE, llList2String(lDeprecatedSplitSettingTokenForTest,0), "");
+                        llMessageLinked(LINK_SET, LM_SETTING_DELETE, sToken, "");
                     }
                 }
             }
@@ -213,9 +224,11 @@ default {
             llSetRemoteScriptAccessPin(0);
             // celebrate
             llOwnerSay("Installation complete!");
-            if (g_iIsUpdate)
+            if (g_iIsUpdate) {
                 //reboot scripts
-                llMessageLinked(5,CMD_OWNER,"reboot --f",llGetOwner());
+                llSleep(0.5);
+                llMessageLinked(LINK_ALL_OTHERS,CMD_OWNER,"reboot --f",llGetOwner());
+            }
             // delete shim script
             llRemoveInventory(llGetScriptName());
         }
@@ -234,7 +247,7 @@ default {
         if (iNum == LOADPIN) {
             integer iPin =  (integer)llGetSubString(sStr,0,llSubStringIndex(sStr,"@")-1);
             string sScriptName = llGetSubString(sStr,llSubStringIndex(sStr,"@")+1,-1);
-            debug("PrimNr:"+(string)iSender+" - "+sStr);
+           //debug("PrimNr:"+(string)iSender+" - "+sStr);
             if (llGetInventoryType(sScriptName) == INVENTORY_SCRIPT) {
                 llRemoteLoadScriptPin(kID, sScriptName, iPin, TRUE, 825);
                 llRemoveInventory(sScriptName);

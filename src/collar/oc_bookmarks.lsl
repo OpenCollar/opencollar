@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Bookmarks - 151024.1                            //
+//                          Bookmarks - 160201.1                            //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Satomi Ahn, Nandana Singh, Wendy Starfall,    //
+//  Copyright (c) 2008 - 2016 Satomi Ahn, Nandana Singh, Wendy Starfall,    //
 //  Sumi Perl, Master Starship, littlemousy, mewtwo064, ml132,              //
 //  Romka Swallowtail, Garvin Twine et al.                                  //
 // ------------------------------------------------------------------------ //
@@ -103,6 +103,7 @@ integer REBOOT                     = -1000;
 integer LINK_DIALOG                = 3;
 integer LINK_RLV                   = 4;
 integer LINK_SAVE                  = 5;
+integer LINK_UPDATE                = -10;
 integer LM_SETTING_SAVE            = 2000;
 integer LM_SETTING_RESPONSE        = 2002;
 integer LM_SETTING_DELETE          = 2003;
@@ -152,7 +153,7 @@ UserCommand(integer iNum, string sStr, key kID) {
             llResetScript();
     } else if (sStr == "rm bookmarks") {
         if (kID!=g_kWearer && iNum!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
-        else Dialog(kID,"\nAre you sure you want to delete the "+g_sSubMenu+" App?\n", ["Yes","No"], [], 0, iNum,"rmbookmarks");
+        else Dialog(kID,"\nDo you really want to uninstall the "+g_sSubMenu+" App?", ["Yes","No","Cancel"], [], 0, iNum,"rmbookmarks");
     }else if(sStr == PLUGIN_CHAT_CMD || llToLower(sStr) == "menu " + PLUGIN_CHAT_CMD_ALT || llToLower(sStr) == PLUGIN_CHAT_CMD_ALT) {
         if (iNum==CMD_GROUP)
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
@@ -354,7 +355,7 @@ ReadDestinations() {  // On inventory change, re-read our ~destinations notecard
     key kAv;
    // webLookup = llHTTPRequest("https://raw.githubusercontent.com/VirtualDisgrace/Collar/whisper/LSL/~bookmarks",
        //[HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
-    webLookup = llHTTPRequest("https://raw.githubusercontent.com/OpenCollar/opencollar/master/web/~bookmarks",[HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
+    webLookup = llHTTPRequest("https://raw.githubusercontent.com/VirtualDisgrace/Collar/live/web/~bookmarks",[HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
     g_lDestinations = [];
     g_lDestinations_Slurls = [];
     //start re-reading the notecards
@@ -533,9 +534,9 @@ default {
                 } else if (sMenuType == "rmbookmarks") {
                     if (sMessage == "Yes") {
                         llMessageLinked(LINK_ROOT, MENUNAME_REMOVE , g_sParentMenu + "|" + g_sSubMenu, "");
-                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+"Removing "+g_sSubMenu+" App...\nYou can re-install it with an OpenCollar Updater.", kAv);
+                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+g_sSubMenu+" App has been removed.", kAv);
                         if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
-                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"Removing "+g_sSubMenu+" App aborted.", kAv);
+                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
                 } else if(~llListFindList(PLUGIN_BUTTONS, [sMessage])) {
                     if(sMessage == "SAVE")
                         UserCommand(iAuth, PLUGIN_CHAT_CMD + " save", kAv);
@@ -548,6 +549,10 @@ default {
                 } else if(~llListFindList(g_lDestinations + g_lVolatile_Destinations, [sMessage]))
                     UserCommand(iAuth, PLUGIN_CHAT_CMD + " " + sMessage, kAv);
             }
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs

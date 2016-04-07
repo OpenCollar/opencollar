@@ -19,10 +19,10 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//          Resizer - 151007.1           .*' /  .*' ; .*`- +'  `*'          //
+//          Resizer - 160201.1           .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Nandana Singh, Lulu Pink, Garvin Twine,       //
+//  Copyright (c) 2008 - 2016 Nandana Singh, Lulu Pink, Garvin Twine,       //
 //  Cleo Collins, Master Starship, Joy Stipe, Wendy Starfall, littlemousy,  //
 //  Romka Swallowtail et al.                                                //
 // ------------------------------------------------------------------------ //
@@ -53,11 +53,9 @@
 
 // Based on a split of OpenCollar - appearance by Romka Swallowtail
 // Virtual Disgrace - Resizer is derivative of OpenCollar - adjustment
-// Compatible with OpenCollar API 4.0
-// and/or minimum Disgraced Version 2.1.0
 
 string g_sSubMenu = "Size/Position";
-string g_sParentMenu = "Options";
+string g_sParentMenu = "Settings";
 
 //string g_sDeviceType = "collar";
 
@@ -103,6 +101,7 @@ integer NOTIFY = 1002;
 //integer LM_SETTING_EMPTY = 2004;
 integer REBOOT              = -1000;
 integer LINK_DIALOG         = 3;
+integer LINK_UPDATE = -10;
 integer MENUNAME_REQUEST = 3000;
 integer MENUNAME_RESPONSE = 3001;
 integer MENUNAME_REMOVE = 3003;
@@ -330,7 +329,7 @@ UserCommand(integer iNum, string sStr, key kID) {
         else SizeMenu(kID, iNum);
     } else if (sStr == "rm resizer") {
         if (kID!=g_kWearer && iNum!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
-        else Dialog(kID, "\nAre you sure you want to delete the resizer App?\n\nNOTE: This App automatically installs with patches. If you want it back, just run a patch/updater/installer. ❤", ["Yes","No","Cancel"], [], 0, iNum,"rmresizer");
+        else Dialog(kID, "\nDo you really want to remove the Resizer?", ["Yes","No","Cancel"], [], 0, iNum,"rmresizer");
     }
 }
 
@@ -418,9 +417,9 @@ default {
                 } else if (sMenuType == "rmresizer") {
                     if (sMessage == "Yes") {
                         llMessageLinked(LINK_ROOT, MENUNAME_REMOVE , g_sParentMenu + "|" + g_sSubMenu, "");
-                        llMessageLinked(LINK_DIALOG,NOTIFY, "1"+"Resizer App has been removed.", kAv);
+                        llMessageLinked(LINK_DIALOG,NOTIFY, "1"+"Resizer has been removed.", kAv);
                         if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
-                    } else llMessageLinked(LINK_DIALOG,NOTIFY, "0"+"Resizer App remains installed.", kAv);
+                    } else llMessageLinked(LINK_DIALOG,NOTIFY, "0"+"Resizer remains installed.", kAv);
                 }
             }
         }
@@ -431,7 +430,8 @@ default {
                 //we have to subtract from the index because the dialog id comes in the middle of the stride
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
             }
-        } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
+        } else if (iNum == LINK_UPDATE && sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+        else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 
     timer() {

@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                           Bell - 151112.1                                //
+//                           Bell - 150201.1                                //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2009 - 2015 Cleo Collins, Nandana Singh, Satomi Ahn,      //
+//  Copyright (c) 2009 - 2016 Cleo Collins, Nandana Singh, Satomi Ahn,      //
 //  Joy Stipe, Wendy Starfall, Medea Destiny, littlemousy,                  //
 //  Romka Swallowtail, Garvin Twine et al.                                  //
 // ------------------------------------------------------------------------ //
@@ -111,6 +111,7 @@ integer SAY = 1004;
 integer REBOOT = -1000;
 integer LINK_DIALOG = 3;
 integer LINK_SAVE = 5;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE = 2000;
 //integer LM_SETTING_REQUEST = 2001;
 integer LM_SETTING_RESPONSE = 2002;
@@ -297,7 +298,7 @@ UserCommand(integer iNum, string sStr, key kID) { // here iNum: auth value, sStr
         }
     } else if (sStr == "rm bell") {
         if (kID!=g_kWearer && iNum!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
-        else  Dialog(kID,"\nDo you really want to uninstall the "+g_sSubMenu+" App?\n\nNOTE: This App automatically installs with patches. If you want it back, just run a patch/updater/installer. ❤", ["Yes","No","Cancel"], [], 0, iNum,"rmbell");
+        else  Dialog(kID,"\nDo you really want to uninstall the "+g_sSubMenu+" App?", ["Yes","No","Cancel"], [], 0, iNum,"rmbell");
     }
     //Debug("command executed");
 }
@@ -394,6 +395,9 @@ default {
                     g_kCurrentBellSound = llList2Key(g_listBellSounds,g_iCurrentBellSound);
                 } else if (sToken == "vol") g_fVolume = (float)sValue/10;
             }
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if(iNum == CMD_OWNER && sStr == "runaway") {
             llSleep(4);
             SetBellElementAlpha();

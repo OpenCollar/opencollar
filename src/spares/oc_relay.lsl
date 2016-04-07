@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                           Relay - 151207.2                               //
+//                           Relay - 160327.1                               //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2015 Satomi Ahn, Nandana Singh, Joy Stipe,         //
 //  Wendy Starfall, Sumi Perl, littlemousy, Romka Swallowtail et al.        //
@@ -51,13 +51,17 @@
 // ------------------------------------------------------------------------ //
 //////////////////////////////////////////////////////////////////////////////
 
+integer g_iSmartStrip = FALSE; // Convert @remoutfit to @detachallthis.
+
 string g_sParentMenu = "Apps";
 string g_sSubMenu = "Relay";
 
-string g_sAppVersion = "¹⁵¹²⁰⁷⋅²";
+string g_sAppVersion = "²⋅⁰";
 
 integer RELAY_CHANNEL = -1812221819;
+integer SAFETY_CHANNEL = -201818;
 integer g_iRlvListener;
+integer g_iSafetyListener;
 
 //MESSAGE MAP
 //integer CMD_ZERO = 0;
@@ -75,6 +79,7 @@ integer NOTIFY = 1002;
 integer LINK_DIALOG = 3;
 integer LINK_RLV = 4;
 integer LINK_SAVE = 5;
+integer LINK_UPDATE = -10;
 integer REBOOT = -1000;
 
 integer LM_SETTING_SAVE = 2000;//scripts send messages on this channel to have settings saved to httpdb
@@ -251,12 +256,13 @@ UpdateMode(integer iMode)
     g_iMinSafeMode = (iMode >> 7) & 1;
     g_iMinLandMode = (iMode >> 8) & 1;
     g_iMinPlayMode = (iMode >> 9) & 1;
+    g_iSmartStrip  = (iMode >> 10) & 1;
 }
 
 SaveMode()
 {
-    string sMode = (string)(512 * g_iMinPlayMode + 256 * g_iMinLandMode + 128 * g_iMinSafeMode + 32 * g_iMinBaseMode
-        + 16 * g_iPlayMode + 8 * g_iLandMode + 4 * g_iSafeMode + g_iBaseMode);
+    string sMode = (string)(1024 * g_iSmartStrip + 512 * g_iMinPlayMode + 256 * g_iMinLandMode + 128 * g_iMinSafeMode
+         + 32 * g_iMinBaseMode + 16 * g_iPlayMode + 8 * g_iLandMode + 4 * g_iSafeMode + g_iBaseMode);
     llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, "rlvrelay_mode=" + sMode, "");
 }
 
@@ -349,7 +355,7 @@ string HandleCommand(string sIdent, key kID, string sCom, integer iAuthed)
         string sAck = "ok";
         if (sCom == "!release" || sCom == "@clear") llMessageLinked(LINK_RLV,RLV_CMD,"clear",kID);
         else if (sCom == "!version") sAck = "1100";
-        else if (sCom == "!implversion") sAck = "OpenCollar Relay 151011.1";
+        else if (sCom == "!implversion") sAck = "OpenCollar Relay 151218.1";
         else if (sCom == "!x-orgversions") sAck = "ORG=0003/who=001";
         else if (llGetSubString(sCom,0,6)=="!x-who/") {kWho = SanitizeKey(llGetSubString(sCom,7,42)); iGotWho=TRUE;}
         else if (llGetSubString(sCom,0,0) == "!") sAck = "ko"; // ko unknown meta-commands
@@ -376,6 +382,9 @@ string HandleCommand(string sIdent, key kID, string sCom, integer iAuthed)
         else if ((lSubArgs!=[])==2)
         {
             string sBehav=llGetSubString(llList2String(lSubArgs,0),1,-1);
+            list lTemp=llParseString2List(sBehav,[":"],[]);
+            if (g_iSmartStrip && llList2String(lTemp,0) == "remoutfit" && sVal == "force")
+                sBehav = "detachallthis:" + llList2String(lTemp,1);
             if (sVal=="force"||sVal=="n"||sVal=="add"||sVal=="y"||sVal=="rem"||sBehav=="clear")
                 llMessageLinked(LINK_RLV,RLV_CMD,sBehav+"="+sVal,kID);
             else sAck="ko";
@@ -427,7 +436,7 @@ SafeWord()
 //----Menu functions section---//
 Menu(key kID, integer iAuth, string sMode)
 {
-    string sPrompt = "\n[http://www.opencollar.at/relay-plugin.html Relay (unsupported)]\t"+g_sAppVersion;
+    string sPrompt = "\n[http://www.opencollar.at/relay-plugin.html Legacy Relay]\t"+g_sAppVersion;
     list lButtons ;
     
     if (sMode == "Main")
@@ -439,6 +448,8 @@ Menu(key kID, integer iAuth, string sMode)
         else lButtons+=["☐ Playful"];
         if (g_iLandMode) lButtons+=["☒ Land"];
         else lButtons+=["☐ Land"];
+        if (g_iSmartStrip) lButtons+=["☒ SmartStrip"];
+        else lButtons+=["☐ SmartStrip"];
         if (g_lSources!=[])
         {
             sPrompt+="\n\nCurrently grabbed by "+(string)(g_lSources!=[])+" object";
@@ -579,7 +590,12 @@ RemoveList(string sMsg, integer iAuth, string sListType)
 refreshRlvListener()
 {
     llListenRemove(g_iRlvListener);
-    if (g_iRLV && g_iBaseMode && !g_iRecentSafeword) g_iRlvListener = llListen(RELAY_CHANNEL, "", NULL_KEY, "");
+    llListenRemove(g_iSafetyListener);
+    if (g_iRLV && g_iBaseMode && !g_iRecentSafeword) {
+        g_iRlvListener = llListen(RELAY_CHANNEL, "", NULL_KEY, "");
+        g_iSafetyListener = llListen(SAFETY_CHANNEL, "","","Safety!");
+        llRegionSayTo(g_kWearer,SAFETY_CHANNEL,"SafetyDenied!"); 
+    }
 }
 
 
@@ -662,6 +678,16 @@ UserCommand(integer iNum, string sStr, key kID)
         else llOwnerSay("No pending relay request for now.");
     }
     else if (sStr=="access") AccessList(kID, iNum);
+    else if (sStr=="smartstrip on")
+    {
+        g_iSmartStrip = TRUE;
+        SaveMode();
+    }
+    else if (sStr=="smartstrip off") 
+    {
+        g_iSmartStrip = FALSE;
+        SaveMode();
+    }
     else if (iNum == CMD_OWNER && !llSubStringIndex(sStr,"minmode"))
     {
         sStr=llGetSubString(sStr,8,-1);
@@ -786,12 +812,12 @@ default {
         //Debug("Starting");
     }
 
-    link_message(integer iLink, integer iNum, string sStr, key kID )
+    link_message(integer iSender, integer iNum, string sStr, key kID )
     {
         if (iNum >= CMD_OWNER && iNum <= CMD_WEARER) UserCommand(iNum, sStr, kID);
         else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
         {
-            llMessageLinked(iLink, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
         }
         else if (iNum==CMD_ADDSRC)
         {
@@ -983,12 +1009,19 @@ default {
                 }
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex-1, iMenuIndex-2+g_iMenuStride);
             }
-        }
-        else if (iNum == REBOOT && sStr == "reboot") llResetScript();
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
+        } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 
     listen(integer iChan, string who, key kID, string sMsg)
     {
+        if (iChan == SAFETY_CHANNEL) {
+            llMessageLinked(LINK_DIALOG,NOTIFY,"0\n\n⚠ "+who+" detected ⚠\n\nTo prevent conflicts this relay is being detached now! If you wish to use "+who+" anyway, type \"/%CHANNEL%%PREFIX% relay off\" to temporarily disable or type \"/%CHANNEL%%PREFIX% rm relay\" to permanently uninstall the internal OpenCollar relay plugin.\n",g_kWearer);
+            llRegionSayTo(g_kWearer,SAFETY_CHANNEL,"SafetyDenied!");
+        }
 /*
         if (llGetSubString(sMsg,-43,-1)==","+(string)g_kWearer+",!pong") 
         {   //sloppy matching; the protocol document is stricter, but some in-world devices do not respect it

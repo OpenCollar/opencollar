@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                           System - 151117.1                              //
+//                           System - 160324.1                              //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Nandana Singh, Garvin Twine, Cleo Collins,    //
+//  Copyright (c) 2008 - 2016 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Satomi Ahn, Joy Stipe, Wendy Starfall, littlemousy, Romka Swallowtail,  //
 //  Sumi Perl et al.                                                        //
 // ------------------------------------------------------------------------ //
@@ -57,9 +57,11 @@
 //on menu request, give dialog, with alphabetized list of submenus
 //on listen, send submenu link message
 
-string g_sCollarVersion="4.1.0";
-string g_sFancyVersion="⁴⋅¹⋅⁰";
+string g_sDevStage="";
+string g_sCollarVersion="6.1.4";
+string g_sFancyVersion="⁶⋅¹⋅⁴";
 integer g_iLatestVersion=TRUE;
+float g_fBuildVersion = 160406.1;
 
 key g_kWearer;
 
@@ -86,6 +88,7 @@ integer REBOOT = -1000;
 integer LINK_DIALOG = 3;
 integer LINK_RLV = 4;
 integer LINK_SAVE = 5;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE = 2000;
 integer LM_SETTING_REQUEST = 2001;
 integer LM_SETTING_RESPONSE = 2002;
@@ -143,13 +146,14 @@ integer g_iUpdateFromMenu;
 
 key github_version_request;
 string g_sDistributor;
+string g_sOtherDist;
 string g_sDistCard = ".distributor";
-string url_check = "https://raw.githubusercontent.com/OpenCollar/opencollar/master/web/~distributor";
+string url_check = "https://raw.githubusercontent.com/VirtualDisgrace/Collar/live/web/~distributor";
 key g_kDistCheck;
 integer g_iOffDist;
 key g_kNCkey;
-string version_check_url = "https://raw.githubusercontent.com/OpenCollar/opencollar/master/web/~version";
-string news_url = "https://raw.githubusercontent.com/OpenCollar/opencollar/master/web/~news";
+string version_check_url = "https://raw.githubusercontent.com/VirtualDisgrace/Collar/live/web/~version";
+string news_url = "https://raw.githubusercontent.com/VirtualDisgrace/Collar/6.1.0/web/~news";
 string license_url = "http://www.opencollar.at/license-terms-for-the-opencollar-role-play-device.html";
 key news_request;
 string g_sLastNewsTime = "0";
@@ -171,6 +175,7 @@ integer STEALTH;
 
 integer g_iWaitUpdate;
 integer g_iWaitRebuild;
+string g_sIntegrity = "(pending...)";
 
 /*
 integer g_iProfiled=1;
@@ -219,21 +224,21 @@ string NameGroupURI(string sStr){
     return "secondlife:///app/"+sStr+"/inspect";
 }
 
-OptionsMenu(key kID, integer iAuth) {
-    string sPrompt = "\n[http://www.opencollar.at/options.html Options]\n\n\"" + DUMPSETTINGS + "\" current settings to chat.";
+SettingsMenu(key kID, integer iAuth) {
+    string sPrompt = "\n[http://www.opencollar.at/settings.html Settings]\n\n\"" + DUMPSETTINGS + "\" current settings to chat.";
     sPrompt += "\n\"" +LOADCARD+"\" settings from backup card.";
     sPrompt += "\n\"Fix\" menus if buttons went missing.\n";
     sPrompt += "\nSelect Themes to customize looks.";
     list lButtons = [DUMPSETTINGS,LOADCARD,REFRESH_MENU];
     lButtons += g_lResizeButtons;
     if (STEALTH) {
-        sPrompt +="\nUncheck " + STEALTH_ON + " to reveal your collar.";
+        sPrompt +="\nUncheck " + STEALTH_ON + " to reveal your %DEVICETYPE%.";
         lButtons += [STEALTH_ON];
     } else {
-        sPrompt +="\nCheck " + STEALTH_OFF + " to hide your collar.";
+        sPrompt +="\nCheck " + STEALTH_OFF + " to hide your %DEVICETYPE%.";
         lButtons += [STEALTH_OFF];
     }
-    Dialog(kID, sPrompt, lButtons, [UPMENU, "Themes"], 0, iAuth, "Options");
+    Dialog(kID, sPrompt, lButtons, [UPMENU, "Themes"], 0, iAuth, "Settings");
 }
 
 AppsMenu(key kID, integer iAuth) {
@@ -247,10 +252,12 @@ UpdateConfirmMenu() {
 }
 
 HelpMenu(key kID, integer iAuth) {
-    string sPrompt="\nOpenCollar Version: "+g_sCollarVersion+"\nOrigin: ";
-    if (g_iOffDist) sPrompt += "["+NameGroupURI(g_sDistributor)+" Official Distributor]";
-    else sPrompt += "Unverified";
+    string sPrompt="\nOpenCollar Version: "+g_sCollarVersion+g_sDevStage+"\nOrigin: ";
+    if (g_iOffDist) sPrompt += NameGroupURI(g_sDistributor)+" [Official]";
+    else if (g_sOtherDist) sPrompt += NameGroupURI("agent/"+g_sOtherDist);
+    else sPrompt += "Unknown";
     sPrompt+="\n\nPrefix: %PREFIX%\nChannel: %CHANNEL%\nSafeword: "+g_sSafeWord;
+    sPrompt += "\n\nThis %DEVICETYPE% has a "+g_sIntegrity+" core.";
     if(!g_iLatestVersion) sPrompt+="\n\n[http://www.opencollar.at/updates.html Update available!]";
     //Debug("max memory used: "+(string)llGetSPMaxMemory());
     list lUtility = [UPMENU];
@@ -261,7 +268,7 @@ HelpMenu(key kID, integer iAuth) {
 }
 
 MainMenu(key kID, integer iAuth) {
-    string sPrompt = "\n[http://www.opencollar.at/main-menu.html O   P   E   N   C   O   L   L   A   R]\ns u b m i s s i o n  s e t  f r e e™\t\t"+g_sFancyVersion;
+    string sPrompt = "\n[http://www.opencollar.at/main-menu.html O   P   E   N   C   O   L   L   A   R™]\nw w w  .  o p e n c o l l a r  .  a t\t\t"+g_sFancyVersion;
     if(!g_iLatestVersion) sPrompt+="\n\nUPDATE AVAILABLE: A new patch has been released.\nPlease install at your earliest convenience. Thanks!\n\nwww.opencollar.at/updates";
     //Debug("max memory used: "+(string)llGetSPMaxMemory());
     list lStaticButtons=["Apps"];
@@ -273,7 +280,7 @@ MainMenu(key kID, integer iAuth) {
     lStaticButtons+=["Leash"];
     if (g_iRlvMenu) lStaticButtons+="RLV";
     else lStaticButtons+=" ";
-    lStaticButtons+=["Access","Options","Help/About"];
+    lStaticButtons+=["Access","Settings","Help/About"];
     if (g_iLocked) Dialog(kID, sPrompt, "UNLOCK"+lStaticButtons, [], 0, iAuth, "Main");
     else Dialog(kID, sPrompt, "LOCK"+lStaticButtons, [], 0, iAuth, "Main");
 }
@@ -286,12 +293,22 @@ UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
         if (sSubmenu == "main" || sSubmenu == "") MainMenu(kID, iNum);
         else if (sSubmenu == "apps" || sSubmenu=="addons") AppsMenu(kID, iNum);
         else if (sSubmenu == "help/about") HelpMenu(kID, iNum);
-        else if (sSubmenu == "options") {
+        else if (sSubmenu == "settings") {
             if (iNum != CMD_OWNER && iNum != CMD_WEARER) {
                 llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
                 MainMenu(kID, iNum);
-            } else OptionsMenu(kID, iNum);
+            } else SettingsMenu(kID, iNum);
         }
+    } else if (sStr == "info") {
+        string sMessage = "\n\nModel: "+llGetObjectName();
+        sMessage += "\nOpenCollar Version: "+g_sCollarVersion+g_sDevStage+" ("+(string)g_fBuildVersion+")\nOrigin: ";
+        if (g_iOffDist) sMessage += NameGroupURI(g_sDistributor)+" [Official]";
+        else if (g_sOtherDist) sMessage += NameGroupURI("agent/"+g_sOtherDist);
+        else sMessage += "Unknown";
+        sMessage += "\nUser: "+llGetUsername(g_kWearer);
+        sMessage += "\nPrefix: %PREFIX%\nChannel: %CHANNEL%\nSafeword: "+g_sSafeWord;
+        sMessage += "\nThis %DEVICETYPE% has a "+g_sIntegrity+" core.\n";
+        llMessageLinked(LINK_DIALOG,NOTIFY,"1"+sMessage,kID);
     } else if (sStr == "license") {
         if(llGetInventoryType(".license")==INVENTORY_NOTECARD) llGiveInventory(kID,".license");
         else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"The license card has been removed from this %DEVICETYPE%. Please find the recent revision at this address: "+license_url,kID);
@@ -301,10 +318,10 @@ UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
         if (fromMenu) HelpMenu(kID, iNum);
     } else if (sStr =="about" || sStr=="help/about") HelpMenu(kID,iNum);
     else if (sStr == "addons" || sStr=="apps") AppsMenu(kID, iNum);
-    else if (sStr == "options") {
-        if (iNum == CMD_OWNER || iNum == CMD_WEARER) OptionsMenu(kID, iNum);
+    else if (sStr == "settings") {
+        if (iNum == CMD_OWNER || iNum == CMD_WEARER) SettingsMenu(kID, iNum);
     } else if (sStr == "contact") {
-        g_kWebLookup = llHTTPRequest("https://raw.githubusercontent.com/OpenCollar/opencollar/master/web/~contact", [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
+        g_kWebLookup = llHTTPRequest("https://raw.githubusercontent.com/VirtualDisgrace/Collar/live/web/~contact", [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
         g_kCurrentUser = kID;
         if (fromMenu) HelpMenu(kID, iNum);
     } else if (sCmd == "menuto") {
@@ -344,11 +361,14 @@ UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
             RebuildMenu();
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Menus have been fixed!",kID);
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
-    } else if (sCmd == "jailbreak" && kID == g_kWearer) {
-        if (g_iOffDist)
-            Dialog(kID,"\nThis process is irreversible. Do you wish to proceed?", ["Yes","No","Cancel"],[],0,iNum,"JB");
-        else
-            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"This %DEVICETYPE% has already been jailbroken.",kID);
+    } else if (llToLower(sStr) == "rm seal" && kID == g_kWearer) {
+        if (g_iOffDist) {
+            if (llGetAttached())
+                 llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Oops! For this to work, please rez your %DEVICETYPE% on the ground and then use the command to remove the seal again.",kID);
+            else
+                Dialog(kID,"\nThis process is irreversible. Do you wish to proceed?", ["Yes","No","Cancel"],[],0,iNum,"JB");
+        } else
+            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"This %DEVICETYPE% has no official seal.",kID);
     } else if (sCmd == "news"){
         if (kID == g_kWearer || iNum==CMD_OWNER){
             if (sStr=="news off"){
@@ -379,18 +399,24 @@ UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Only the wearer can update the %DEVICETYPE%.",kID);
             if (fromMenu) HelpMenu(kID, iNum);
         }
-    } else if (!llSubStringIndex(sStr,".- ... -.-")) { 
+    } else if (!llSubStringIndex(sStr,".- ... -.-")) {
         if (kID == g_kWearer) {
-            g_kUpdaterOrb = (key)llGetSubString(sStr,10,-1);
-            UpdateConfirmMenu(); 
+            list lTemp = llParseString2List(sStr,["|"],[]);
+            if (llList2Float(lTemp,1) < g_fBuildVersion && llList2String(lTemp,1) != "AppInstall") {
+                llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"Installation aborted. The version you are trying to install is deprecated. ",g_kWearer);
+            } else {
+                g_kUpdaterOrb = (key)llGetSubString(sStr,-36,-1);
+                UpdateConfirmMenu();
+            }
         }
     } else if (sCmd == "version") {
-        string sVersion = "\n\nOpenCollar Version: "+g_sCollarVersion+"\nOrigin: ";
-        if (g_iOffDist) sVersion += "["+NameGroupURI(g_sDistributor)+" Official Distributor]\n";
-        else sVersion += "Unverified\n";
+        string sVersion = "\n\nOpenCollar Version: "+g_sCollarVersion+g_sDevStage+" ("+(string)g_fBuildVersion+")\nOrigin: ";
+        if (g_iOffDist) sVersion += NameGroupURI(g_sDistributor)+" [Official]\n";
+        else if (g_sOtherDist) sVersion += NameGroupURI("agent/"+g_sOtherDist);
+        else sVersion += "Unknown\n";
         if(!g_iLatestVersion) sVersion+="\nUPDATE AVAILABLE: A new patch has been released.\nPlease install at your earliest convenience. Thanks!\n\nwww.opencollar.at/updates\n";
         llMessageLinked(LINK_DIALOG,NOTIFY,"0"+sVersion,kID);
-    } else if (sCmd == "objectversion") {
+    }/* else if (sCmd == "objectversion") {
         // ping from an object, we answer to it on the object channel
         // inlined single use GetOwnerChannel(key kOwner, integer iOffset) function
         integer iChan = (integer)("0x"+llGetSubString((string)g_kWearer,2,7)) + 1111;
@@ -402,7 +428,7 @@ UserCommand(integer iNum, string sStr, key kID, integer fromMenu) {
         integer iInterfaceChannel = (integer)("0x" + llGetSubString(g_kWearer,30,-1));
         if (iInterfaceChannel > 0) iInterfaceChannel = -iInterfaceChannel;
         llRegionSayTo(g_kWearer, iInterfaceChannel, "version="+g_sCollarVersion);
-    }
+    }*/
 }
 
 string GetTimestamp() { // Return a string of the date and time
@@ -440,7 +466,7 @@ JB(){
     (7,i);do{if(s==g_sDistCard){if(llGetInventoryCreator(s)==
     "4da2b231-87e1-45e4-a067-05cf3a5027ea"){g_iOffDist=1;
     if (llGetInventoryPermMask(g_sDistCard,4)&0x2000){
-    llDialog(g_kWearer, "\nATTENTION:\n\nThe permissions on the .distributor card must be set to ☐Modify ☑Copy ☐Transfer while still in your inventory.\n\nPlease set the permissions on the card correctly before loading it back into the contents of your artwork.\n\nhttp://www.opencollar.at/workshop.html", [], 298479);
+    llDialog(g_kWearer, "\nATTENTION:\n\nThe permissions on the .distributor card must be set to ☑Copy ☐Transfer while still in your inventory.\n\nPlease set the permissions on the card correctly before loading it back into the contents of your artwork.\n\nhttp://www.opencollar.at/workshop.html", [], 298479);
     llRemoveInventory(s);g_iOffDist=0;return;}
     g_kNCkey=llGetNotecardLine(s,0);}else g_iOffDist=0;return;}i--;s=
     llGetInventoryName(7,i);}while(i+1);}
@@ -493,13 +519,14 @@ RebuildMenu() {
     g_lAppsButtons = [] ;
     llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Main", "");
     llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Apps", "");
-    llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Options", "");
+    llMessageLinked(LINK_SET, MENUNAME_REQUEST, "Settings", "");
+    llMessageLinked(LINK_ALL_OTHERS, LINK_UPDATE,"LINK_REQUEST","");
 }
 
 init (){
     github_version_request = llHTTPRequest(version_check_url, [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
     g_iWaitRebuild = TRUE;SafeX();JB();
-    llSetTimerEvent(1);
+    llSetTimerEvent(1.0);
 }
 
 StartUpdate(){
@@ -535,7 +562,7 @@ default
             } else if (sStr=="Main|Animations") g_iAnimsMenu=TRUE;
             else if (sStr=="Main|RLV") g_iRlvMenu=TRUE;
             else if (sStr=="Main|Capture") g_iCaptureMenu=TRUE;
-            else if (sStr=="Options|Size/Position") g_lResizeButtons = ["Position","Rotation","Size"];
+            else if (sStr=="Settings|Size/Position") g_lResizeButtons = ["Position","Rotation","Size"];
         } else if (iNum == MENUNAME_REMOVE) {
             //sStr should be in form of parentmenu|childmenu
             list lParams = llParseString2List(sStr, ["|"], []);
@@ -546,6 +573,10 @@ default
                 //only remove if it's there
                 if (gutiIndex != -1) g_lAppsButtons = llDeleteSubList(g_lAppsButtons, gutiIndex, gutiIndex);
             } else if (child == "Size/Position") g_lResizeButtons = [];
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == DIALOG_RESPONSE) {
             //Debug("Menu response");
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
@@ -587,8 +618,8 @@ default
                         llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Installation cancelled.",kAv);
                         return;
                     }
-                } else if (sMenu == "Options") {
-                     if (sMessage == DUMPSETTINGS) llMessageLinked(LINK_SAVE, iAuth,"settings",kAv);
+                } else if (sMenu == "Settings") {
+                     if (sMessage == DUMPSETTINGS) llMessageLinked(LINK_SAVE, iAuth,"print settings",kAv);
                      else if (sMessage == LOADCARD) llMessageLinked(LINK_SAVE, iAuth,sMessage,kAv);
                      else if (sMessage == REFRESH_MENU) {
                          UserCommand(iAuth, sMessage, kAv, TRUE);
@@ -609,17 +640,17 @@ default
                         llMessageLinked(LINK_ROOT, iAuth, llToLower(sMessage), kAv);
                         return;
                     }
-                    OptionsMenu(kAv,iAuth);
+                    SettingsMenu(kAv,iAuth);
                 } else if (sMenu =="JB") {
                     if (sMessage == "Yes") {
                         if (llGetInventoryType(g_sDistCard)==7) llRemoveInventory(g_sDistCard);
                         if (llGetInventoryType(g_sDistCard)==-1) {
                             g_sDistributor = "";
                             g_iOffDist = 0;
-                            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%DEVICETYPE% has been jailbroken.",kAv);
+                            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"The %DEVICETYPE%'s official seal has been removed.",kAv);
                         }
                     } else
-                        llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Jailbreak sequence aborted.",kAv);
+                        llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"The %DEVICETYPE%'s official seal remains intact.",kAv);
                 }
             }
         } else if (iNum >= CMD_OWNER && iNum <= CMD_WEARER) UserCommand(iNum, sStr, kID, FALSE);
@@ -631,7 +662,9 @@ default
                 g_iLocked = (integer)sValue;
                 if (g_iLocked) llOwnerSay("@detach=n");
                 SetLockElementAlpha();
-            } else if(sToken =="lock_locksound") {
+            } else if (sToken == "intern_integrity") 
+                g_sIntegrity = sValue;
+            else if(sToken =="lock_locksound") {
                 if(sValue=="default") g_sLockSound=g_sDefaultLockSound;
                 else if((key)sValue!=NULL_KEY || llGetInventoryType(sValue)==INVENTORY_SOUND) g_sLockSound=sValue;
             } else if(sToken =="lock_unlocksound") {
@@ -639,6 +672,7 @@ default
                 else if ((key)sValue!=NULL_KEY || llGetInventoryType(sValue)==INVENTORY_SOUND) g_sUnlockSound=sValue;
             } else if (sToken == g_sGlobalToken+"safeword") g_sSafeWord = sValue;
             else if (sToken == g_sGlobalToken+"news") g_iNews = (integer)sValue;
+            else if (sToken == "intern_dist") g_sOtherDist = sValue;
             else if (sStr == "settings=sent") {
                 if (g_iNews) news_request = llHTTPRequest(news_url, [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
             }
@@ -657,9 +691,9 @@ default
 
     changed(integer iChange) {
         if ((iChange & CHANGED_INVENTORY) && !llGetStartParameter()) {
-            llMessageLinked(LINK_ALL_OTHERS, LM_SETTING_REQUEST,"ALL","");
             g_iWaitRebuild = TRUE;JB();
             llSetTimerEvent(1.0);
+            llMessageLinked(LINK_ALL_OTHERS, LM_SETTING_REQUEST,"ALL","");
         }
         if (iChange & CHANGED_OWNER) llResetScript();
         if (iChange & CHANGED_COLOR) {
@@ -669,7 +703,10 @@ default
                 SetLockElementAlpha(); // update hide elements
             }
         }
-        if (iChange & CHANGED_LINK) BuildLockElementList(); // need rebuils lockelements list
+        if (iChange & CHANGED_LINK) {
+            llMessageLinked(LINK_ALL_OTHERS,LINK_UPDATE,"LINK_REQUEST","");
+            BuildLockElementList(); // need rebuils lockelements list
+        }
      /*  if (iChange & CHANGED_REGION) {
             if (g_iProfiled){
                 llScriptProfiler(1);
@@ -724,11 +761,19 @@ default
 
     listen(integer channel, string name, key id, string message) {
         if (llGetOwnerKey(id) == g_kWearer) {   //collar and updater have to have the same Owner else do nothing!
-            list lTemp = llParseString2List(message, [","],[]);
+            list lTemp = llParseString2List(message, ["|"],[]);
             string sCommand = llList2String(lTemp, 0);
-            if( message == "-.. ---") {
-                g_iWillingUpdaters++;
-                g_kUpdaterOrb = id;
+            string sOption = llList2String(lTemp, 1);
+            if(sCommand == "-.. ---") {
+                if (sOption == "AppInstall" || (float)sOption >= g_fBuildVersion) {
+                    g_iWillingUpdaters++;
+                    g_kUpdaterOrb = id;
+                } else {
+                    llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"Installation aborted. The version you are trying to install is deprecated. ",g_kWearer);
+                    llSetTimerEvent(0);
+                    g_iWaitUpdate = FALSE;
+                    llListenRemove(g_iUpdateHandle);
+                }
             }
         }
     }
@@ -738,11 +783,11 @@ default
             g_iWaitUpdate = FALSE;
             llListenRemove(g_iUpdateHandle);
             if (!g_iWillingUpdaters) {   //if no updaters responded, get upgrader info from web and remenu
-                g_kWebLookup = llHTTPRequest("https://raw.githubusercontent.com/OpenCollar/opencollar/master/web/~update", [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
+                g_kWebLookup = llHTTPRequest("https://raw.githubusercontent.com/VirtualDisgrace/Collar/live/web/~update", [HTTP_METHOD, "GET", HTTP_VERBOSE_THROTTLE, FALSE], "");
                 if (g_iUpdateFromMenu) HelpMenu(g_kCurrentUser,g_iUpdateAuth);
             } else if (g_iWillingUpdaters > 1) {    //if too many updaters, PANIC!
                 llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Multiple updaters were found nearby. Please remove all but one and try again.",g_kCurrentUser);
-            } else StartUpdate();  //update 
+            } else StartUpdate();  //update
            // else UpdateConfirmMenu();  //perform update
         }
         if (g_iWaitRebuild) {

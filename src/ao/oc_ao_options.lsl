@@ -1,24 +1,54 @@
-////////////////////////////////////////////////////////////////////////////////////
-// ------------------------------------------------------------------------------ //
-//                             OpenCollarAO - Options                             //
-//                                 version 3.960                                  //
-// ------------------------------------------------------------------------------ //
-// Licensed under the GPLv2 with additional requirements specific to Second Life® //
-// and other virtual metaverse environments.  ->  www.opencollar.at/license.html  //
-// ------------------------------------------------------------------------------ //
-// ©   2008 - 2013  Individual Contributors and OpenCollar - submission set free™ //
-// ------------------------------------------------------------------------------ //
-////////////////////////////////////////////////////////////////////////////////////
-
-// HudOptions (Alexei Maven + Jessenia Mocha) 
-// This script could be used to position all HUDs quite easy.  Please remember this is Open Source 
-// Thus you need to Credit Open Collar / Alexei Maven / Jessenia Mocha + Keep it full perm and not sell it! =)
-
-// This script was intended to make the Sub AO as customizable as possible for the user.
-// The second goal was to make it easy for the developers to make new add-ons, and minimize script changes.
-// The code in this script reflects the two above goals. There is a reason for every line. 
-
-// Start Jess's OC modified menu injection
+//////////////////////////////////////////////////////////////////////////////
+//                                                                          //
+//       _   ___     __            __  ___  _                               //
+//      | | / (_)___/ /___ _____ _/ / / _ \(_)__ ___ ________ ________      //
+//      | |/ / / __/ __/ // / _ `/ / / // / (_-</ _ `/ __/ _ `/ __/ -_)     //
+//      |___/_/_/  \__/\_,_/\_,_/_/ /____/_/___/\_, /_/  \_,_/\__/\__/      //
+//                                             /___/                        //
+//                                                                          //
+//                                        _                                 //
+//                                        \`*-.                             //
+//                                         )  _`-.                          //
+//                                        .  : `. .                         //
+//                                        : _   '  \                        //
+//                                        ; *` _.   `*-._                   //
+//                                        `-.-'          `-.                //
+//                                          ;       `       `.              //
+//                                          :.       .        \             //
+//                                          . \  .   :   .-'   .            //
+//                                          '  `+.;  ;  '      :            //
+//                                          :  '  |    ;       ;-.          //
+//                                          ; '   : :`-:     _.`* ;         //
+//        AO Options - 160120.1          .*' /  .*' ; .*`- +'  `*'          //
+//                                       `*-*   `*-*  `*-*'                 //
+// ------------------------------------------------------------------------ //
+//  Copyright (c) 2008 - 2016 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
+//  Wendy Starfall, littlemousy, Romka Swallowtail, Garvin Twine et al.     //
+// ------------------------------------------------------------------------ //
+//  This script is free software: you can redistribute it and/or modify     //
+//  it under the terms of the GNU General Public License as published       //
+//  by the Free Software Foundation, version 2.                             //
+//                                                                          //
+//  This script is distributed in the hope that it will be useful,          //
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            //
+//  GNU General Public License for more details.                            //
+//                                                                          //
+//  You should have received a copy of the GNU General Public License       //
+//  along with this script; if not, see www.gnu.org/licenses/gpl-2.0        //
+// ------------------------------------------------------------------------ //
+//  This script and any derivatives based on it must remain "full perms".   //
+//                                                                          //
+//  "Full perms" means maintaining MODIFY, COPY, and TRANSFER permissions   //
+//  in Second Life(R), OpenSimulator and the Metaverse.                     //
+//                                                                          //
+//  If these platforms should allow more fine-grained permissions in the    //
+//  future, then "full perms" will mean the most permissive possible set    //
+//  of permissions allowed by the platform.                                 //
+// ------------------------------------------------------------------------ //
+//           github.com/OpenCollar/opencollar/tree/master/src/ao            //
+// ------------------------------------------------------------------------ //
+//////////////////////////////////////////////////////////////////////////////
 
 // -- HUD Message Map
 integer MENUNAME_RESPONSE = 3001;
@@ -26,6 +56,7 @@ integer SUBMENU = 3002;
 integer DIALOG = -9000;
 integer DIALOG_RESPONSE = -9001;
 integer DIALOG_TIMEOUT = -9002;
+
 //Added for the collar auth system:
 integer CMD_NOAUTH = 0;
 integer CMD_AUTH = 42; //used to send authenticated commands to be executed in the core script
@@ -39,784 +70,331 @@ integer CMD_OWNER = 500;
 //integer COLLAR_INT_REP = 611;
 //integer CMD_UPDATE = 10001;
 integer OPTIONS = 69; // Hud Options LM
-integer AOLock;
-integer AOPower = TRUE; // -- Power will always be on when scripts are reset as that is the default state of the AO
-integer AOSit;
 
-vector AOoffcolor = <0.5, 0.5, 0.5>;
-vector AOoncolor = <1,1,1>;
-
+string AOON = "ZHAO_AOON";
+string AOOFF = "ZHAO_AOOFF";
 string UNLOCK = " UNLOCK";
 string LOCK = " LOCK";
 string SITANYON = "ZHAO_SITANYWHERE_ON";
 string SITANYOFF = "ZHAO_SITANYWHERE_OFF";
 
-string UPMENU = "AO Menu";
-string parentmenu = "Main";
-string submenu = "Options";
-string submenu1 = "Textures";
-string submenu2 = "Order";
-string submenu3 = "Tint";
-string currentmenu;
-string texture;
+string UPMENU = "BACK";
+//string g_sParentMenu = "Main";
+string g_sHudMenu = "Options";
+string g_sOrderMenu = "Order";
+//string submenu3 = "Tint";
 
-key menuid;
+// Start HUD Options
+list g_lAttachPoints = [ATTACH_HUD_TOP_RIGHT,
+                    ATTACH_HUD_TOP_CENTER,
+                    ATTACH_HUD_TOP_LEFT,
+                    ATTACH_HUD_BOTTOM_RIGHT,
+                    ATTACH_HUD_BOTTOM,
+                    ATTACH_HUD_BOTTOM_LEFT];
 
+float g_fGap = 0.001; // This is the space between buttons
+float g_Yoff = 0.002; // space between buttons and screen top/bottom border
+float g_Zoff = 0.04; // space between buttons and screen left/right border
 
-key Dialog(key rcpt, string prompt, list choices, list utilitybuttons, integer page)
-{
-    key id = llGenerateKey();
-    llMessageLinked(LINK_SET, DIALOG, (string)rcpt + "|" + prompt + "|" + (string)page +
- "|" + llDumpList2String(choices, "`") + "|" + llDumpList2String(utilitybuttons, "`"), id);
-    return id;
-}
-
-
-// Start HUD Options 
-list attachPoints = [ATTACH_HUD_TOP_RIGHT, ATTACH_HUD_TOP_CENTER, ATTACH_HUD_TOP_LEFT, 
-                     ATTACH_HUD_BOTTOM_RIGHT, ATTACH_HUD_BOTTOM, ATTACH_HUD_BOTTOM_LEFT];
-
-list primOrder = [0,1,2,3,4]; // -- List must always start with '0','1' 
+list g_lButtons ; // buttons names for Order menu
+list g_lPrimOrder = [0,1,2,3,4]; // -- List must always start with '0','1'
 // -- 0:Spacer, 1:Root, 2:Power, 3:Sit Anywhere, 4:Menu
 // -- Spacer serves to even up the list with actual link numbers
 
-integer Layout = 1;
-integer Hidden;
-integer SPosition = 69; // Nuff'said =D
-integer oldPos;
-integer newPos;
-integer tintable = FALSE;
+integer g_iLayout = 1;
+integer g_iHidden = FALSE;
+integer g_iPosition = 69; // Nuff'said =D
+integer g_iOldPos;
+integer g_iNewPos;
 
-DoPosition(float yOff, float zOff)
-{   // Places the buttons
+integer g_iAOLock = FALSE;
+integer g_iAOPower = TRUE; // -- Power will always be on when scripts are reset as that is the default state of the AO
+integer g_iAOSit = FALSE;
+vector g_vAOoffcolor = <0.5,0.5,0.5>;
+vector g_vAOoncolor = <1,1,1>;
+string g_sDarkLock = "e633ced3-2327-4288-8d4f-7cc530be0faa";
+string g_sLightLock = "8aadf1ed-63d1-2bc5-174b-7c074f676b88";
+
+list g_lStyles;
+string g_sTexture; // current style
+
+list g_lMenuIDs;
+integer g_iMenuStride=3;
+
+Dialog(key rcpt, string prompt, list choices, list utilitybuttons, integer page, string menu)
+{
+    key id = llGenerateKey();
+    llMessageLinked(LINK_THIS, DIALOG, (string)rcpt + "|" + prompt + "|" + (string)page +
+ "|" + llDumpList2String(choices, "`") + "|" + llDumpList2String(utilitybuttons, "`"), id);
+
+    integer index = llListFindList(g_lMenuIDs, [rcpt]);
+    if (~index) g_lMenuIDs = llListReplaceList(g_lMenuIDs,[rcpt,id,menu],index,index+g_iMenuStride-1);
+    else g_lMenuIDs += [rcpt,id,menu];
+}
+
+FindButtons() { // collect buttons names & links
+    g_lButtons = [" ", "Minimize"] ; // 'Minimize' need for g_sTexture
+    g_lPrimOrder = [0, 1];  //  '1' - root prim
     integer i;
-    integer LinkCount=llGetListLength(primOrder);
-    for (i=2;i<=LinkCount;++i)
-    { 
-        llSetLinkPrimitiveParams(llList2Integer(primOrder,i), [PRIM_POSITION, <0.0, yOff * (i-1), zOff * (i-1)>]);
-    }    
+    for (i=2; i<llGetNumberOfPrims()+1; ++i) {
+        g_lButtons += llGetLinkPrimitiveParams(i, [PRIM_DESC]);
+        g_lPrimOrder += i;
+    }
 }
 
-DoTextures(string _style)
-{   // -- Texture Settings by Jessenia Mocha
-    // -- Texture UUID's [ Root, Power, Sit, Menu ]
-    list _blue        = ["fe7844f7-1179-5ba1-eb46-d44d3bed5837",
-                         "b666c23b-a75a-e5b6-fd26-c17fbe921121",
-                         "cb4ea616-6478-3f8d-2207-4daee93a01c3",
-                         "7d5ebb11-b3e2-4353-231b-c898c5645872"];
-    
-    list _red         = ["4d61335b-2b3d-e3d2-a6b9-e3fba73f9f8e",
-                         "202d091c-e6fb-533d-9cfe-19e098d883c6",
-                         "4ba67464-ae2b-7271-8445-de393a551eba",
-                         "917d6349-a01b-1c1e-7c49-1b889fd81217"];
-
-    list _graysquare  = ["0744de1c-a3bd-47db-b20f-2cb7b93a3ff1",
-                         "ffbc0c09-7741-015a-37cb-67e1d6c15111",
-                         "dd4832fb-9583-7b50-aacc-6b80e7508ddb",
-                         "09b69dd4-eb80-e2de-7dba-70c8337d283c"];
-
-    list _graycircle  = ["428f1dfc-251c-b204-da66-000082bee96f",
-                         "47ae23a3-e9e7-e045-3a65-5389f2038b9f",
-                         "b7db4e46-443d-6da7-246b-4b9a1d9a16ca",
-                         "6df113f7-c667-106b-e276-31dc1be37513"];
-                         
-    list _whitetint   = ["8408646f-2d35-3938-cba9-0808a12fcb80",
-                         "cc3bb8fd-8ccd-18a1-b570-e7d3fbbda5e7",
-                         "d95be5fe-1a7a-2b44-3713-948135054822",
-                         "eb1f670d-c34f-23cb-3beb-f859c3c0278e"];
-                         
-    // -- Texture lists complete    
-    llOwnerSay("Setting texture scheme to :: \""+_style+"\""); // -- More for debugging than anything else
-    
-    
-    // -- If we don't select "White" as the style, remove tintable flag and reset AOcolors
-    if(_style != "White") 
-    {
-        tintable = FALSE; // -- Turn off tint
-        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES, <1,1,1>, 1.0]);
+DoPosition(float yOff, float zOff) {   // Places the buttons
+    integer i;
+    integer LinkCount=llGetListLength(g_lPrimOrder);
+    for (i=2;i<=LinkCount;++i) {
+        llSetLinkPrimitiveParamsFast(llList2Integer(g_lPrimOrder,i),[PRIM_POSITION,<0, yOff*(i-1), zOff*(i-1)>]);
     }
-
-    // -- Get the actual texture setting ready
-    // integer _primNum = llGetNumberOfPrims(); // -- Yes this can be used, however, since the textures are hard-coded, no point.
-    integer _primNum = 3;
-    integer _i = 0;
-    texture = _style;
-    
-    if(_style == "Gray Square")
-    {
-        do
-        {
-            llSetLinkPrimitiveParams(_i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(_graysquare,_i), <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-        }
-        while((++_i)<=_primNum);    
-        
-    }
-    else if(_style == "Gray Circle")
-    {
-        do
-        {
-            llSetLinkPrimitiveParams(_i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(_graycircle,_i), <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-        }
-        while((++_i)<=_primNum);        
-    }
-    else if(_style == "Red")
-    {
-        do
-        {
-            llSetLinkPrimitiveParams(_i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(_red,_i), <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-        }
-        while((++_i)<=_primNum);        
-    } 
-    else if(_style == "Blue")
-    {
-        do
-        {
-            llSetLinkPrimitiveParams(_i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(_blue,_i), <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-        }
-        while((++_i)<=_primNum);        
-    }
-    else if(_style == "White")
-    {
-        do
-        {
-            llSetLinkPrimitiveParams(_i+1,[PRIM_TEXTURE, ALL_SIDES, llList2String(_whitetint,_i), <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-        }
-        while((++_i)<=_primNum);        
-    }
-
 }
 
-DoHide()
-{   // This moves the child prims under the root prim to hide them
-    llSetLinkPrimitiveParams(LINK_ALL_OTHERS, [PRIM_POSITION, <1.0, 0.0,  0.0>]);
+DoTextures(string style) {
+
+    list lTextures = [
+    "[ Dark ]",
+    "Minimize~e1482c7e-8609-fcb0-56d8-18c3c94d21c0",
+    "Power~e630e9e0-799e-6acc-e066-196cca7b37d4",
+    "SitAny~251b2661-235e-b4d8-0c75-248b6bdf6675",
+    "Menu~f3ec1052-6ec4-04ba-d752-937a4d837bf8",
+    "[ Light ]",
+    "Minimize~b59f9932-5de4-fc23-b5aa-2ab46d22c9a6",
+    "Power~42d4d624-ca72-1c74-0045-f782d7409061",
+    "SitAny~349340c5-0045-c32d-540e-52b6fb77af55",
+    "Menu~52c3f4cf-e87e-dbdd-cf18-b2c4f6002a96"
+    ];
+
+    integer i;
+    while (i < llGetListLength(lTextures)) {
+        string sData = llStringTrim(llList2String(lTextures,i),STRING_TRIM);
+        if (sData!="" && llSubStringIndex(sData,"#") != 0) {
+            if (llGetSubString(sData,0,0) == "[") {
+                sData = llGetSubString(sData,llSubStringIndex(sData,"[")+1,llSubStringIndex(sData,"]")-1);
+                sData = llStringTrim(sData,STRING_TRIM);
+                if (style=="initialize") {  //reading list to determine style names
+                    g_lStyles += sData;
+                } else if (sData==style) {  //we just found our section
+                    style="processing";
+                    g_sTexture = sData;
+                } else if (style=="processing") {  //we just found the start of the next section, we're
+                    return;
+                }
+            } else if (style=="processing") {
+                list lParams = llParseStringKeepNulls(sData,["~"],[]);
+                string sButton = llStringTrim(llList2String(lParams,0),STRING_TRIM);
+                integer link = llListFindList(g_lButtons,[sButton]);
+                if (link > 0) {
+                    sData = llStringTrim(llList2String(lParams,1),STRING_TRIM);
+                    if (sData != "" && sData != ",") {
+                        llSetLinkPrimitiveParamsFast(link,[PRIM_TEXTURE, ALL_SIDES, sData, <1,1,0>, ZERO_VECTOR, 0]);
+                    }
+                }
+            }
+        }
+        i++;
+    }
 }
 
-DefinePosition()                
-{    
-    integer Position = llListFindList(attachPoints, [llGetAttached()]);
-    if(Position != SPosition) // Allows manual repositioning, without resetting it, if needed
-    {
-        // Set up the six root prim locations which all other posistions are based from
-        list RootOffsets = [   
-        <0.0,  0.02, -0.04>,    // Top right        (Position 0)
-        <0.0,  0.00, -0.04>,    // Top middle       (Position 1)
-        <0.0, -0.02, -0.04>,    // Top left         (Position 2)
-        <0.0,  0.02,  0.10>,    // Bottom right     (Position 3)
-        <0.0,  0.00,  0.07>,   // Bottom middle    (Position 4)
-        <0.0, -0.02,  0.07>];  // Bottom left      (Position 5)
-    
-        llSetPos((vector)llList2String(RootOffsets, Position)); // Position the Root Prim on screen 
-        SPosition = Position;           
+DefinePosition() {
+    integer iPosition = llListFindList(g_lAttachPoints, [llGetAttached()]);
+    vector size = llGetScale();
+//  Allows manual repositioning, without resetting it, if needed
+    if (iPosition != g_iPosition && iPosition != -1) { //do this only when attached to the hud
+        vector offset = <0, size.y/2+g_Yoff, size.z/2+g_Zoff>;
+        if (iPosition==0||iPosition==1||iPosition==2) offset.z = -offset.z;
+        if (iPosition==2||iPosition==5) offset.y = -offset.y;
+        llSetPos(offset); // Position the Root Prim on screen
+        g_iPosition = iPosition;
     }
-    if(!Hidden) // -- Fixes Issue 615: HUD forgets hide setting on relog.
-    {
-        float yOff = 0.037; float zOff = 0.037; // This is the space between buttons     
-                                                                                                   
-        if (Layout == 0 || Position == 1 || Position == 4) // Horizontal + top and bottom are always horizontal
-        {         
-            if(Position == 2 || Position == 5) // Left side needs to push buttons right
-                yOff = yOff * -1;
-                zOff = 0.0;  
-        }        
-        else // Vertical
-        {       
-            if(Position == 0 || Position == 2)  // Top needs push buttons down
-                zOff = zOff * -1;  
-                yOff = 0.0;
-        }               
-            
-        DoPosition(yOff, zOff); // Does the actual placement 
+    if (g_iHidden) llSetLinkPrimitiveParamsFast(LINK_ALL_OTHERS, [PRIM_POSITION,<1,0,0>]);
+    else {
+        float fYoff = size.y + g_fGap;
+        float fZoff = size.z + g_fGap;
+        if (iPosition == 0 || iPosition == 1 || iPosition == 2) fZoff = -fZoff;
+        if (iPosition == 1 || iPosition == 2 || iPosition == 4 || iPosition == 5) fYoff = -fYoff;
+        if (iPosition == 1 || iPosition == 4) g_iLayout = 0;
+        if (g_iLayout) fYoff = 0;
+        else fZoff = 0;
+        DoPosition(fYoff, fZoff);
     }
-} 
+}
 
-DoButtonOrder()
-{   // -- Set the button order and reset display
-    // -- llOwnerSay("Old Position: "+(string)(oldPos)+" :: New Position: "+(string)(newPos));
-    list _tempList = [];
-    integer _oldPos = llList2Integer(primOrder,oldPos);
-    // -- llOwnerSay("Position "+(string)oldPos+" in 'primOrder' is "+(string)_oldPos);
-    integer _newPos = llList2Integer(primOrder,newPos);
-    // -- llOwnerSay("Position "+(string)newPos+" in 'primOrder' is "+(string)_newPos);
-    
-    integer _length = llGetListLength(primOrder);
+DoButtonOrder() {   // -- Set the button order and reset display
+    integer iOldPos = llList2Integer(g_lPrimOrder,g_iOldPos);
+    integer iNewPos = llList2Integer(g_lPrimOrder,g_iNewPos);
     integer i = 2;
-    _tempList += [0,1];
-    for(;i<_length;++i)
-    {
-        integer _tempPos = llList2Integer(primOrder,i);
-                
-        if(_tempPos == _oldPos)
-        {
-            _tempList += [_newPos];
-        }
-        else if(_tempPos == _newPos)
-        {
-            _tempList += [_oldPos];
-        }
-        else 
-        {
-            _tempList += [_tempPos];
-        }
+    list lTemp = [0,1];
+    for(;i<llGetListLength(g_lPrimOrder);++i) {
+        integer iTempPos = llList2Integer(g_lPrimOrder,i);
+        if (iTempPos == iOldPos) lTemp += [iNewPos];
+        else if (iTempPos == iNewPos) lTemp += [iOldPos];
+        else lTemp += [iTempPos];
     }
-    
-    primOrder = [];
-    primOrder = _tempList;
-    oldPos = -1;
-    newPos = -1;
-    
+    g_lPrimOrder = lTemp;
+    g_iOldPos = -1;
+    g_iNewPos = -1;
     DefinePosition();
 }
 
-DetermineColors()
-{
-    AOoncolor = llGetColor(0);
-    float x;
-    float y;
-    float z;
-    
-    x = (AOoncolor.x/2);
-    y = (AOoncolor.y/2);
-    z = (AOoncolor.z/2);
-    AOoffcolor = <x,y,z>;
-}
-
-DoStatus()
-{
-    if(AOPower) // Apply white on/off setting to power prim
-    {   
-        llSetLinkColor(2, AOoncolor , ALL_SIDES); 
-    }
-    else
-    {
-        llSetLinkColor(2, AOoffcolor , ALL_SIDES);  
-    }
-    if(AOSit) // Apply white on/off setting to sit prim
-    {   
-        llSetLinkColor(3, AOoncolor , ALL_SIDES); 
-    }
-    else
-    {
-        llSetLinkColor(3, AOoffcolor , ALL_SIDES);  
-    }
-}
-
-DoReset()
-{   // -- Reset the entire HUD back to default
-
-    Layout = 1;
-    SPosition = 69; // -- Don't we just love that position? *winks*
-    tintable = FALSE;
-    Hidden = FALSE;
-    AOLock = FALSE;
-    AOPower = TRUE;
-    AOSit = FALSE;
-    DoTextures("White");
-    llSleep(1.5);
-    primOrder = [0,1,2,3,4];
-    DoHide();
-    llSleep(1.0);
-    DefinePosition();
+DetermineColors() {
+    g_vAOoncolor = llGetColor(0);
+    g_vAOoffcolor.x = g_vAOoncolor.x/2;
+    g_vAOoffcolor.y = g_vAOoncolor.y/2;
+    g_vAOoffcolor.z = g_vAOoncolor.z/2;
     DoStatus();
-    llSleep(1.5); // -- We want the position to be set before reset
-    llOwnerSay("Finalizing HUD Reset... please wait a few seconds so all menus have time to initialize.");
-    llResetScript();
-}    
-// End HUD Options    
+}
 
-// Start standard 
-default
-{
-    changed(integer c)
-    {
-        if (c & CHANGED_OWNER) // Nice way to do this and not break everything in here
-        {
-            DoTextures("White");
-            llGiveInventory(llGetOwner(),"OpenCollar SubAO Help Image");
-            llResetScript();
+DoStatus() {
+    vector color;
+    if (g_iAOPower) color = g_vAOoncolor;
+    else color = g_vAOoffcolor;
+    llSetLinkColor(llListFindList(g_lButtons,["Power"]), color, ALL_SIDES);
+    if (g_iAOSit) color = g_vAOoncolor;
+    else color = g_vAOoffcolor;
+    llSetLinkColor(llListFindList(g_lButtons,["SitAny"]), color, ALL_SIDES);
+}
+
+MainMenu(key id) {
+    string text = "\nCustomize your AO!";
+    list buttons = ["Horizontal","Vertical","Order"];
+    buttons += g_lStyles;
+    Dialog(id, text, buttons, [UPMENU], 0, g_sHudMenu);
+}
+
+OrderMenu(key id) {
+    string text = "This is the order menu, simply select the\n";
+    text += "button which you want to re-order.\n\n";
+    integer i;
+    list buttons;
+    for (i=2;i<llGetListLength(g_lPrimOrder);++i) {
+        integer pos = llList2Integer(g_lPrimOrder,i);
+        buttons += llList2List(g_lButtons,pos,pos);
+    }
+    Dialog(id, text, buttons, ["Reset",UPMENU], 0, g_sOrderMenu);
+}
+
+
+default {
+    changed(integer change) {
+        if (change & CHANGED_OWNER) llResetScript();
+        else if (change & CHANGED_LINK) llResetScript();
+        else if (change & CHANGED_COLOR) {
+            if (llGetColor(0) != g_vAOoncolor) { //If we change color because of tint, we need to set the new g_vAOoffcolor!
+                DetermineColors();
+            }
         }
-        else if (c & CHANGED_COLOR)
-        {
-            DetermineColors(); // -- If we change color because of tint, we need to set the new AOoffcolor!
-            DoStatus();
-        }
-    }  
-    
-    attach(key attached)
-    {        
-        if (attached==NULL_KEY)  // Being detached
-        {
-            // -- Hidden = FALSE; -- Fixes Issue 615:       HUD forgets hide setting on relog.
-            return;
-        }
-        
-        else if(llGetAttached() <= 30) // Check the attach point is a HUD position
-        {
+    }
+
+    attach(key attached) {
+        if (attached == NULL_KEY) return;
+        else if (llGetAttached() <= 30) {
             llOwnerSay("Sorry, this device can only be placed on the HUD.");
             llRequestPermissions(attached, PERMISSION_ATTACH);
             llDetachFromAvatar();
             return;
-        }
-        else // It's being attached and the attachment point is a HUD position, DefinePosition()
-        {
-            DefinePosition();
-        }
-    } 
-    
-    state_entry()
-    {
-        llSleep(1.0);        
-        llMessageLinked(LINK_SET, MENUNAME_RESPONSE, parentmenu + "|" + submenu + "|" + submenu1, NULL_KEY);
+        } else DefinePosition();
     }
-    
-    link_message(integer sender, integer num, string str, key id)
-    {
-        
-        //llOwnerSay(llGetScriptName()+": ["+(string)num+"] "+str+" ("+(string)id+")");
-        
-        if(num == SUBMENU && str == submenu)
-        {
-            currentmenu = submenu;
-            
-            string text = "\nThis menu sets your HUD options.\n";
-            text += "[Horizontal] sets the button layout to Horizontal.\n\n";
-            text += "[Vertical] sets the button layout to Vertical.\n\n";
-            text += "[Textures] opens a sub menu to choose button texture.\n\n";
-            text += "[Order] opens the sub menus to reorder the buttons.\n\n";
-            //text += "[Reset] Resets ALL custom HUD settings.\n";
-            
-            list buttons = [];
-            buttons += ["Horizontal"];   
-            buttons += ["Vertical"]; 
-            buttons += ["Textures"];
-            buttons += ["Order"];
-            //buttons += [" "];
-            //buttons += ["Reset"];
-            //buttons += [" "];
-            
-            list utility = [UPMENU];
 
-            menuid = Dialog(llGetOwner(), text, buttons, utility, 0);
-        }
-        
-        else if (num == CMD_AUTH && str == "ZHAO_RESET")
-        {
-            DoReset();
-        }    
-        
-        else if(num == OPTIONS)
-        {
-            // --  llOwnerSay("We hit the HUD Options, Options LM: "+str);
-            
-            if(str == LOCK)
-            {
-                // -- Position in link is 2
-                if(texture == "") texture = "White"; // -- Redundancy sake "texture" should never be blank =)
-                
-                if(texture == "Gray Square")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "0237e900-7c8e-be25-1d21-e0901c4792c2" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]); 
-                }
-                else if(texture == "Gray Circle")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "bc394fb7-2b65-35ff-b0b9-837e079ea61b" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }
-                else if(texture == "Red")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "a4532a86-4815-9938-df9f-67ba3cbf5aa9" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }
-                else if(texture == "Blue")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "7ebbdb82-e6cf-27f9-e508-d3eb84cc2be4" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }
-                else if(texture == "White")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "34aa44c9-56ae-4eaa-2895-1858adc5964f" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }
+    state_entry() {
+        FindButtons(); // collect buttons names
+        DefinePosition();
+        DoTextures("initialize");
+        DoTextures(llList2String(g_lStyles, 0));
+        DetermineColors();
+        //llSleep(1.0);
+        //llMessageLinked(LINK_THIS, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sHudMenu, "");
+    }
+
+    link_message(integer sender, integer num, string str, key id) {
+        if (num == SUBMENU && str == g_sHudMenu) MainMenu(id);
+        else if (num == CMD_AUTH && str == "ZHAO_RESET") llResetScript();
+        else if (num == OPTIONS) {
+            // llOwnerSay("We hit the HUD Options, Options LM: "+str);
+            if (str == LOCK && !g_iHidden) {
                 // Collapse the HUD and set AOLOCK so clicking the hide button dosnt do anyhting
-                if(!Hidden)
-                {
-                    Hidden = TRUE;
-                    AOLock = TRUE;
-                    DoHide();
-                }                
-            }
-            else if(str == UNLOCK)
-            {
-                // -- Position in link is 2
-                if(texture == "") texture = "White"; // -- Redundancy sake "texture" should never be blank =)
-                
-                if(texture == "Gray Square")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "0744de1c-a3bd-47db-b20f-2cb7b93a3ff1" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);    
-                }
-                else if(texture == "Gray Circle")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "428f1dfc-251c-b204-da66-000082bee96f" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }
-                else if(texture == "Red")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "4d61335b-2b3d-e3d2-a6b9-e3fba73f9f8e" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }
-                else if(texture == "Blue")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "fe7844f7-1179-5ba1-eb46-d44d3bed5837" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }
-                else if(texture == "White")
-                {
-                    llSetLinkPrimitiveParams(1,[PRIM_TEXTURE, ALL_SIDES, "8408646f-2d35-3938-cba9-0808a12fcb80" , <1.0, 1.0, 0.0>, <0.0, 0.0, 0.0>, 0.0]);
-                }                
+                g_iHidden = TRUE;
+                g_iAOLock = TRUE;
+                DefinePosition();
+                integer iLink = llListFindList(g_lButtons,["Minimize"]);
+                if (g_sTexture == "Dark")
+                    llSetLinkPrimitiveParamsFast(iLink,[PRIM_TEXTURE, ALL_SIDES, g_sDarkLock, <1,1,0>, ZERO_VECTOR, 0]);
+                else if (g_sTexture == "Light")
+                    llSetLinkPrimitiveParamsFast(iLink,[PRIM_TEXTURE, ALL_SIDES, g_sLightLock, <1,1,0>, ZERO_VECTOR, 0]);
+            } else if (str == UNLOCK) {
                 // Un-Collapse the HUD and set AOLOCK so the button works again
-                Hidden = FALSE;
-                AOLock = FALSE;
-                DefinePosition();                             
-            }
-            else if(str == SITANYON)
-            { 
-                // -- Position in link is 3
-                if(texture != "White")
-                    llSetLinkColor(3, <1.0, 1.0, 1.0> , ALL_SIDES);
-                else
-                    llSetLinkColor(3, AOoffcolor , ALL_SIDES);
-                AOSit = TRUE;
-            }
-            else if(str == SITANYOFF)
-            {
-                // -- Position in link is 3
-                if(texture != "White")
-                    llSetLinkColor(3, <0.5, 0.5, 0.5> , ALL_SIDES);
-                else
-                    llSetLinkColor(3, AOoncolor , ALL_SIDES);
-                AOSit = FALSE;
-            }
-            else if(str == "ZHAO_AOOFF")
-            {
-                if(texture != "White")
-                    llSetLinkColor(2, <0.5, 0.5, 0.5> , ALL_SIDES);
-                else 
-                    llSetLinkColor(2, AOoffcolor , ALL_SIDES);
-                AOPower = FALSE;
-            }
-            else if(str == "ZHAO_AOON")
-            {
-                if(texture != "White")
-                    llSetLinkColor(2, <1, 1, 1> , ALL_SIDES);
-                else 
-                    llSetLinkColor(2, AOoncolor , ALL_SIDES);
-                AOPower = TRUE;
-            }
-        }            
-        
-        else if(num == DIALOG_RESPONSE)
-        {            
-            if(id == menuid)
-            {
-                list menuparams = llParseString2List(str, ["|"], []);
-                id = (key)llList2String(menuparams, 0);
-                string response = llList2String(menuparams, 1);
-                integer page = (integer)llList2String(menuparams, 2);
-                
-                if(currentmenu == submenu)
-                {   // -- Inside the 'Options' menu, or 'submenu'
-                    if(response == UPMENU)
-                    {   // If we press the '^' and we are inside the Options menu, go back to OwnerHUD menu
-                        llMessageLinked(LINK_THIS, CMD_OWNER, "ZHAO_MENU", id);
-                    }
-                    else if(response == "Horizontal")
-                    {
-                        Layout = 0; 
-                        DefinePosition();
-                    }
-                    else if(response == "Vertical")
-                    {
-                        Layout = 69;  // Because we love 69!
-                        DefinePosition();
-                    }
-                    else if(response == "Textures")
-                    {
-                        currentmenu = submenu1;
-                        string text = "This is the menu for styles.\n";
-                        text += "Selecting one of these options will\n";
-                        text += "change the color of the HUD buttons.\n";
-                        if(tintable) text+="Tint will allow you to change the HUD color\nto various shades via the 'Tint' menu.\n";
-                        if(!tintable)text += "If [White] is selected, an extra menu named 'Tint' will appear in this menu.\n";
-                        // -- text += "This menu will time out in " + (string)timeout + " seconds.";
-                    
-                        list buttons = [];
-                        buttons += ["Gray Square"];
-                        buttons += ["Gray Circle"];
-                        buttons += ["Blue"];
-                        buttons += ["Red"];
-                        buttons += ["White"];
-                        if(tintable) buttons += ["Tint"," "," "];
-                        
-                        list utility = [UPMENU];
-                    
-                        menuid = Dialog(id, text, buttons, utility, page);
-                    }
-                    else if(response == "Order")
-                    {
-                        currentmenu = submenu2;
-                        
-                        string text = "This is the order menu, simply select the\n";
-                        text += "button which you want to re-order.\n\n";
-                        // -- text += "This menu will time out in " + (string)timeout + " seconds.";
-                        
-                        list buttons = [];
-                        integer i;
-                        integer _count = llGetListLength(primOrder);
-                        for (i=0;i<_count;++i)
-                        {
-                            integer _pos = llList2Integer(primOrder,i);
-                            if(_pos == 2) buttons += ["Power"];
-                            else if(_pos == 3) buttons += ["Sit Any"];
-                            else if(_pos == 4) buttons += ["Menu"];
+                g_iHidden = FALSE;
+                g_iAOLock = FALSE;
+                DefinePosition();
+                DoTextures(g_sTexture);
+            } else if (str == SITANYON) g_iAOSit = TRUE;
+            else if (str == SITANYOFF) g_iAOSit = FALSE;
+            else if (str == AOOFF) g_iAOPower = FALSE;
+            else if (str == AOON) g_iAOPower = TRUE;
+            DoStatus();
+        } else if (num == DIALOG_RESPONSE) {
+            integer index = llListFindList(g_lMenuIDs, [id]);
+            if (index == -1) return;
+
+            list menuparams = llParseString2List(str, ["|"], []);
+            id = (key)llList2String(menuparams, 0);
+            string response = llList2String(menuparams, 1);
+            //integer page = (integer)llList2String(menuparams, 2);
+            
+            string sMenu = llList2String(g_lMenuIDs,index+1);
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs,index-1,index-2+g_iMenuStride);
+
+            if (sMenu == g_sHudMenu) {
+                if (response == UPMENU) {
+                    //llMessageLinked(LINK_THIS, CMD_OWNER, "ZHAO_MENU", id);
+                    llMessageLinked(LINK_THIS, CMD_OWNER, "OCAO_MENU", id);
+                    return;
+                } else if (response == "Horizontal") {
+                    g_iLayout = 0;
+                    DefinePosition();
+                } else if (response == "Vertical") {
+                    g_iLayout = 1;
+                    DefinePosition();
+                } else if (response == g_sOrderMenu) {
+                    OrderMenu(id);
+                    return;
+                } else if (~llListFindList(g_lStyles,[response])) DoTextures(response);
+                MainMenu(id);
+            } else if (sMenu == g_sOrderMenu) {
+                if (response == UPMENU) MainMenu(id);
+                else if (response == "Reset") {
+                    FindButtons();
+                    llRegionSayTo(id,0,"Order position reset to default.");
+                    DefinePosition();
+                    OrderMenu(id);
+                } else if (llSubStringIndex(response,":") >= 0) {
+                    g_iNewPos = llList2Integer(llParseString2List(response,[":"],[]),1);
+                    DoButtonOrder();
+                    OrderMenu(id);
+                } else {
+                    list lButtons;
+                    string sPrompt;
+                    integer iTemp = llListFindList(g_lButtons,[response]);
+                    g_iOldPos = llListFindList(g_lPrimOrder, [iTemp]);
+                    sPrompt = "\nSelect the new position for swap with "+response+"\n\n";
+                    integer i;
+                    for (i=2;i<llGetListLength(g_lPrimOrder);++i) {
+                        if (g_iOldPos != i) {
+                            integer iTemp = llList2Integer(g_lPrimOrder,i);
+                            lButtons +=[llList2String(g_lButtons,iTemp)+":"+(string)i];
                         }
-                        buttons += ["Reset"];
-                        
-                        list utility = [UPMENU];
-                        
-                        menuid = Dialog(id, text, buttons, utility, page);
                     }
-                }
-                
-                if(currentmenu == submenu1)
-                {   // -- Inside the 'Texture' menu, or 'submenu1'
-                    if(response == UPMENU)
-                    {   // -- If we press the '^' and we are inside the Texture menu, go back to Options menu
-                        llMessageLinked(LINK_SET, SUBMENU, submenu, id);
-                    }
-                    else if(response == "Gray Square")
-                    {
-                        DoTextures(response);
-                    }
-                    else if(response == "Gray Circle")
-                    {
-                        DoTextures(response);
-                    }
-                    else if(response == "Blue")
-                    {
-                        DoTextures(response);
-                    }
-                    else if(response == "Red")
-                    {
-                        DoTextures(response);
-                    }
-                    else if(response == "White")
-                    {
-                        tintable = TRUE;
-                        DoTextures(response);
-                    }
-                    else if(response == "Tint")
-                    {
-                        currentmenu = submenu3;
-                        
-                        string text = "Select the color you wish to tint the HUD.\n";
-                        text += "If you don't see a color you enjoy, simply edit\n";
-                        text += "and select a color under the menu you wish.\n";
-                        
-                        list buttons = [];
-                        buttons += ["Orange"];
-                        buttons += ["Yellow"];
-                        buttons += ["Pink"];
-                        buttons += ["Purple"];
-                        buttons += ["Sky Blue"];
-                        buttons += ["Light Green"];
-                        buttons += ["Cyan"];
-                        buttons += ["Mint"];                
-                        
-                        list utility = [UPMENU];
-                        
-                        menuid = Dialog(id, text, buttons, utility, page);
-                    }    
-                }
-                
-                if(currentmenu == submenu2)
-                {    // -- Inside the 'Order' menu, or 'submenu2'
-                    if(response == UPMENU)
-                    {   // -- If we press the '^' and we are inside the Order menu, go back to Options menu
-                        llMessageLinked(LINK_THIS, CMD_OWNER, "ZHAO_MENU", id);
-                    }
-                    else if(response == "Power")
-                    {
-                        oldPos = llListFindList(primOrder, [2]);
-                        
-                        string text = "Select the new position for "+response+"\n\n";
-                        
-                        list buttons = [];
-                        
-                        integer i = 2;
-                        integer _count = llGetListLength(primOrder);
-                        for(;i<=_count;++i)
-                        {
-                            if(oldPos != i) 
-                            {
-                                integer _temp = llList2Integer(primOrder,i);
-                                if(_temp == 2) buttons += ["Power:"+(string)i];
-                                else if(_temp == 3) buttons += ["Sit Any:"+(string)i];
-                                else if(_temp == 4) buttons += ["Menu:"+(string)i];
-                            }
-                        }
-                        
-                        list utility = [];
-                        
-                        menuid = Dialog(id, text, buttons, utility, page);
-                    }
-                    else if(response == "Sit Any")
-                    {
-                        oldPos = llListFindList(primOrder, [3]);
-                        string text = "Select the new position for "+response+"\n\n";
-                        
-                        list buttons = [];
-                        
-                        integer i = 2;
-                        integer _count = llGetListLength(primOrder);
-                        for(;i<=_count;++i)
-                        {
-                            if(oldPos != i) 
-                            {
-                                integer _temp = llList2Integer(primOrder,i);
-                                if(_temp == 2) buttons += ["Power:"+(string)i];
-                                else if(_temp == 3) buttons += ["Sit Any:"+(string)i];
-                                else if(_temp == 4) buttons += ["Menu:"+(string)i];
-                            }
-                        }
-                        
-                        list utility = [];
-                        
-                        menuid = Dialog(id, text, buttons, utility, page);
-                    }
-                    else if(response == "Menu")
-                    {
-                        oldPos = llListFindList(primOrder, [4]);
-                        string text = "Select the new position for "+response+"\n\n";
-                        
-                        list buttons = [];
-                        
-                        integer i = 2;
-                        integer _count = llGetListLength(primOrder);
-                        for(;i<=_count;++i)
-                        {
-                            if(oldPos != i) 
-                            {
-                                integer _temp = llList2Integer(primOrder,i);
-                                if(_temp == 2) buttons += ["Power:"+(string)i];
-                                else if(_temp == 3) buttons += ["Sit Any:"+(string)i];
-                                else if(_temp == 4) buttons += ["Menu:"+(string)i];
-                            }
-                        }
-                        
-                        list utility = [];
-                        
-                        menuid = Dialog(id, text, buttons, utility, page);
-                    }
-                    else if (response == "Reset")
-                    {
-                        string text = "Confirm reset of the button order to default.\n\n";
-                        list buttons = [];
-                        buttons += ["Confirm"];
-                        buttons += ["Cancel"];
-                        
-                        list utility = [];
-                        
-                        menuid = Dialog(id, text, buttons, utility, page);
-                    }
-                    else if (response == "Confirm")
-                    {
-                        primOrder = [];
-                        primOrder = [0,1,2,3,4];
-                        llOwnerSay("Order position reset to default.");
-                        DefinePosition();
-                    }
-                    else if(llSubStringIndex(response,":") >= 0)
-                    {   // Jess's nifty parsing trick for the menus
-                        list _newPosList = llParseString2List(response, [":"],[]);
-                        newPos = llList2Integer(_newPosList,1);
-                        DoButtonOrder();
-                    }
-                }
-                
-                if(currentmenu == submenu3)
-                {    // -- Inside the 'Tint' menu, or 'submenu3'
-                    if(response == UPMENU)
-                    {
-                        currentmenu = submenu1;
-                        string text = "This is the menu for styles.\n";
-                        text += "Selecting one of these options will\n";
-                        text += "change the color of the HUD buttons.\n";
-                        if(tintable) text+="Tint will allow you to change the HUD color\nto various shades via the 'Tint' menu.\n";
-                        if(!tintable)text += "If [White] is selected, an extra menu named 'Tint' will appear in this menu.\n";
-                    
-                        list buttons = [];
-                        buttons += ["Gray Square"];
-                        buttons += ["Gray Circle"];
-                        buttons += ["Blue"];
-                        buttons += ["Red"];
-                        buttons += ["White"];
-                        if(tintable) buttons += ["Tint"," "," "];
-                        
-                        list utility = [];
-                        
-                        menuid = Dialog(id, text, buttons, utility, page);
-                    }
-                    else if(response == "Orange")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES, <1.00000, 0.49804, 0.00000>, 1.0]);
-                    }
-                    else if(response == "Yellow")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES, <1.00000, 1.00000, 0.00000>, 1.0]);
-                    }
-                    else if(response == "Light Green")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES, <0.00000, 1.00000, 0.00000>, 1.0]);
-                    }
-                    else if(response == "Pink")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES, <1.00000, 0.58431, 1.00000>, 1.0]);
-                    }
-                    else if(response == "Purple")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES, <0.50196, 0.00000, 1.00000>, 1.0]);
-                    }
-                    else if(response == "Sky Blue")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES,  <0.52941, 0.80784, 1.00000>, 1.0]);
-                    }
-                    else if(response == "Cyan")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES,    <0.00000, 0.80784, 0.79216>, 1.0]);
-                    }
-                    else if(response == "Mint")
-                    {
-                        llSetLinkPrimitiveParams(LINK_SET,[PRIM_COLOR, ALL_SIDES,   <0.49020, 0.73725, 0.49412>, 1.0]);
-                    }
+                    Dialog(id, sPrompt, lButtons, [UPMENU], 0, g_sOrderMenu);
                 }
             }
+        } else if (num == DIALOG_TIMEOUT) {
+            integer index = llListFindList(g_lMenuIDs, [id]);
+            if (~index) g_lMenuIDs = llDeleteSubList(g_lMenuIDs,index-1,index-2+g_iMenuStride);
         }
-        
-        else if(num == DIALOG_TIMEOUT)
-        {
-            if(id == menuid)
-            {
-                llInstantMessage(llGetOwner(),"Menu timed out!");                
-            }
-        }
-        
-        else if(str == "hide")
-        {     
-            if(!AOLock) 
-            {   // This disables the hide button when locked       
-                if(Hidden)
-                { 
-                    Hidden = !Hidden;
-                    DefinePosition();                              
-                }
-                else
-                {
-                    Hidden = !Hidden;
-                    DoHide();
-                }
-            }
+        else if (str == "hide" && !g_iAOLock) {
+            // This disables the hide button when locked
+            g_iHidden = !g_iHidden;
+            DefinePosition();
         }
     }
 }

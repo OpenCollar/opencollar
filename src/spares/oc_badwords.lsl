@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Badwords - 151024.1                             //
+//                          Badwords - 160207.1                             //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Lulu Pink, Nandana Singh, Garvin Twine,       //
+//  Copyright (c) 2008 - 2016 Lulu Pink, Nandana Singh, Garvin Twine,       //
 //  Cleo Collins, Satomi Ahn, Joy Stipe, Wendy Starfall, Romka Swallowtail, //
 //  littlemousy, Karo Weirsider, Nori Ovis, Ray Zopf et al.                 //
 // ------------------------------------------------------------------------ //
@@ -48,11 +48,11 @@
 //  future, then "full perms" will mean the most permissive possible set    //
 //  of permissions allowed by the platform.                                 //
 // ------------------------------------------------------------------------ //
-//         github.com/OpenCollar/opencollar/tree/master/src/collar          //
+//         github.com/OpenCollar/opencollar/tree/master/src/spares          //
 // ------------------------------------------------------------------------ //
 //////////////////////////////////////////////////////////////////////////////
 
-string g_sAppVersion = "¹⁵¹⁰²⁴⋅¹";
+string g_sAppVersion = "¹⋅¹";
 
 //MESSAGE MAP
 //integer CMD_ZERO = 0;
@@ -72,6 +72,7 @@ integer LINK_DIALOG = 3;
 //integer LINK_RLV = 4;
 integer LINK_SAVE = 5;
 integer LINK_ANIM = 6;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE = 2000;
 integer LM_SETTING_RESPONSE = 2002;
 integer LM_SETTING_DELETE = 2003;
@@ -166,7 +167,7 @@ MenuBadwords(key kID, integer iNum){
     if (g_iIsEnabled) lButtons += "OFF";
     else lButtons += "ON";
     lButtons += "Stop";
-    string sText= "\n[http://www.opencollar.at/badwords.html Badwords]\t"+g_sAppVersion+"\n";
+    string sText= "\n[http://www.opencollar.at/badwords.html Legacy Badwords]\t"+g_sAppVersion+"\n";
     sText+= "\n" + llList2CSV(g_lBadWords) + "\n";
     sText+= "\nPenance: " + g_sPenance;
     Dialog(kID, sText, lButtons, ["BACK"],0, iNum, "BadwordsMenu");
@@ -194,7 +195,7 @@ UserCommand(integer iNum, string sStr, key kID, integer remenu) { // here iNum: 
         MenuBadwords(kID, iNum);
     } else if (sStr == "rm badwords") {
         if (kID!=g_kWearer && iNum!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
-        else Dialog(kID, "\nAre you sure you want to delete the Badwords App?\n", ["Yes","No"], [], 0, iNum,"rmbadwords");
+        else Dialog(kID, "\nDo you really want to uninstall the "+g_sSubMenu+" App?", ["Yes","No", "Cancel"], [], 0, iNum,"rmbadwords");
     } else if (llToLower(sCommand)=="badwords"){
         if (iNum != CMD_OWNER) {
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
@@ -425,14 +426,18 @@ default {
                     if (sMessage == "Yes") {
                         llMessageLinked(LINK_ROOT, MENUNAME_REMOVE , g_sParentMenu+"|"+g_sSubMenu, "");
                         llMessageLinked(LINK_THIS, APPOVERRIDE, g_sSubMenu, "off");
-                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+"Removing "+g_sSubMenu+" App...\nYou can re-install it with an OpenCollar Updater.", kAv);
+                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+g_sSubMenu+" App has been removed.", kAv);
                         if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
-                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"Removing "+g_sSubMenu+" App aborted.", kAv);
+                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
                 }
             }
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
+            else if (sStr == "LINK_ANIM") LINK_ANIM = iSender;
         } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 

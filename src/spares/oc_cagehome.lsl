@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Cage Home - 151108.1                            //
+//                          Cage Home - 160207.1                            //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Satomi Ahn, Nandana Singh, Joy Stipe,         //
+//  Copyright (c) 2008 - 2016 Satomi Ahn, Nandana Singh, Joy Stipe,         //
 //  Wendy Starfall, Sumi Perl, littlemousy, Romka Swallowtail et al.        //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
@@ -211,6 +211,7 @@ integer REBOOT      = -1000;
 integer LINK_DIALOG = 3;
 integer LINK_RLV    = 4;
 integer LINK_SAVE   = 5;
+integer LINK_UPDATE = -10;
 
 integer LM_SETTING_SAVE = 2000;
 //integer LM_SETTING_REQUEST = 2001;
@@ -669,7 +670,7 @@ SetState(integer iState) {
         if (!g_iRlvActive || llGetAttached() == 0) {
             string sMsg = g_sPluginTitle + " can not teleport %WEARERNAME% for ";
             if (!g_iRlvActive) sMsg += "RLV was not detected.";
-            else sMsg += "collar seems not attached.";
+            else sMsg += "%DEVICETYPE% seems not attached.";
             Notify(g_kCageOwnerKey, sMsg + " AddOn now disarming itself.", TRUE);
             iState = iDISARMED;
             jump again;
@@ -717,7 +718,10 @@ UserCommand(integer iAuth, string sStr, key kID) {
     if (iAuth < CMD_OWNER || iAuth > CMD_WEARER) return;
 
     if (sStr=="menu "+g_sSubMenu || sStr==g_sSubMenu || sStr==g_sChatCmd) MenuMain(kID,iAuth);
-    else if (sStr == "settings") { // collar's command to request settings of all modules
+    else if (llToLower(sStr) == "rm cagehome") {
+        if (kID!=g_kWearer && iAuth!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
+        else Dialog(kID, "\nDo you really want to uninstall the "+g_sSubMenu+" App?", ["Yes","No","Cancel"], [], 0, iAuth,"rmcagehome");        
+    } else if (sStr == "settings") { // collar's command to request settings of all modules
         string sMsg = g_sPluginTitle+": "+llList2String(lSTATES, g_iState);
         if (g_sCageRegion!="") sMsg += ", TP Location: "+Map(g_sCageRegion, g_vCagePos);
         llSleep(0.5);
@@ -904,10 +908,20 @@ default {
                 string sMenuButton = llDeleteSubString(sMenu,0,llStringLength("set~")-1);
                 if (sMsg == UPMENU) MenuSettings(kAv, iAuth);
                 else Set(kAv, iAuth, sMenuButton, sMsg);
-            }
+            } else if (sMenu == "rmcagehome") {
+                if (sMsg == "Yes") {
+                    llMessageLinked(LINK_ROOT, MENUNAME_REMOVE , g_sParentMenu + "|" + g_sSubMenu, "");
+                    llMessageLinked(LINK_DIALOG, NOTIFY, "1"+g_sSubMenu+" App has been removed.", kAv);
+                if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
+                } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
+            }         
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             if (~iMenuIndex) g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex-1, iMenuIndex-2+g_iMenuStride);
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 

@@ -19,10 +19,10 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//       RLV Suite - 151213.1            .*' /  .*' ; .*`- +'  `*'          //
+//       RLV Suite - 160217.1            .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2014 - 2015 Wendy Starfall, littlemousy, Sumi Perl,       //
+//  Copyright (c) 2014 - 2016 Wendy Starfall, littlemousy, Sumi Perl,       //
 //  Garvin Twine, Romka Swallowtail et al.                                  //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
@@ -49,9 +49,6 @@
 //         github.com/OpenCollar/opencollar/tree/master/src/collar          //
 // ------------------------------------------------------------------------ //
 //////////////////////////////////////////////////////////////////////////////
-
-// Compatible with OpenCollar API 4.0
-// and/or minimum Disgraced Version 2.x
 
 //menu setup
 string  RESTRICTION_BUTTON          = "Restrictions"; // Name of the submenu
@@ -104,10 +101,10 @@ key     g_kWearer;
 //MESSAGE MAP
 //integer CMD_ZERO = 0;
 integer CMD_OWNER                   = 500;
-//integer CMD_TRUSTED = 501;
+integer CMD_TRUSTED = 501;
 //integer CMD_GROUP = 502;
 integer CMD_WEARER                  = 503;
-//integer CMD_EVERYONE = 504;
+integer CMD_EVERYONE = 504;
 //integer CMD_RLV_RELAY = 507;
 integer CMD_SAFEWORD                = 510;
 integer CMD_RELAY_SAFEWORD          = 511;
@@ -119,6 +116,7 @@ integer REBOOT                     = -1000;
 integer LINK_DIALOG                = 3;
 integer LINK_RLV                   = 4;
 integer LINK_SAVE                  = 5;
+integer LINK_UPDATE                = -10;
 integer LM_SETTING_SAVE            = 2000;
 //integer LM_SETTING_REQUEST         = 2001;
 integer LM_SETTING_RESPONSE        = 2002;
@@ -143,7 +141,7 @@ integer DIALOG                     = -9000;
 integer DIALOG_RESPONSE            = -9001;
 integer DIALOG_TIMEOUT             = -9002;
 integer SENSORDIALOG               = -9003;
-
+integer g_iAuth;
 
 key g_kLastForcedSeat;
 string g_sLastForcedSeat;
@@ -245,9 +243,10 @@ DoTerminalCommand(string sMessage, key kID) {
 
 OutfitsMenu(key kID, integer iAuth) {
     g_kMenuClicker = kID; //on our listen response, we need to know who to pop a dialog for
+    g_iAuth = iAuth;
     g_sCurrentPath = g_sPathPrefix + "/";
     llSetTimerEvent(g_iTimeOut);
-    g_iListener = llListen(g_iFolderRLV, "", llGetOwner(), "");
+    g_iListener = llListen(g_iFolderRLV, "", g_kWearer, "");
     llOwnerSay("@getinv:"+g_sCurrentPath+"="+(string)g_iFolderRLV);
 }
 
@@ -304,8 +303,8 @@ doRestrictions(){
     if (g_iTouchRestricted)    llMessageLinked(LINK_RLV,RLV_CMD,"touchall=n","vdRestrict");
     else llMessageLinked(LINK_RLV,RLV_CMD,"touchall=y","vdRestrict");
 
-    if (g_iStrayRestricted)    llMessageLinked(LINK_RLV,RLV_CMD,"tplm=n,tploc=n,tplure=n,sittp=n,standtp=n","vdRestrict");
-    else llMessageLinked(LINK_RLV,RLV_CMD,"tplm=y,tploc=y,tplure=y,sittp=y,standtp=y","vdRestrict");
+    if (g_iStrayRestricted)    llMessageLinked(LINK_RLV,RLV_CMD,"tplm=n,tploc=n,tplure=n,sittp=n","vdRestrict");
+    else llMessageLinked(LINK_RLV,RLV_CMD,"tplm=y,tploc=y,tplure=y,sittp=y","vdRestrict");
 
     if (g_iStandRestricted) {
         if (llGetAgentInfo(g_kWearer)&AGENT_SITTING) llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
@@ -365,7 +364,7 @@ UserCommand(integer iNum, string sStr, key kID, integer bFromMenu) {
             sLowerStr = llDeleteSubString(sStr,0,llStringLength("wear ")-1);
             if (sLowerStr) { //we have a folder to try find...
                 llSetTimerEvent(g_iTimeOut);
-                g_iListener = llListen(g_iFolderRLVSearch, "", llGetOwner(), "");
+                g_iListener = llListen(g_iFolderRLVSearch, "", g_kWearer, "");
                 g_kMenuClicker = kID;
                 if (g_iRlvaOn) {
                     llOwnerSay("@findfolders:"+sLowerStr+"="+(string)g_iFolderRLVSearch);
@@ -608,11 +607,11 @@ UserCommand(integer iNum, string sStr, key kID, integer bFromMenu) {
     } else if (sLowerStr == "clear") {
         releaseRestrictions();
         return;
+    } else if (!llSubStringIndex(sLowerStr, "hudtpto:") && (iNum == CMD_OWNER || iNum == CMD_TRUSTED)) {
+        if (g_iRlvOn) llMessageLinked(LINK_RLV,RLV_CMD,llGetSubString(sLowerStr,3,-1),"");
     }
     if (bFromMenu) RestrictionsMenu(kID,iNum);
 }
-
-
 
 default {
 
@@ -711,13 +710,15 @@ default {
                         lTempSplit = llList2List(lTempSplit,0,llGetListLength(lTempSplit) -2);
                         g_sCurrentPath = llDumpList2String(lTempSplit,"/") + "/";
                         llSetTimerEvent(g_iTimeOut);
-                        g_iListener = llListen(g_iFolderRLV, "", llGetOwner(), "");
+                        g_iAuth = iAuth;
+                        g_iListener = llListen(g_iFolderRLV, "", g_kWearer, "");
                         llOwnerSay("@getinv:"+g_sCurrentPath+"="+(string)g_iFolderRLV);
                     } else if (sMessage == "WEAR") WearFolder(g_sCurrentPath);
                     else if (sMessage != "") {
                         g_sCurrentPath += sMessage + "/";
                         if (sMenu == "multimatch") g_sCurrentPath = sMessage + "/";
                         llSetTimerEvent(g_iTimeOut);
+                        g_iAuth = iAuth;
                         g_iListener = llListen(g_iFolderRLV, "", llGetOwner(), "");
                         llOwnerSay("@getinv:"+g_sCurrentPath+"="+(string)g_iFolderRLV);
                     }
@@ -726,6 +727,10 @@ default {
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 
@@ -734,7 +739,8 @@ default {
         llSetTimerEvent(0.0);
         //Debug((string)iChan+"|"+sName+"|"+(string)kID+"|"+sMsg);
         if (iChan == g_iFolderRLV) { //We got some folders to process
-            FolderMenu(g_kMenuClicker,CMD_OWNER,sMsg); //we use g_kMenuClicker to respond to the person who asked for the menu
+            FolderMenu(g_kMenuClicker,g_iAuth,sMsg); //we use g_kMenuClicker to respond to the person who asked for the menu
+            g_iAuth = CMD_EVERYONE;
         }
         else if (iChan == g_iFolderRLVSearch) {
             if (sMsg == "") {
@@ -748,7 +754,8 @@ default {
                 } else {
                     string sPrompt = "\nPick one!";
                     list lFolderMatches = llParseString2List(sMsg,[","],[]);
-                    Dialog(g_kMenuClicker, sPrompt, lFolderMatches, [UPMENU], 0, CMD_OWNER, "multimatch");
+                    Dialog(g_kMenuClicker, sPrompt, lFolderMatches, [UPMENU], 0, g_iAuth, "multimatch");
+                    g_iAuth = CMD_EVERYONE;
                 }
             }
         }

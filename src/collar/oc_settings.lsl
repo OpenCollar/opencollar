@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Settings - 151115.1                             //
+//                          Settings - 160323.2                             //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Nandana Singh, Cleo Collins, Master Starship, //
+//  Copyright (c) 2008 - 2016 Nandana Singh, Cleo Collins, Master Starship, //
 //  Satomi Ahn, Garvin Twine, Joy Stipe, Alex Carpenter, Xenhat Liamano,    //
 //  Wendy Starfall, Medea Destiny, Rebbie, Romka Swallowtail,               //
 //  littlemousy et al.                                                      //
@@ -60,6 +60,9 @@ string g_sSplitLine; // to parse lines that were split due to lsl constraints
 integer g_iLineNr = 0;
 key g_kLineID;
 key g_kCardID = NULL_KEY; //needed for change event check if no .settings card is in the inventory
+list g_lExceptionTokens = ["texture","glow","shininess","color","intern"];
+key g_kLoadFromWeb;
+key g_kURLLoadRequest;
 key g_kWearer;
 
 //string g_sSettingToken = "settings_";
@@ -89,11 +92,12 @@ integer LM_SETTING_EMPTY = 2004;
 integer DIALOG = -9000;
 integer DIALOG_RESPONSE = -9001;
 integer LINK_DIALOG = 3;
-integer INTEGRITY = -1050;
+integer LINK_UPDATE = -10;
 integer REBOOT = -1000;
 integer LOADPIN = -1904;
 integer g_iRebootConfirmed;
 key g_kConfirmDialogID;
+string g_sSampleURL = "https://goo.gl/uXuN6b";
 
 //string WIKI_URL = "http://www.opencollar.at/user-guide.html";
 list g_lSettings;
@@ -173,7 +177,7 @@ DelSetting(string sToken) { // we'll only ever delete user settings
 }
 
 // run delimiters & add escape-characters for settings print
-list Add2OutList(list lIn) {
+list Add2OutList(list lIn, string sDebug) {
     if (!llGetListLength(lIn)) return [];
     list lOut;// = ["#---My Settings---#"];
     string sBuffer;
@@ -190,6 +194,7 @@ list Add2OutList(list lIn) {
         sValue = llList2String(lIn, i + 1);
         //sGroup = SplitToken(sToken, 0);
         sGroup = llToUpper(SplitToken(sToken, 0));
+        if (sDebug == "print" && ~llListFindList(g_lExceptionTokens,[llToLower(sGroup)])) jump next;
         sToken = SplitToken(sToken, 1);
         integer bIsSplit = FALSE ;
         integer iAddedLength = llStringLength(sBuffer) + llStringLength(sValue)
@@ -217,17 +222,21 @@ list Add2OutList(list lIn) {
                 sBuffer = "" ;
             }
         }
+        @next;
     }
     // If there's anything left in the buffer, flush it to output.
     if ( llStringLength(sBuffer) ) lOut += [sBuffer] ;
     return lOut;
 }
 
-PrintSettings(key kID) {
+PrintSettings(key kID, string sDebug) {
     // compile everything into one list, so we can tell the user everything seamlessly
     list lOut;
-    list lSay = ["\n\nEverything below this line can be copied & pasted into a notecard called \".settings\" for backup:\n"];
-    lSay += Add2OutList(g_lSettings);
+    //list lSay = ["\n\nEverything below this line can be copied & pasted into a notecard called \".settings\" for backup:\n"];
+    list lSay = ["\n\n"];
+    if (sDebug == "debug") 
+        lSay = ["\n\nSettings Debug:\n"];
+    lSay += Add2OutList(g_lSettings, sDebug);
     string sOld;
     string sNew;
     integer i;
@@ -246,6 +255,65 @@ PrintSettings(key kID) {
         llMessageLinked(LINK_DIALOG,NOTIFY,"0"+llList2String(lOut, 0), kID);
         //Notify(kID, llList2String(lOut, 0), TRUE);
         lOut = llDeleteSubList(lOut, 0, 0);
+    }
+}
+
+LoadSetting(string sData, integer iLine) {
+    string sID;
+    string sToken;
+    string sValue;
+    integer i;
+    if (iLine == 0 && g_sSplitLine != "" ) {
+        sData = g_sSplitLine ;
+        g_sSplitLine = "" ;
+    }
+    if (iLine) {
+        // first we can filter out & skip blank lines & remarks
+        sData = llStringTrim(sData, STRING_TRIM_HEAD);
+        if (sData == "" || llGetSubString(sData, 0, 0) == "#") return;
+        // check for "continued" line pieces
+        if (llStringLength(g_sSplitLine)) {
+            sData = g_sSplitLine + sData ;
+            g_sSplitLine = "" ;
+        }
+        if (llGetSubString(sData,-1,-1) == g_sDelimiter) {
+            g_sSplitLine = llDeleteSubString(sData,-1,-1) ;
+            return;
+        }
+        i = llSubStringIndex(sData, "=");
+        sID = llGetSubString(sData, 0, i - 1);
+        sData = llGetSubString(sData, i + 1, -1);
+        if (~llSubStringIndex(llToLower(sID), "_")) return;
+        else if (~llListFindList(g_lExceptionTokens,[sID])) return; 
+        sID = llToLower(sID)+"_";
+        list lData = llParseString2List(sData, ["~"], []);
+        for (i = 0; i < llGetListLength(lData); i += 2) {
+            sToken = llList2String(lData, i);
+            sValue = llList2String(lData, i + 1);
+            if (sValue != "") {
+                if (sID == "auth_") { //if we have auth, can only be the below, else we dont care
+                    sToken = llToLower(sToken);
+                    if (~llListFindList(["block","trust","owner"],[sToken])) {
+                        list lTest = llParseString2List(sValue,[","],[]);
+                        list lOut;
+                        integer n;
+                        do {//sanity check for valid entries
+                            if (llList2Key(lTest,n)) //if this is not a valid key, it's useless
+                                lOut += llList2String(lTest,n);
+                            integer iTest = llGetListLength(lOut);
+                            if (sToken == "owner" &&  iTest == 3)  jump next;
+                            else if (sToken == "trust" &&  iTest == 15)  jump next;
+                            else if (sToken == "block" &&  iTest == 9)  jump next;
+                        } while (++n < llGetListLength(lTest));
+                        @next;
+                        sValue = llDumpList2String(lOut,",");
+                        lTest = [];
+                        lOut = [];
+                    } 
+                }
+                if (sValue) g_lSettings = SetSetting(g_lSettings, sID + sToken, sValue);
+            }
+        }    
     }
 }
 
@@ -268,13 +336,26 @@ SendValues() {
 }
 
 UserCommand(integer iAuth, string sStr, key kID) {
-    sStr = llToLower(sStr);
-    if (sStr == "settings") PrintSettings(kID);
-    else if (sStr == "load") {
-        g_iLineNr = 0;
-        if (llGetInventoryKey(g_sCard)) g_kLineID = llGetNotecardLine(g_sCard, g_iLineNr);
-    } else if (sStr == "reboot" || sStr == "reboot --f") {
-        if (g_iRebootConfirmed || sStr == "reboot --f") {
+    string sStrLower = llToLower(sStr);
+    if (sStrLower == "print settings" || sStrLower == "debug settings") PrintSettings(kID, llGetSubString(sStrLower,0,4));
+    else if (!llSubStringIndex(sStrLower,"load")) {
+        if (iAuth == CMD_OWNER) {
+            if (llSubStringIndex(sStrLower,"load url") == 0 && iAuth == CMD_OWNER) {
+                string sURL = llList2String(llParseString2List(sStr,[" "],[]),2);
+                if (!llSubStringIndex(sURL,"http")) {
+                    llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Fetching settings from "+sURL,kID);
+                    g_kURLLoadRequest = kID;
+                    g_kLoadFromWeb = llHTTPRequest(sURL,[HTTP_METHOD, "GET"],"");
+                } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Please enter a valid URL like: "+g_sSampleURL,kID);
+            } else if (sStrLower == "load card" || sStrLower == "load") {
+                if (llGetInventoryKey(g_sCard)) {
+                    llMessageLinked(LINK_DIALOG,NOTIFY,"0"+ "\n\nLoading backup from "+g_sCard+" card. If you want to load settings from the web, please type: /%CHANNEL%%PREFIX% load url <url>\n\nwww.opencollar.at/settings\n",kID);
+                    g_kLineID = llGetNotecardLine(g_sCard, g_iLineNr);
+                } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"No "+g_sCard+" to load found.",kID);
+            }
+        } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
+    } else if (sStrLower == "reboot" || sStrLower == "reboot --f") {
+        if (g_iRebootConfirmed || sStrLower == "reboot --f") {
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Rebooting your %DEVICETYPE% ....",kID);
             g_iRebootConfirmed = FALSE;
             llMessageLinked(LINK_ALL_OTHERS, REBOOT,"reboot","");
@@ -283,17 +364,18 @@ UserCommand(integer iAuth, string sStr, key kID) {
             g_kConfirmDialogID = llGenerateKey();
             llMessageLinked(LINK_DIALOG,DIALOG,(string)kID+"|\nAre you sure you want to reboot the %DEVICETYPE%?|0|Yes`No|Cancel|"+(string)iAuth,g_kConfirmDialogID);
         }
-    } else if (sStr == "show storage") {
+    } else if (sStrLower == "show storage") {
         llSetPrimitiveParams([PRIM_TEXTURE,ALL_SIDES,TEXTURE_BLANK,<1,1,0>,ZERO_VECTOR,0.0,PRIM_FULLBRIGHT,ALL_SIDES,TRUE]);
-        llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"To hide the storage prim again type:\n%PREFIX% hide storage\n",kID);
-    } else if (sStr == "hide storage")
+        llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nTo hide the storage prim again type:\n\n/%CHANNEL%%PREFIX% hide storage\n",kID);
+    } else if (sStrLower == "hide storage")
         llSetPrimitiveParams([PRIM_TEXTURE,ALL_SIDES,TEXTURE_TRANSPARENT,<1,1,0>,ZERO_VECTOR,0.0,PRIM_FULLBRIGHT,ALL_SIDES,FALSE]);
-    else if (sStr == "runaway") llSetTimerEvent(2.0);
+    else if (sStrLower == "runaway") llSetTimerEvent(2.0);
 }
 
 default {
-    state_entry() {
+    state_entry() { 
         if (llGetStartParameter()==825) llSetRemoteScriptAccessPin(0);
+        if (llGetNumberOfPrims()>5) g_lSettings = ["intern_dist",(string)llGetObjectDetails(llGetLinkKey(1),[27])];
         // Ensure that settings resets AFTER every other script, so that they don't reset after they get settings
         llSleep(0.5);
         g_kWearer = llGetOwner();
@@ -301,81 +383,58 @@ default {
         if (llGetInventoryKey(g_sCard)) {
             g_kLineID = llGetNotecardLine(g_sCard, g_iLineNr);
             g_kCardID = llGetInventoryKey(g_sCard);
-        }
+        } else if (g_lSettings) llMessageLinked(LINK_ALL_OTHERS, LM_SETTING_RESPONSE, llDumpList2String(g_lSettings, "="), "");
     }
 
     on_rez(integer iParam) {
         if (g_kWearer == llGetOwner()) {
-            llSleep(0.5); // brief wait for others to reset
-            SendValues();
+            llSetTimerEvent(2.0);
+            //llSleep(0.5); // brief wait for others to reset
+            //llMessageLinked(LINK_ALL_OTHERS,LINK_UPDATE,"LINK_SAVE","");
+            //SendValues();
         } else llResetScript();
     }
 
-    dataserver(key id, string data) {
-        if (id == g_kLineID) {
-            string sID;
-            string sToken;
-            string sValue;
-            integer i;
-            if (data == EOF && g_sSplitLine != "" ) {
-                data = g_sSplitLine ;
-                g_sSplitLine = "" ;
-            }
-            if (data != EOF) {
-                // first we can filter out & skip blank lines & remarks
-                data = llStringTrim(data, STRING_TRIM_HEAD);
-                if (data == "" || llGetSubString(data, 0, 0) == "#") jump nextline;
-                // check for "continued" line pieces
-                if ( llStringLength(g_sSplitLine) ) {
-                    data = g_sSplitLine + data ;
-                    g_sSplitLine = "" ;
-                }
-                if ( llGetSubString( data, -1, -1) == g_sDelimiter ) {
-                    g_sSplitLine = llDeleteSubString( data, -1, -1) ;
-                    jump nextline ;
-                }
-                i = llSubStringIndex(data, "=");
-                sID = llGetSubString(data, 0, i - 1);
-                data = llGetSubString(data, i + 1, -1);
-                if (~llSubStringIndex(llToLower(sID), "_")) jump nextline ;
-                //sID += "-";
-                sID = llToLower(sID)+"_";
-                list lData = llParseString2List(data, ["~"], []);
-                for (i = 0; i < llGetListLength(lData); i += 2) {
-                    sToken = llList2String(lData, i);
-                    sValue = llList2String(lData, i + 1);
-                    if (sValue != "") { //if no value, nothing to do
-                        if (sID == "auth_") { //if we have auth, can only be the below, else we dont care
-                            sToken = llToLower(sToken);
-                            if (~llListFindList(["block","trust","owner"],[sToken])) {
-                                list lTest = llParseString2List(sValue,[","],[]);
-                                list lOut;
-                                integer n;
-                                do {//sanity check for valid entries
-                                    if (llList2Key(lTest,n)) {//if this is not a valid key, it's useless
-                                        lOut += llList2List(lTest,n,n+1);
-                                    }
-                                    n = n+2;
-                                } while (n < llGetListLength(lTest));
-                                sValue = llDumpList2String(lOut,",");
-                            } 
-                        }
-                        g_lSettings = SetSetting(g_lSettings, sID + sToken, sValue);
-                    }
-                }
-                @nextline;
-                g_iLineNr++;
+    dataserver(key kID, string sData) {
+        if (kID == g_kLineID) {
+            if (sData != EOF) {
+                LoadSetting(sData,++g_iLineNr);
                 g_kLineID = llGetNotecardLine(g_sCard, g_iLineNr);
             } else {
-                // wait a sec before sending settings, in case other scripts are
-                // still resetting.
-                llSleep(2.0);
+                g_iLineNr = 0;
+                LoadSetting(sData,g_iLineNr);
+                llSetTimerEvent(1.0);
                 SendValues();
             }
         }
     }
-
-    link_message(integer iLink, integer iNum, string sStr, key kID) {
+    
+    http_response(key kID, integer iStatus, list lMeta, string sBody) {
+        if (kID ==  g_kLoadFromWeb) {
+            if (iStatus == 200) {
+                if (lMeta)
+                    llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Invalid URL. You need to provide a raw text file like this: "+g_sSampleURL,g_kURLLoadRequest);
+                else {
+                    list lLoadSettings = llParseString2List(sBody,["\n"],[]);
+                    if (lLoadSettings) {
+                        llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Settings fetched.",g_kURLLoadRequest);
+                        integer i;
+                        string sSetting;
+                        do {
+                            sSetting = llList2String(lLoadSettings,0);
+                            i = llGetListLength(lLoadSettings);
+                            lLoadSettings = llDeleteSubList(lLoadSettings,0,0);
+                            LoadSetting(sSetting,i);
+                        } while (i);
+                        SendValues();
+                    } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Empty site provided to load settings.",g_kURLLoadRequest);
+                }
+            } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Invalid url provided to load settings.",g_kURLLoadRequest);
+        }
+        g_kURLLoadRequest = "";
+    }
+    
+    link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (iNum == CMD_OWNER || kID == g_kWearer) UserCommand(iNum, sStr, kID);
         else if (iNum == LM_SETTING_SAVE) {
             //save the token, value
@@ -401,8 +460,11 @@ default {
         } else if (iNum == LOADPIN && sStr == llGetScriptName()) {
             integer iPin = (integer)llFrand(99999.0)+1;
             llSetRemoteScriptAccessPin(iPin);
-            llMessageLinked(iLink, LOADPIN, (string)iPin+"@"+llGetScriptName(),llGetKey());
-        } else if (iNum == INTEGRITY) llMessageLinked(iLink,iNum,llGetScriptName(),"");
+            llMessageLinked(iSender, LOADPIN, (string)iPin+"@"+llGetScriptName(),llGetKey());
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_REQUEST") llMessageLinked(LINK_ALL_OTHERS,LINK_UPDATE,"LINK_SAVE","");
+        }
     }
 
     timer() {
@@ -421,7 +483,7 @@ default {
                     g_kCardID = llGetInventoryKey(g_sCard);
                 }
             } else {
-                llSleep(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
+                llSetTimerEvent(1.0);   //pause, then send values if inventory changes, in case script was edited and needs its settings again
                 SendValues();
             }
         }

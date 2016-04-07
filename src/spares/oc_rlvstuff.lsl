@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          RLV Stuff - 151107.1                            //
+//                          RLV Stuff - 160207.1                            //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Satomi Ahn, Nandana Singh, Joy Stipe,         //
+//  Copyright (c) 2008 - 2016 Satomi Ahn, Nandana Singh, Joy Stipe,         //
 //  Wendy Starfall, Master Starship, littlemousy, Romka Swallowtail et al.  //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
@@ -50,6 +50,8 @@
 //         github.com/OpenCollar/opencollar/tree/master/src/spares          //
 // ------------------------------------------------------------------------ //
 //////////////////////////////////////////////////////////////////////////////
+
+string g_sAppVersion = "¹⁶⁰²⁰⁷⋅¹";
 
 string g_sParentMenu = "RLV";
 
@@ -140,6 +142,7 @@ integer REBOOT  = -1000;
 integer LINK_DIALOG = 3;
 integer LINK_RLV    = 4;
 integer LINK_SAVE   = 5;
+integer LINK_UPDATE = -10;
 
 integer LM_SETTING_SAVE = 2000;//scripts send messages on this channel to have settings saved to httpdb
 //str must be in form of "token=value"
@@ -216,7 +219,7 @@ Menu(key kID, integer iAuth, string sMenuName) {
     list lButtons;
 
     n=llListFindList(g_lMenuHelpMap,[sMenuName]);
-    if (~n) sPrompt="\nwww.opencollar.at/"+llList2String(g_lMenuHelpMap,n+1)+"\n";
+    if (~n) sPrompt="\nwww.opencollar.at/"+llList2String(g_lMenuHelpMap,n+1)+"\t"+g_sAppVersion+"\n";
 
     integer iStop = llGetListLength(g_lRLVcmds);
     for (n = 0; n < iStop; n+=g_lRLVcmds_stride) {
@@ -338,8 +341,10 @@ UserCommand(integer iNum, string sStr, key kID, string fromMenu) {
     if (iNum > CMD_WEARER) return;  //nothing for lower than wearer here
     sStr=llStringTrim(sStr,STRING_TRIM);
     string sStrLower=llToLower(sStr);
-
-    if (sStrLower == "sitmenu" || sStrLower == "menu sit") Menu(kID, iNum, "rlvsit_");
+    if (sStrLower == "rm rlvstuff") {
+        if (kID!=g_kWearer && iNum!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
+        else Dialog(kID, "\nDo you really want to uninstall the RLVStuff App?", ["Yes","No","Cancel"], [], 0, iNum,"rmrlvstuff");
+    } else if (sStrLower == "sitmenu" || sStrLower == "menu sit") Menu(kID, iNum, "rlvsit_");
     else if (sStrLower == "rlvtp" || sStrLower == "menu travel") Menu(kID, iNum, "rlvtp_");
     else if (sStrLower == "rlvtalk" || sStrLower == "menu talk") Menu(kID, iNum, "rlvtalk_");
     else if (sStrLower == "rlvtouch" || sStrLower == "menu touch") Menu(kID, iNum, "rlvtouch_");
@@ -470,14 +475,14 @@ default {
         }
     }
 
-    link_message(integer iLink, integer iNum, string sStr, key kID) {
+    link_message(integer iSender, integer iNum, string sStr, key kID) {
         if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu) {
-            llMessageLinked(iLink, MENUNAME_RESPONSE, g_sParentMenu + "|Sit", "");
-            llMessageLinked(iLink, MENUNAME_RESPONSE, g_sParentMenu + "|Travel", "");
-            llMessageLinked(iLink, MENUNAME_RESPONSE, g_sParentMenu + "|Talk", "");
-            llMessageLinked(iLink, MENUNAME_RESPONSE, g_sParentMenu + "|Touch", "");
-            llMessageLinked(iLink, MENUNAME_RESPONSE, g_sParentMenu + "|Misc", "");
-            llMessageLinked(iLink, MENUNAME_RESPONSE, g_sParentMenu + "|View", "");
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|Sit", "");
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|Travel", "");
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|Talk", "");
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|Touch", "");
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|Misc", "");
+            llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|View", "");
         }
         else if (iNum >= CMD_OWNER && iNum <= CMD_EVERYONE) UserCommand(iNum, sStr, kID, "");
         else if (iNum == LM_SETTING_RESPONSE) {
@@ -535,6 +540,17 @@ default {
                         //Debug("Sending \""+"sit:" + sMessage + "=force\" to "+(string)kAv+" with auth "+(string)iAuth);
                         UserCommand(iAuth, "sit:" + sMessage + "=force", kAv, "rlvsit_");
                     }
+                } else if (sMenu == "rmrlvstuff") {
+                    if (sMessage == "Yes") {
+                        llMessageLinked(LINK_RLV, MENUNAME_REMOVE, g_sParentMenu + "|Sit", "");
+                        llMessageLinked(LINK_RLV, MENUNAME_REMOVE, g_sParentMenu + "|Travel", "");
+                        llMessageLinked(LINK_RLV, MENUNAME_REMOVE, g_sParentMenu + "|Talk", "");
+                        llMessageLinked(LINK_RLV, MENUNAME_REMOVE, g_sParentMenu + "|Touch", "");
+                        llMessageLinked(LINK_RLV, MENUNAME_REMOVE, g_sParentMenu + "|Misc", "");
+                        llMessageLinked(LINK_RLV, MENUNAME_REMOVE, g_sParentMenu + "|View", "");
+                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+"RLVStuff has been removed.", kAv);
+                        if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
+                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"RLVStuff remains installed.", kAv);
                 } else {
                     if (sMessage == UPMENU) llMessageLinked(LINK_SET, iAuth, "menu "+g_sParentMenu, kAv);
                     else if (sMessage == "SitNow") UserCommand(iAuth, "sitnow", kAv, "rlvsit_");
@@ -581,8 +597,11 @@ default {
             //remove stride from g_lMenuIDs
             //we have to subtract from the index because the dialog id comes in the middle of the stride
             if (~iMenuIndex) g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
-        }
-        else if (iNum == REBOOT && sStr == "reboot") llResetScript();
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
+        } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 
 /*

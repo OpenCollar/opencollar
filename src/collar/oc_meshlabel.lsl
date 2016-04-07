@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                         Mesh Label - 151118.1                            //
+//                         Mesh Label - 160201.1                            //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2006 - 2015 Xylor Baysklef, Kermitt Quirk,                //
+//  Copyright (c) 2006 - 2016 Xylor Baysklef, Kermitt Quirk,                //
 //  Thraxis Epsilon, Gigs Taggart, Strife Onizuka, Huney Jewell,            //
 //  Salahzar Stenvaag, Lulu Pink, Nandana Singh, Cleo Collins, Satomi Ahn,  //
 //  Joy Stipe, Wendy Starfall, Romka Swallowtail, littlemousy,              //
@@ -77,6 +77,7 @@ integer REBOOT              = -1000;
 integer LINK_DIALOG         = 3;
 integer LINK_RLV            = 4;
 integer LINK_SAVE           = 5;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE = 2000;
 //integer LM_SETTING_REQUEST = 2001;
 integer LM_SETTING_RESPONSE = 2002;
@@ -275,7 +276,7 @@ FontMenu(key kID, integer iAuth) {
 }
 
 ConfirmDeleteMenu(key kAv, integer iAuth) {
-    string sPrompt = "\nDo you really want to uninstall the "+g_sSubMenu+" App?\n\nNOTE: This App automatically installs with patches. If you want it back, just run a patch/updater/installer. ❤";
+    string sPrompt = "\nDo you really want to uninstall the "+g_sSubMenu+" App?";
     Dialog(kAv, sPrompt, ["Yes","No","Cancel"], [], 0, iAuth,"rmlabel");
 }
 
@@ -380,8 +381,7 @@ default
                 SetColor();
                 SetLabel();
             }
-        }
-        else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
+        } else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
             llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
         else if (iNum == DIALOG_RESPONSE) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
@@ -435,11 +435,15 @@ default
                     if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
                     } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
                 }
-            } else if (iNum == DIALOG_TIMEOUT) {
-                integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs
-            } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
-        } 
+            }
+        } else if (iNum == DIALOG_TIMEOUT) {
+            integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
+        } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 
     timer() {

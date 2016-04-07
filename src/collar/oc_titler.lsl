@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                           Titler - 151007.1                              //
+//                           Titler - 160301.1                              //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Nandana Singh, Garvin Twine, Cleo Collins,    //
+//  Copyright (c) 2008 - 2016 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Satomi Ahn, Kisamin, Joy Stipe, Wendy Starfall, littlemousy,            //
 //  Romka Swallowtail et al.                                                //
 // ------------------------------------------------------------------------ //
@@ -74,6 +74,7 @@ integer REBOOT              = -1000;
 integer LINK_DIALOG         = 3;
 //integer LINK_RLV            = 4;
 integer LINK_SAVE           = 5;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE = 2000;
 //integer LM_SETTING_REQUEST = 2001;
 integer LM_SETTING_RESPONSE = 2002;
@@ -142,7 +143,7 @@ ShowHideText() {
 }
 
 ConfirmDeleteMenu(key kAv, integer iAuth) {
-    string sPrompt ="\nDo you really want to uninstall the "+g_sSubMenu+" App?\n\nNOTE: This App automatically installs with patches. If you want it back, just run a patch/updater/installer. ❤";
+    string sPrompt ="\nDo you really want to uninstall the "+g_sSubMenu+" App?";
     Dialog(kAv, sPrompt, ["Yes","No","Cancel"], [], 0, iAuth,"rmtitler");
 }
 
@@ -175,10 +176,11 @@ UserCommand(integer iAuth, string sStr, key kAv) {
     } else if (sCommand=="titler" && sAction == "box") 
         Dialog(kAv, "\n- Submit the new title in the field below.\n- Submit a blank field to go back to " + g_sSubMenu + ".", [], [], 0, iAuth,"textbox");
     else if (sStr == "runaway" && (iAuth == CMD_OWNER || iAuth == CMD_WEARER)) {
-        g_sText = "";
+        UserCommand(CMD_OWNER,"title off", g_kWearer);
+       /* g_sText = "";
         g_iOn = FALSE;
         ShowHideText();
-        llResetScript();
+        llResetScript();*/
     } else if (sCommand == "title") {
         integer iIsCommand;
         if (llGetListLength(lParams) <= 2) iIsCommand = TRUE;
@@ -302,11 +304,14 @@ default{
                     if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
                     } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
                 }
-            } else if (iNum == DIALOG_TIMEOUT) {
-                integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs
-            } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
-        }
+            }
+        } else if (iNum == DIALOG_TIMEOUT) {
+            integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +3);  //remove stride from g_lMenuIDs
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
+        } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 
     changed(integer iChange){

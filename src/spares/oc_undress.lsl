@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Undress - 151107.1                              //
+//                          Undress - 160207.1                              //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Satomi Ahn, Nandana Singh, Joy Stipe,         //
+//  Copyright (c) 2008 - 2016 Satomi Ahn, Nandana Singh, Joy Stipe,         //
 //  Wendy Starfall, Master Starship, Medea Destiny, littlemousy,            //
 //  Romka Swallowtail, Sumi Perl, Keiyra Aeon et al.                        //
 // ------------------------------------------------------------------------ //
@@ -53,7 +53,8 @@
 //////////////////////////////////////////////////////////////////////////////
 
 //gives menus for clothing and attachment, stripping and locking
-//Satomi Ahn, Medea Destiny
+
+string g_sAppVersion = "¹⋅¹";
 
 string g_sSubMenu = "Un/Dress";
 string g_sParentMenu = "RLV";
@@ -170,6 +171,7 @@ integer REBOOT  = -1000;
 integer LINK_DIALOG = 3;
 integer LINK_RLV    = 4;
 integer LINK_SAVE   = 5;
+integer LINK_UPDATE = -10;
 
 integer LM_SETTING_SAVE = 2000;//scripts send messages on this channel to have settings saved to httpdb
 //str must be in form of "token=value"
@@ -248,7 +250,7 @@ Notify(key kID, string sMsg, integer iAlsoNotifyWearer)
 
 MainMenu(key kID, integer iAuth)
 {
-    string sPrompt = "\nwww.opencollar.at/undress\n\nNOTE: Many clothes, and almost all mesh, mixes layers and attachments. With a properly set up #RLV folder";
+    string sPrompt = "\n[http://www.opencollar.at/undress.html Legacy Un/dress]\t"+g_sAppVersion+"\n\nNOTE: Many clothes, and almost all mesh, mixes layers and attachments. With a properly set up #RLV folder";
     sPrompt += ", the SmartStrip option will allow these to be removed automatically. Otherwise, it is recommended to explore the #RLV Folders menu for a smoother un/dressing experience.";
 
     if (g_iAllLocked) sPrompt += "\n all clothes and attachments are currently locked.";
@@ -447,7 +449,12 @@ DoUnlockAll()
 UserCommand(integer iNum, string sStr, key kID)
 {
     if (iNum > CMD_WEARER || iNum < CMD_OWNER) return; // sanity check
-
+    if (llToLower(sStr) == "rm undress" || llToLower(sStr) == "rm un/dress") {
+        if (iNum == CMD_OWNER || kID == g_kWearer) 
+            Dialog(kID, "\nDo you really want to uninstall the "+g_sSubMenu+" App?", ["Yes","No","Cancel"], [], 0, iNum,"rmundress");
+        else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
+        return;
+    }
     if (!g_iRLVOn)
     {
         if (~llListFindList(["menu "+g_sSubMenu,"undress","lockall","unlockall"],[sStr]))
@@ -793,6 +800,12 @@ default {
                         if (sMenu == "lockclothing") LockClothMenu(kAv, iAuth);
                         if (sMenu == "lockattachment") LockAttachmentMenu(kAv, iAuth);
                     }
+                } else if (sMenu == "rmundress") {
+                    if (sMessage == "Yes") {
+                        llMessageLinked(LINK_RLV, MENUNAME_REMOVE , g_sParentMenu + "|"+g_sSubMenu, "");
+                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+g_sSubMenu+" App has been removed.", kAv);
+                        if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
+                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
                 }
             }
         }
@@ -800,6 +813,12 @@ default {
         {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             if (~iMenuIndex) g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex-1, iMenuIndex-2+g_iMenuStride);
+        }
+        else if (iNum == LINK_UPDATE)
+        {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         }
         else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }

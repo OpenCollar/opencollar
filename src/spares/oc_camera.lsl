@@ -21,10 +21,10 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                           Camera - 151001.1                              //
+//                           Camera - 160301.1                              //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2011 - 2015 Nandana Singh, Wendy Starfall, Medea Destiny, //
-//  littlemousy, Romka Swallowtail et al.                                   //
+//  Copyright (c) 2011 - 2016 Nandana Singh, Wendy Starfall, Medea Destiny, //
+//  littlemousy, Romka Swallowtail, Garvin Twine et al.                     //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
 //  it under the terms of the GNU General Public License as published       //
@@ -47,12 +47,14 @@
 //  future, then "full perms" will mean the most permissive possible set    //
 //  of permissions allowed by the platform.                                 //
 // ------------------------------------------------------------------------ //
-//         github.com/OpenCollar/opencollar/tree/master/src/collar          //
+//         github.com/OpenCollar/opencollar/tree/master/src/spares          //
 // ------------------------------------------------------------------------ //
 //////////////////////////////////////////////////////////////////////////////
 
 //allows owner to set different camera mode
 //responds to commands from modes list
+
+string g_sAppVersion = "¹⋅²";
 
 key g_kWearer;
 integer g_iLastNum;
@@ -87,6 +89,7 @@ integer REBOOT = -1000;
 integer LINK_DIALOG = 3;
 integer LINK_RLV = 4;
 integer LINK_SAVE = 5;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE = 2000;//scripts send messages on this channel to have settings saved to settings store
                             //str must be in form of "token=value"
 //integer LM_SETTING_REQUEST = 2001;//when startup, scripts send requests for settings on this channel
@@ -181,11 +184,6 @@ Dialog(key kID, string sPrompt, list lChoices, list lUtilityButtons, integer iPa
     else g_lMenuIDs += [kID, kMenuID, sName];
 } 
 
-ConfirmDeleteMenu(key kAv, integer iAuth) {
-    string sPrompt = "\nAre you sure you want to delete the "+g_sSubMenu+" App?\n";
-    Dialog(kAv, sPrompt, ["Yes","No"], [], 0, iAuth,"rmcamera");
-}
-
 CamMode(string sMode) {
     llClearCameraParams();
     llSetCameraParams(lJsonModes(sMode));
@@ -252,7 +250,7 @@ LockCam() {
 }
 
 CamMenu(key kID, integer iAuth) {
-    string sPrompt = "\nCurrent camera mode is " + g_sCurrentMode + ".\n\nwww.opencollar.at/camera\n\nNOTE: Full functionality only on RLV API v2.9 and greater.";
+    string sPrompt = "\n[http://www.opencollar.at/camera.html Legacy Camera]\t"+g_sAppVersion+"\n\nCurrent camera mode is " + g_sCurrentMode + ".\n\nNOTE: Full functionality only on RLV API v2.9 and greater.";
     list lButtons = ["CLEAR","FREEZE","MOUSELOOK"];
     integer n;
     integer stop = llGetListLength(llJson2List(g_sJsonModes)); 
@@ -311,9 +309,9 @@ UserCommand(integer iNum, string sStr, key kID) { // here iNum: auth value, sStr
     string sCommand = llList2String(lParams, 0);
     string sValue = llList2String(lParams, 1);
     string sValue2 = llList2String(lParams, 2);
-    if (sStr == "menu " + g_sSubMenu) {
+    if (sStr == "menu " + g_sSubMenu)
         CamMenu(kID, iNum);
-    } else if (sCommand == "cam" || sCommand == "camera") {
+    else if (sCommand == "cam" || sCommand == "camera") {
         //Debug("g_iLastNum=" + (string)g_iLastNum);  
         if (sValue == "")//they just said *cam.  give menu
             CamMenu(kID, iNum);
@@ -363,10 +361,10 @@ UserCommand(integer iNum, string sStr, key kID) { // here iNum: auth value, sStr
         }
     } else if (sStr == "rm camera") {
             if (kID!=g_kWearer && iNum!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
-            else ConfirmDeleteMenu(kID, iNum);
+            else Dialog(kID, "\nDo you really want to uninstall the "+g_sSubMenu+" App?", ["Yes","No","Cancel"], [], 0, iNum,"rmcamera");
     } else if ((iNum == CMD_OWNER  || kID == g_kWearer) && sStr == "runaway") {
         ClearCam();
-        llResetScript();
+        //llResetScript();
     }
    // Debug(sCommand+" executed");
 }
@@ -394,7 +392,7 @@ default {
         if (iNum >= CMD_OWNER && iNum <= CMD_WEARER) UserCommand(iNum, sStr, kID);
         else if (iNum == CMD_SAFEWORD || iNum == RLV_CLEAR) {
             ClearCam();
-            llResetScript();
+            //llResetScript();
         } else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
             llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
         else if (iNum == LM_SETTING_RESPONSE) {
@@ -432,14 +430,18 @@ default {
                 } else if (sMenuType == "rmcamera") {
                     if (sMessage == "Yes") {
                         llMessageLinked(LINK_ROOT, MENUNAME_REMOVE , g_sParentMenu + "|" + g_sSubMenu, "");
-                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+"Removing "+g_sSubMenu+" App...\nYou can re-install it with an OpenCollar Updater.", kAv);
+                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+g_sSubMenu+" App has been removed.", kAv);
                     if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
-                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"Removing "+g_sSubMenu+" App aborted.", kAv);
-                }                      
+                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
+                }                    
             }
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                        
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
     

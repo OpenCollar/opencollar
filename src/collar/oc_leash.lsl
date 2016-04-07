@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                           Leash - 151001.1                               //
+//                           Leash - 160310.1                               //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Nandana Singh, Lulu Pink, Garvin Twine,       //
+//  Copyright (c) 2008 - 2016 Nandana Singh, Lulu Pink, Garvin Twine,       //
 //  Joy Stipe, Cleo Collins, Satomi Ahn, Master Starship, Toy Wylie,        //
 //  Kaori Gray, Sei Lisa, Wendy Starfall, littlemousy, Romka Swallowtail,   //
 //  Sumi Perl, Karo Weirsider, Kurt Burleigh, Marissa Mistwallow et al.     //
@@ -79,6 +79,7 @@ integer REBOOT                = -1000;
 integer LINK_DIALOG           = 3;
 integer LINK_RLV              = 4;
 integer LINK_SAVE             = 5;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE       = 2000;
 integer LM_SETTING_REQUEST    = 2001;
 integer LM_SETTING_RESPONSE   = 2002;
@@ -199,19 +200,19 @@ ConfirmDialog(key kAv, key kCmdGiver, string sType, integer iAuth) {
     string sCmdGiverURI = NameURI(kCmdGiver);
     string sPrompt;
     string sMessage;
-    if (kCmdGiver == g_kWearer) sPrompt = "%WEARERNAME% wants to ";
+    if (kCmdGiver == g_kWearer) sPrompt = "\n%WEARERNAME% wants to ";
     else sPrompt = sCmdGiverURI + " wants to ";
     if (sType == "LeashTarget") {
         sMessage = "Asking "+NameURI(kAv)+" to accept %WEARERNAME%'s leash.";
         if (kCmdGiver == g_kWearer) sPrompt += "pass you their leash.";
         else sPrompt += "pass you %WEARERNAME%'s leash.";
-        sPrompt += "\nAre you OK with this?";
+        sPrompt += "\n\nAre you OK with this?";
         Dialog(kAv,sPrompt,["Yes","No"],[],0,iAuth,"LeashTargetConfirm");
     } else {
         sMessage = "Asking "+NameURI(kAv)+" to accept %WEARERNAME% to follow them.";
         if (kCmdGiver == g_kWearer) sPrompt += "follow you.";
         else sPrompt += " command %WEARERNAME% to follow you.";
-        sPrompt += "\nAre you OK with this?";
+        sPrompt += "\n\nAre you OK with this?";
         Dialog(kAv,sPrompt,["Yes","No"],[],0,iAuth,"FollowTargetConfirm");
     }
     llMessageLinked(LINK_DIALOG,NOTIFY,"0"+sMessage,kCmdGiver);
@@ -335,9 +336,9 @@ integer LeashTo(key kTarget, key kCmdGiver, integer iAuth, list lPoints, integer
     // Don't own the object that sent the command
     if (g_bLeashedToAvi && kCmdGiver != kTarget && llGetOwnerKey(kCmdGiver) != kTarget) {
         if (iFollowMode){
-            llMessageLinked(LINK_DIALOG,NOTIFY, "0"+"%WEARERNAME% has been commanded to follow you.  Say \"%PREFIX%unfollow\" to relase them.", g_kLeashedTo);
+            llMessageLinked(LINK_DIALOG,NOTIFY, "0"+"%WEARERNAME% has been commanded to follow you.  Say \"/%CHANNEL%%PREFIX% unfollow\" to relase them.", g_kLeashedTo);
         } else {
-            llMessageLinked(LINK_DIALOG,NOTIFY, "0"+"%WEARERNAME% has been leashed to you.  Say \"%PREFIX%unleash\" to unleash them.", g_kLeashedTo);
+            llMessageLinked(LINK_DIALOG,NOTIFY, "0"+"%WEARERNAME% has been leashed to you.  Say \"/%CHANNEL%%PREFIX% unleash\" to unleash them.", g_kLeashedTo);
         }
     }
     return TRUE;
@@ -383,6 +384,7 @@ Unleash(key kCmdGiver) {
         string sTargetMess;
         integer bCmdGiverIsAvi=llGetAgentSize(kCmdGiver) != ZERO_VECTOR;
         if (bCmdGiverIsAvi) {
+            g_bLeashedToAvi = llGetAgentSize(g_kLeashedTo) != ZERO_VECTOR; //refresh to check if the leash target is in sim, no need to spam else
             if (kCmdGiver == g_kWearer) { // Wearer is Leasher
                 if (g_bFollowMode) {
                     sWearMess = "You stop following " + sTarget + ".";
@@ -570,7 +572,7 @@ UserCommand(integer iAuth, string sMessage, key kMessageID, integer bFromMenu) {
                 ApplyRestrictions();
                 llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Strict leashing disabled.",kMessageID);
             } else {
-                llMessageLinked(LINK_SET, LM_SETTING_RESPONSE,"strictAuthError="+(string)iAuth,kMessageID);
+                //llMessageLinked(LINK_SET, LM_SETTING_RESPONSE,"strictAuthError="+(string)iAuth,kMessageID);
                 llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kMessageID);
             }
         } else if (sMessage == "turn on") {
@@ -786,7 +788,11 @@ default {
             }
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kMessageID]);
-            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);                        
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+        } else if (iNum == LINK_UPDATE) {
+            if (sMessage == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sMessage == "LINK_RLV") LINK_RLV = iSender;
+            else if (sMessage == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == REBOOT && sMessage == "reboot") llResetScript();
     }
 

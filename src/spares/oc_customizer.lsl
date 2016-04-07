@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Customizer - 151027.2                           //
+//                          Customizer - 160207.1                           //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2014 - 2015 Romka Swallowtail et al.                      //
+//  Copyright (c) 2014 - 2016 Romka Swallowtail et al.                      //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
 //  it under the terms of the GNU General Public License as published       //
@@ -62,8 +62,8 @@ integer CMD_WEARER = 503;
 
 integer NOTIFY = 1002;
 integer LINK_DIALOG = 3;
-
 integer LINK_SAVE = 5;
+integer LINK_UPDATE = -10;
 integer REBOOT = -1000;
 
 integer MENUNAME_REQUEST = 3000;
@@ -240,6 +240,9 @@ UserCommand(integer iAuth, string sStr, key kID )
             llMessageLinked(LINK_THIS, iAuth, "menu " + g_sParentMenu, kID);
         }
         else ElementMenu(kID, 0, iAuth);
+    } else if (llToLower(sStr) == "rm customizer") {
+        if (kID!=g_kWearer && iAuth!=CMD_OWNER) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
+        else Dialog(kID, "\nDo you really want to uninstall the "+g_sSubMenu+" App?", ["Yes","No","Cancel"], [], 0, iAuth,"rm"+g_sSubMenu);
     }
 }
 
@@ -338,6 +341,12 @@ default
                         else if (sMessage == "▣ glow") g_iGlow = FALSE;
                         CustomMenu(kAv, iPage, iAuth);
                     }
+                } else if (sMenuType == "rm"+g_sSubMenu) {
+                    if (sMessage == "Yes") {
+                        llMessageLinked(LINK_ROOT, MENUNAME_REMOVE , g_sParentMenu + "|" + g_sSubMenu, "");
+                        llMessageLinked(LINK_DIALOG, NOTIFY, "1"+g_sSubMenu+" App has been removed.", kAv);
+                    if (llGetInventoryType(llGetScriptName()) == INVENTORY_SCRIPT) llRemoveInventory(llGetScriptName());
+                    } else llMessageLinked(LINK_DIALOG, NOTIFY, "0"+g_sSubMenu+" App remains installed.", kAv);
                 }
             }
         }
@@ -345,6 +354,11 @@ default
         {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             if (iMenuIndex != -1) g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex-1, iMenuIndex-2+g_iMenuStride);
+        }
+        else if (iNum == LINK_UPDATE)
+        {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         }
     }
 

@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                         Exceptions - 151007.1                            //
+//                         Exceptions - 160124.1                            //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Satomi Ahn, Nandana Singh, Joy Stipe,         //
+//  Copyright (c) 2008 - 2016 Satomi Ahn, Nandana Singh, Joy Stipe,         //
 //  Wendy Starfall, Medea Destiny, Garvin Twine, littlemousy,               //
 //  Romka Swallowtail et al.                                                //
 // ------------------------------------------------------------------------ //
@@ -148,6 +148,7 @@ integer REBOOT              = -1000;
 integer LINK_DIALOG         = 3;
 integer LINK_RLV            = 4;
 integer LINK_SAVE           = 5;
+integer LINK_UPDATE = -10;
 integer LM_SETTING_SAVE = 2000;
 //integer LM_SETTING_REQUEST = 2001;
 integer LM_SETTING_RESPONSE = 2002;
@@ -279,7 +280,7 @@ SetAllExs() {
     integer i;
     string sRLVCmd = "@";
     integer iLength = llGetListLength(g_lSecOwners);
-    for (n = 0; n < iLength; n += 2) {
+    for (n = 0; n < iLength; ++n) {
         string sTmpOwner = llList2String(g_lSecOwners, n);
         if (llListFindList(g_lSettings, [sTmpOwner]) == -1 && sTmpOwner!=g_kWearer) {
             for (i = 0; i<iStop; i++) {
@@ -293,7 +294,7 @@ SetAllExs() {
         }
     }
     iLength = llGetListLength(g_lOwners+g_lTempOwners);
-    for (n = 0; n < iLength; n += 2) {
+    for (n = 0; n < iLength; ++n) {
         string sTmpOwner = llList2String(g_lOwners+g_lTempOwners, n);
         if (llListFindList(g_lSettings, [sTmpOwner]) == -1 && sTmpOwner!=g_kWearer) {
             for (i = 0; i<iStop; i++) {
@@ -543,10 +544,14 @@ default {
                         }
                     }
                 }
-            } else if (iNum == DIALOG_TIMEOUT) {
-                integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
-                g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
-            }
+            } 
+        } else if (iNum == DIALOG_TIMEOUT) {
+            integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
+            g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_RLV") LINK_RLV = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 /*

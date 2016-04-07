@@ -19,10 +19,10 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//           Themes - 151117.1           .*' /  .*' ; .*`- +'  `*'          //
+//           Themes - 160406.1           .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2015 Nandana Singh, Lulu Pink, Garvin Twine,       //
+//  Copyright (c) 2008 - 2016 Nandana Singh, Lulu Pink, Garvin Twine,       //
 //  Cleo Collins, Master Starship, Joy Stipe, Wendy Starfall, littlemousy,  //
 //  Romka Swallowtail et al.                                                //
 // ------------------------------------------------------------------------ //
@@ -54,8 +54,6 @@
 // Based on a merge of all OpenCollar appearance plugins by littlemousy
 // Virtual Disgrace - Paint is derivate of Virtual Disgrace - Customize
 // OpenCollar - styles is derivative of Virtual Disgrace - Paint
-// Compatible with OpenCollar API 4.0
-// and/or minimum Disgraced Version 1.9.7
 
 list g_lElements;  //list of element types, built on script start.  Changed event restarts script on link set change
 list g_lElementFlags;
@@ -102,6 +100,7 @@ integer REBOOT              = -1000;
 integer LINK_DIALOG         = 3;
 //integer LINK_RLV            = 4;
 integer LINK_SAVE           = 5;
+integer LINK_UPDATE = -10;
 //integer MENUNAME_REQUEST    =  3000;
 //integer MENUNAME_RESPONSE   =  3001;
 
@@ -168,7 +167,7 @@ LooksMenu(key kID, integer iAuth) {
 }
 
 StyleMenu(key kID, integer iAuth) {
-    Dialog(kID, "\n[http://www.opencollar.at/themes.html Themes]\n\nChoose a visual theme for your %DEVICETYPE%.", g_lStyles, ["BACK"], 0, iAuth, "StyleMenu~styles");
+    Dialog(kID, "\n[http://www.opencollar.at/themes.html Themes]\n\nChoose a visual theme for your %DEVICETYPE%.\n", g_lStyles, ["BACK"], 0, iAuth, "StyleMenu~styles");
 }
 
 ShinyMenu(key kID, integer iAuth, string sElement) {
@@ -274,12 +273,12 @@ BuildTexturesList() {
         string sTextureName = llGetInventoryName(INVENTORY_TEXTURE, numInventoryTextures);
         string sShortName=llList2String(llParseString2List(sTextureName, ["~"], []), -1);
         if (!(llGetSubString(sTextureName, 0, 5) == "leash_" || sTextureName == "chain" || sTextureName == "rope")) {  // we want to ignore particle textures, and textures named in the notecard
-            if(llStringLength(sShortName)>23) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Texture name "+sTextureName+" in %DEVICETYPE% is too long, dropping.",g_kWearer);
-            else {
-                g_lTextures += sTextureName;
-                g_lTextureKeys += sTextureName;  //add name of texture inside collar as the key, to match notecard lists format
-                g_lTextureShortNames+=sShortName;
-            }
+           // if(llStringLength(sShortName)>23) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Texture name "+sTextureName+" in %DEVICETYPE% is too long, dropping.",g_kWearer);
+            //else {
+            g_lTextures += sTextureName;
+            g_lTextureKeys += sTextureName;  //add name of texture inside collar as the key, to match notecard lists format
+            g_lTextureShortNames+=sShortName;
+           // }
         }
     }
     //after inventory, start reading textures notecard
@@ -360,7 +359,7 @@ UserCommand(integer iNum, string sStr, key kID, integer reMenu) {
                     }
                 } else {
                     llMessageLinked(LINK_ROOT, iNum, "options", kID);
-                    llMessageLinked(LINK_DIALOG, NOTIFY,"0"+"This %DEVICETYPE% has no themes installed. You can type \"%PREFIX%looks\" to fine-tune your %DEVICETYPE% (NOTE: Basic building knowledge required.)",kID);
+                    llMessageLinked(LINK_DIALOG, NOTIFY,"0"+"This %DEVICETYPE% has no themes installed. You can type \"%PREFIX% looks\" to fine-tune your %DEVICETYPE% (NOTE: Basic building knowledge required.)",kID);
                 }
             }  else if (sCommand == "looks") LooksMenu(kID,iNum);
             else if (sCommand == "menu") ElementMenu(kID, 0, iNum, sElement);
@@ -478,7 +477,7 @@ UserCommand(integer iNum, string sStr, key kID, integer reMenu) {
                     TextureMenu(kID, 0, iNum, sStr);
                 } else if (! ~iTextureIndex) {  //invalid texture name supplied, send texture menu for this element
                     llMessageLinked(LINK_DIALOG,NOTIFY, "0"+"No texture "+sTextureShortName+" found, please choose one from the menu.",kID);
-                    TextureMenu(kID, 0, iNum, sCommand+" "+sElement);
+                    if (reMenu) TextureMenu(kID, 0, iNum, sCommand+" "+sElement);
                 } else {  //valid element and texture names supplied, apply texture
                     //get key from long name
                     //Debug("Texture command is good:"+sStr);
@@ -588,7 +587,7 @@ default {
                     string sBackMenu=llList2String(llParseString2List(sBreadcrumbs,[" "],[]),0);
                     //Debug(sBreadcrumbs+" "+sMessage);
                     if (sMessage == "BACK") {
-                        if (~llSubStringIndex(sMenu,"StyleMenu~styles")) llMessageLinked(LINK_ROOT, iAuth, "options", kAv);
+                        if (~llSubStringIndex(sMenu,"StyleMenu~styles")) llMessageLinked(LINK_ROOT, iAuth, "settings", kAv);
                         else  ElementMenu(kAv, 0, iAuth, sBackMenu);
                     }
                     else UserCommand(iAuth,sBreadcrumbs+" "+sMessage, kAv, TRUE);
@@ -617,6 +616,9 @@ default {
         } else if (iNum == DIALOG_TIMEOUT) {
             integer iMenuIndex = llListFindList(g_lMenuIDs, [kID]);
             g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex - 2 + g_iMenuStride);
+        } else if (iNum == LINK_UPDATE) {
+            if (sStr == "LINK_DIALOG") LINK_DIALOG = iSender;
+            else if (sStr == "LINK_SAVE") LINK_SAVE = iSender;
         } else if (iNum == REBOOT && sStr == "reboot") llResetScript();
     }
 
@@ -628,7 +630,7 @@ default {
                     key kTextureKey=(key)llStringTrim(llList2String(lThisLine,1),STRING_TRIM);
                     string sTextureName=llStringTrim(llList2String(lThisLine,0),STRING_TRIM);
                     string sShortName=llList2String(llParseString2List(sTextureName, ["~"], []), -1);
-                    if ( ~llListFindList(g_lTextures,[sTextureName])) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Texture "+sTextureName+" is in the collar AND the notecard.  Collar texture takes priority.",g_kWearer);
+                    if ( ~llListFindList(g_lTextures,[sTextureName])) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Texture "+sTextureName+" is in the %DEVICETYPE% AND the notecard.  %DEVICETYPE% texture takes priority.",g_kWearer);
                     else if((key)kTextureKey) {  //if the notecard has valid key, and texture is not already in collar
                         if(llStringLength(sShortName)>23) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Texture "+sTextureName+" in textures notecard too long, dropping.",g_kWearer);
                         else {

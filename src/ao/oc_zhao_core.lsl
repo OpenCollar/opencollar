@@ -1,6 +1,56 @@
-// Submissive AO 3.960
-// Anyway. This version has Wendy's request to offer a menu when the
-// ao is reset/has a new owner, asking the user to pick the correct notecard. MD 
+//////////////////////////////////////////////////////////////////////////////
+//                                                                          //
+//              ____                   ______      ____                     //
+//             / __ \____  ___  ____  / ____/___  / / /___ ______           //
+//            / / / / __ \/ _ \/ __ \/ /   / __ \/ / / __ `/ ___/           //
+//           / /_/ / /_/ /  __/ / / / /___/ /_/ / / / /_/ / /               //
+//           \____/ .___/\___/_/ /_/\____/\____/_/_/\__,_/_/                //
+//               /_/                                                        //
+//                                                                          //
+//                        ,^~~~-.         .-~~~"-.                          //
+//                       :  .--. \       /  .--.  \                         //
+//                       : (    .-`<^~~~-: :    )  :                        //
+//                       `. `-,~            ^- '  .'                        //
+//                         `-:                ,.-~                          //
+//                          .'                  `.                          //
+//                         ,'   @   @            |                          //
+//                         :    __               ;                          //
+//                      ...{   (__)          ,----.                         //
+//                     /   `.              ,' ,--. `.                       //
+//                    |      `.,___   ,      :    : :                       //
+//                    |     .'    ~~~~       \    / :                       //
+//                     \.. /               `. `--' .'                       //
+//                        |                  ~----~                         //
+//                          ZHAO Core - 160120.1                            //
+// ------------------------------------------------------------------------ //
+//  Copyright (c) 2004 - 2016 Francis Chung, Dzonatas Sol, Fennec Wind,     //
+//  Ziggy Puff, Nandana Singh, Wendy Starfall, Medea Destiny,               //
+//  Alex Carpenter, Romka Swallowtail, Garvin Twine et al.                  //
+// ------------------------------------------------------------------------ //
+//  This script is free software: you can redistribute it and/or modify     //
+//  it under the terms of the GNU General Public License as published       //
+//  by the Free Software Foundation, version 2.                             //
+//                                                                          //
+//  This script is distributed in the hope that it will be useful,          //
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of          //
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            //
+//  GNU General Public License for more details.                            //
+//                                                                          //
+//  You should have received a copy of the GNU General Public License       //
+//  along with this script; if not, see www.gnu.org/licenses/gpl-2.0        //
+// ------------------------------------------------------------------------ //
+//  This script and any derivatives based on it must remain "full perms".   //
+//                                                                          //
+//  "Full perms" means maintaining MODIFY, COPY, and TRANSFER permissions   //
+//  in Second Life(R), OpenSimulator and the Metaverse.                     //
+//                                                                          //
+//  If these platforms should allow more fine-grained permissions in the    //
+//  future, then "full perms" will mean the most permissive possible set    //
+//  of permissions allowed by the platform.                                 //
+// ------------------------------------------------------------------------ //
+//           github.com/OpenCollar/opencollar/tree/master/src/ao            //
+// ------------------------------------------------------------------------ //
+//////////////////////////////////////////////////////////////////////////////
 
 // ZHAO-II-core - Ziggy Puff, 07/07
 
@@ -133,20 +183,6 @@
 
 
 // Based on Francis Chung's Franimation Overrider v1.8
-
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307, USA.
 
 // CONSTANTS
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -317,7 +353,7 @@ integer haveWalkingAnim = FALSE;            // Hack to get it so we face the rig
 integer sitOverride = TRUE;                 // Whether we're overriding sit or not
 
 integer standOverride = TRUE;                 // Whether we're overriding stand or not
-integer typingOverrideOn = TRUE;            // Whether we're overriding typing or not
+integer typingOverrideOn = FALSE;            // Whether we're overriding typing or not
 /// Sit Anywhere mod by Marcus Gray
 /// just one var to overrider stands... let's see how this works out 0o
 integer sitAnywhereOn = FALSE;
@@ -361,8 +397,7 @@ integer g_iJustRezed;
 
 
 key g_kSetDefault; //menu id for setting  default notecard.
-string helpNotecard = "OpenCollar AO Guide"; //we need these two here now as well for the above.
-string license = "OpenCollar AO License";
+
 // CODE
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -607,7 +642,7 @@ doMultiAnimMenu(key _id, integer _animIndex, string _animType, string _currentAn
         animNames = "\n\nNo overrides have been configured.";
     }
     
-    string text = "Select the " + _animType + " animation to use:\n\nCurrently: " + _currentAnim + animNames + "\n"; 
+    string text = "\nSelected \""+_animType+"\" animation: " + _currentAnim + "\n" + animNames + "\n"; 
     list utility = [UPMENU];
     key menuid = Dialog(_id, text, buttons, utility, 0);
     
@@ -782,10 +817,10 @@ askDefault() //added to provide a menu to ask for default notecard and
     for ( i = 0; i < n; i++ ) 
     {
         string notecardName = llGetInventoryName( INVENTORY_NOTECARD, i );
-        if ( notecardName != helpNotecard && notecardName != license)
+        if (notecardName != ".license")
         animSets += [ notecardName ];
     }
-    g_kSetDefault = Dialog(Owner, "New or reset AO. Please pick your default animation set.", animSets, [], 0);
+    g_kSetDefault = Dialog(Owner, "\nYou are wearing me for the first time!\n\nWhich set do you want me to load?", animSets, [], 0);
 
 }
 // STATE
@@ -863,13 +898,12 @@ default {
                 menuids = llDeleteSubList(menuids, menuindex - 1, menuindex - 2 + menustride);
                 if(menutype == MULTIANIM)
                 {
-
                     if ( listenState == 1 ) {
                         // Dialog enhancement - Fennec Wind
                         // Note that this is within one 'overrides' entry
                         if(_message == UPMENU)
                         {
-                            llMessageLinked(LINK_THIS, 0, "ZHAO_MENU", _id);
+                            llMessageLinked(LINK_THIS, 503, "ZHAO_MENU", _id);
                             return;
                         }
                         curSitAnim = findMultiAnim( sittingIndex, (integer)_message - 1 );
@@ -885,7 +919,7 @@ default {
                         // Note that this is within one 'overrides' entry
                         if(_message == UPMENU)
                         {
-                            llMessageLinked(LINK_THIS, 0, "ZHAO_MENU", _id);
+                            llMessageLinked(LINK_THIS, 503, "ZHAO_MENU", _id);
                             return;
                         }
                         curWalkAnim = findMultiAnim( walkingIndex, (integer)_message - 1 );
@@ -901,7 +935,7 @@ default {
                         // Note that this is within one 'overrides' entry
                         if(_message == UPMENU)
                         {
-                            llMessageLinked(LINK_THIS, 0, "ZHAO_MENU", _id);
+                            llMessageLinked(LINK_THIS, 503, "ZHAO_MENU", _id);
                             return;
                         }
                         curGsitAnim = findMultiAnim( sitgroundIndex, (integer)_message - 1 );
@@ -944,7 +978,8 @@ default {
             // if it's greater than 0, we know it's for us (this script)
             if (menuindex != -1)
             {
-                llInstantMessage(llGetOwner(),"SubAO Menu has timed out. Pressing a menu entry will not do anything.");
+                //llInstantMessage(llGetOwner(),"SubAO Menu has timed out. Pressing a menu entry will not do anything.");
+                menuids = llDeleteSubList(menuids,menuindex-1,menuindex + menustride - 2);
             }
            
         }
@@ -1357,6 +1392,6 @@ default {
     
     changed (integer change)
     {
-        if(change&CHANGED_OWNER) askDefault();
+        if(change&CHANGED_OWNER) llResetScript();
     }
 }

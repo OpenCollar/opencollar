@@ -21,9 +21,9 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                       Installer System - 151027.1                        //
+//                       Installer System - 160203.1                        //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2011 - 2015 Nandana Singh, Satomi Ahn, DrakeSystem,       //
+//  Copyright (c) 2011 - 2016 Nandana Singh, Satomi Ahn, DrakeSystem,       //
 //  Wendy Starfall, littlemousy, Romka Swallowtail, Garvin Twine et al.     //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
@@ -72,7 +72,11 @@ integer g_iInstallOnRez = FALSE; // TRUE initiates right away on rez
 
 key g_kNameID;
 integer g_initChannel = -7483213;
+//integer g_initChannel = -7483220; channel for AO SIX
+//integer g_initChannel = -7483210; channel for Remote HUD SIX
 integer g_iSecureChannel;
+string g_sBuildVersion;
+
 
 // store the script pin here when we get it from the collar.
 integer g_iPin;
@@ -141,6 +145,14 @@ SetFloatText() {
 }
 
 Particles(key kTarget) {
+    integer i = llGetNumberOfPrims();
+    vector vParticleColor;
+    do {
+        if (llGetLinkName(i) == "<3") {
+            vParticleColor = llList2Vector(llGetLinkPrimitiveParams(i,[PRIM_COLOR,ALL_SIDES]),0);
+            i = 1;
+        }
+    } while (--i > 1);
     llParticleSystem([ 
         PSYS_PART_FLAGS, 
             PSYS_PART_INTERP_COLOR_MASK |
@@ -150,8 +162,10 @@ Particles(key kTarget) {
         PSYS_SRC_PATTERN, PSYS_SRC_PATTERN_EXPLODE,
         PSYS_SRC_TEXTURE, "930c3304-e899-9266-2ab5-ab9ec3aec2b6",
         PSYS_SRC_TARGET_KEY, kTarget,
-        PSYS_PART_START_COLOR, <0.529, 0.416, 0.212>,
-        PSYS_PART_END_COLOR, <0.733, 0.592, 0.345>,
+        PSYS_PART_START_COLOR, vParticleColor,
+        PSYS_PART_END_COLOR, vParticleColor,
+       // PSYS_PART_START_COLOR, <0.529, 0.416, 0.212>,
+       // PSYS_PART_END_COLOR, <0.733, 0.592, 0.345>,
         PSYS_PART_START_SCALE, <0.68, 0.64, 0>,
         PSYS_PART_END_SCALE, <0.04, 0.04, 0>,
         PSYS_PART_START_ALPHA, 0.1,
@@ -164,16 +178,22 @@ Particles(key kTarget) {
 }
 
 InitiateInstallation() {
-    integer iChan = -llAbs((integer)("0x"+llGetSubString((string)llGetOwner(),2,7)) + 1111);
-    if (iChan > -10000) iChan -= 30000;
+    integer iChan = -llAbs((integer)("0x"+llGetSubString((string)llGetOwner(),-7,-1)));
     llPlaySound("6b4092ce-5e5a-ff2e-42e0-3d4c1a069b2f",1.0);
-    llWhisper(iChan,(string)llGetOwner()+":.- ... -.-"+(string)llGetKey());
+    //llPlaySound("3409e593-20ab-fd34-82b3-6ecfdefc0207",1.0); //ao
+    //llPlaySound("95d3f6c5-6a27-da1c-d75c-a57cb29c883b",1.0); //remote hud
+    Debug("PLaying sound");
+    llWhisper(iChan,(string)llGetOwner()+":.- ... -.-|"+g_sBuildVersion+"|"+(string)llGetKey());
+    //llWhisper(iChan,"-.. --- / .- ---"); AO command
+    //llWhisper(iChan,"-.. --- / .... ..- -.."); Remote HUD command
 }
 
 default {
     state_entry() {
-        llPreloadSound("6b4092ce-5e5a-ff2e-42e0-3d4c1a069b2f");
-        llPreloadSound("d023339f-9a9d-75cf-4232-93957c6f620c");
+       // llPreloadSound("6b4092ce-5e5a-ff2e-42e0-3d4c1a069b2f");
+       // llPreloadSound("d023339f-9a9d-75cf-4232-93957c6f620c");
+        //llPreloadSound("3409e593-20ab-fd34-82b3-6ecfdefc0207"); // ao
+       // llPreloadSound("95d3f6c5-6a27-da1c-d75c-a57cb29c883b"); //remote hud
         llSetTimerEvent(300.0);
         ReadName();
         llListen(g_initChannel, "", "", "");
@@ -204,7 +224,6 @@ default {
         llParticleSystem([]);
         if (llGetInventoryType(g_sInfoCard) == INVENTORY_NOTECARD)
             g_kInfoID = llGetNotecardLine(g_sInfoCard,0);
-        if (g_iInstallOnRez) InitiateInstallation();
     }
     
     touch_start(integer iNumber) {
@@ -231,9 +250,10 @@ default {
                 if (g_iDone) {
                     g_iDone = FALSE;
                     //llSetTimerEvent(30.0);
-                }  
+                }
+                Debug("sound");
                 llPlaySound("d023339f-9a9d-75cf-4232-93957c6f620c",1.0);
-                llWhisper(g_initChannel,"-.. ---"); //tell collar we are here and to send the pin 
+                llWhisper(g_initChannel,"-.. ---|"+g_sBuildVersion); //tell collar we are here and to send the pin 
             } else if (sCmd == "ready") {
                 // person clicked "Yes I want to update" on the collar menu.
                 // the script pin will be in the param
@@ -278,8 +298,8 @@ default {
     }
     timer() {
         if (g_iDone) {
-            g_iDone = FALSE;
-            SetFloatText();
+            if (g_iInstallOnRez) SetFloatText();
+            else llResetScript();
         }
         llSetTimerEvent(300);
         if (llVecDist(llGetPos(),llList2Vector(llGetObjectDetails(llGetOwner(),[OBJECT_POS]),0)) > 30) llDie();
@@ -298,11 +318,19 @@ default {
     dataserver(key kID, string sData) {
         if (kID == g_kNameID) {
             // make sure that object name matches this card.
+            integer index = llSubStringIndex(sData,"&");
+            g_sBuildVersion = llStringTrim(llGetSubString(sData,index+1,-1),STRING_TRIM);
+            if ((float)g_sBuildVersion == 0.0 && g_sBuildVersion != "AppInstall") {
+                llOwnerSay("Invalid .name notecard, please fix!");
+                return;
+            }
+            sData = llStringTrim(llGetSubString(sData,0, index-1),STRING_TRIM);
             list lNameParts = llParseString2List(sData, [" - "], []);
             llSetObjectName(sData);
             g_sName = llList2String(lNameParts,1);
             g_sObjectType = llList2String(lNameParts,0);
             SetFloatText();
+            if (g_iInstallOnRez) InitiateInstallation();
         }
         if (kID == g_kInfoID) {
             if (sData != EOF) {
