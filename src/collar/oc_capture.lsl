@@ -19,7 +19,7 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//           Capture - 160202.1          .*' /  .*' ; .*`- +'  `*'          //
+//           Capture - 160413.3          .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2014 - 2016 littlemousy, Sumi Perl, Wendy Starfall,       //
@@ -132,7 +132,7 @@ CaptureMenu(key kId, integer iAuth) {
         if (g_iCaptureOn) lMyButtons += "OFF";
         else lMyButtons += "ON";
 
-        if (g_iRiskyOn) lMyButtons += "☒ risky";
+        if (g_iRiskyOn) lMyButtons += "☑ risky";
         else lMyButtons += "☐ risky";
     }
     if (g_sTempOwnerID)
@@ -165,7 +165,7 @@ doCapture(string sCaptorID, integer iIsConfirmed) {
         //llMessageLinked(LINK_SET, CMD_OWNER, "follow " + sCaptorID, sCaptorID);
         llMessageLinked(LINK_SET, CMD_OWNER, "beckon", sCaptorID);
         llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"You are at "+NameURI(sCaptorID)+"'s whim.",g_kWearer);
-        llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"\n\n%WEARERNAME% is at your mercy.\n\nNOTE: During capture RP %WEARERNAME% cannot refuse your teleport offers and you will keep full control. Type \"/%CHANNEL%%PREFIX% grab\" to attach a leash or \"/%CHANNEL%%PREFIX% capture release\" to relinquish capture access to %WEARERNAME%'s %DEVICETYPE%.\n\nHave fun! For basic instructions click [http://www.opencollar.at/congratulations.html here].\n", sCaptorID);
+        llMessageLinked(LINK_DIALOG, NOTIFY, "0"+"\n\n%WEARERNAME% is at your mercy.\n\nNOTE: During capture RP %WEARERNAME% cannot refuse your teleport offers and you will keep full control. Type \"/%CHANNEL% %PREFIX% grab\" to attach a leash or \"/%CHANNEL% %PREFIX% capture release\" to relinquish capture access to %WEARERNAME%'s %DEVICETYPE%.\n\nHave fun! For basic instructions click [http://www.opencollar.at/congratulations.html here].\n", sCaptorID);
         g_sTempOwnerID = sCaptorID;
         saveTempOwners();
         llSetTimerEvent(0.0);
@@ -196,7 +196,7 @@ UserCommand(integer iNum, string sStr, key kID, integer remenu) {
         } else if (sStrLower == "capture on") {
             llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Capture Mode activated",kID);
             if (g_iRiskyOn && g_iCaptureInfo) {
-                llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my neck...","");
+                llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my %DEVICETYPE%...","");
                 llSetTimerEvent(900.0);
             }
             g_iCaptureOn=TRUE;
@@ -219,16 +219,16 @@ UserCommand(integer iNum, string sStr, key kID, integer remenu) {
         } else if (sStrLower == "capture risky on") {
             llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken+"risky=1", "");
             g_iRiskyOn = TRUE;
-            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"You are vulnerable now...",g_kWearer);
-            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%WEARERNAME% is vulnerable now...",kID);
+            //llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"You are vulnerable now...",g_kWearer);
+            llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Capturing won't require %WEARERNAME%'s consent. \"/%CHANNEL% %PREFIX% capture info off\" will deactivate \"capture me\" announcements.",kID);
             if (g_iCaptureOn && g_iCaptureInfo){
                  llSetTimerEvent(900.0);
-                 llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my neck...","");
+                 llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my %DEVICETYPE%...","");
                 }
         } else if (sStrLower == "capture risky off") {
             llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken+"risky", "");
             g_iRiskyOn = FALSE;
-            llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Capturing will require consent first.",kID);
+            llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Capturing will require %WEARERNAME%'s consent first.",kID);
             llSetTimerEvent(0.0);
         } else if (sStrLower == "capture info on") {
             g_iCaptureInfo = TRUE;
@@ -236,7 +236,7 @@ UserCommand(integer iNum, string sStr, key kID, integer remenu) {
             llMessageLinked(LINK_SAVE,LM_SETTING_DELETE,g_sSettingToken+"info","");
             if (g_iRiskyOn && g_iCaptureOn) {
                 llSetTimerEvent(900.0);
-                llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my neck...","");
+                llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my %DEVICETYPE%...","");
             }
         } else if (sStrLower == "capture info off") {
             g_iCaptureInfo = FALSE;
@@ -303,7 +303,7 @@ default{
                 g_lMenuIDs = llDeleteSubList(g_lMenuIDs, iMenuIndex - 1, iMenuIndex +2);  //remove stride from g_lMenuIDs
                 if (sMenu=="CaptureMenu") {
                     if (sMessage == "BACK") llMessageLinked(LINK_ROOT, iAuth, "menu Main", kAv);
-                    else if (sMessage == "☒ risky") UserCommand(iAuth,"capture risky off",kAv,TRUE);
+                    else if (sMessage == "☑ risky") UserCommand(iAuth,"capture risky off",kAv,TRUE);
                     else if (sMessage == "☐ risky") UserCommand(iAuth,"capture risky on",kAv,TRUE);
                     else UserCommand(iAuth,"capture "+sMessage,kAv,TRUE);
                 } else if (sMenu=="AllowCaptureMenu") {  //wearer must confirm when forced is off
@@ -333,14 +333,14 @@ default{
     }
 
     timer() {
-        if(g_iCaptureInfo) llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my neck...","");
+        if(g_iCaptureInfo) llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my %DEVICETYPE%...","");
     }
 
     changed(integer iChange) {
         if (iChange & CHANGED_TELEPORT) {
             if (g_sTempOwnerID == "") {
                 if (g_iRiskyOn && g_iCaptureOn && g_iCaptureInfo) {
-                    llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my neck...","");
+                    llMessageLinked(LINK_DIALOG,SAY,"1"+"%WEARERNAME%: You can capture me if you touch my %DEVICETYPE%...","");
                     llSetTimerEvent(900.0);
                 }
             }

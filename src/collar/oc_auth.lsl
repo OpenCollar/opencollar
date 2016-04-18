@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Authorizer - 160322.1                           //
+//                          Authorizer - 160413.3                           //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2016 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Satomi Ahn, Master Starship, Sei Lisa, Joy Stipe, Wendy Starfall,       //
@@ -123,6 +123,7 @@ string UPMENU = "BACK";
 integer g_iOpenAccess; // 0: disabled, 1: openaccess
 integer g_iLimitRange=1; // 0: disabled, 1: limited
 integer g_iVanilla; // self-owned wearers
+string g_sFlavor = "Yoghurt";
 
 list g_lMenuIDs;
 integer g_iMenuStride = 3;
@@ -169,11 +170,11 @@ AuthMenu(key kAv, integer iAuth) {
     list lButtons = ["+ Owner", "+ Trust", "+ Block", "− Owner", "− Trust", "− Block"];
 
     if (g_kGroup=="") lButtons += ["Group ☐"];    //set group
-    else lButtons += ["Group ☒"];    //unset group
-    if (g_iOpenAccess) lButtons += ["Public ☒"];    //set open access
+    else lButtons += ["Group ☑"];    //unset group
+    if (g_iOpenAccess) lButtons += ["Public ☑"];    //set open access
     else lButtons += ["Public ☐"];    //unset open access
-    if (g_iVanilla) lButtons += ["Vanilla ☒"];    //add wearer as owner
-    else lButtons +=["Vanilla ☐"];    //remove wearer as owner
+    if (g_iVanilla) lButtons += g_sFlavor+" ☑";    //add wearer as owner
+    else lButtons += g_sFlavor+" ☐";    //remove wearer as owner
 
     lButtons += ["Runaway","Access List"];
     Dialog(kAv, sPrompt, lButtons, [UPMENU], 0, iAuth, "Auth",FALSE);
@@ -277,7 +278,7 @@ AddUniquePerson(string sPersonID, string sToken, key kID) {
                 llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nOops!\n\n"+NameURI(sPersonID)+" is already Owner! You should really trust them.\n",kID);
                 return;
             } else if (sPersonID==g_sWearerID) {
-                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nOops!\n\n"+NameURI(sPersonID)+" doesn't belong on this list as the wearer of the %DEVICETYPE%. Instead try: /%CHANNEL%%PREFIX% vanilla on\n",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nOops!\n\n"+NameURI(sPersonID)+" doesn't belong on this list as the wearer of the %DEVICETYPE%. Instead try: /%CHANNEL% %PREFIX% vanilla on\n",kID);
                 return;
             }
         } else if (sToken=="tempowner") {
@@ -453,7 +454,7 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
         }
         else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
         if (iRemenu) AuthMenu(kID, iNum);
-    } else if (sCommand == "vanilla") {
+    } else if (sCommand == "vanilla" || sCommand == llToLower(g_sFlavor)) {
         if (iNum == CMD_OWNER && !~llListFindList(g_lTempOwner,[(string)kID])) {
             if (sAction == "on") {
                 //g_iVanilla = TRUE;
@@ -513,7 +514,7 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
                 llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken + "group", "");
                 llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken + "groupname", "");
                 g_iGroupEnabled = FALSE;
-                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Group unset.",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Group unset.",kID);
                 llMessageLinked(LINK_RLV, RLV_CMD, "setgroup=y", "auth");
             }
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
@@ -528,11 +529,11 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
             if (sAction == "on") {
                 g_iOpenAccess = TRUE;
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken + "public=" + (string) g_iOpenAccess, "");
-                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Your %DEVICETYPE% is open to the public.",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"The %DEVICETYPE% is open to the public.",kID);
             } else if (sAction == "off") {
                 g_iOpenAccess = FALSE;
                 llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken + "public", "");
-                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Your %DEVICETYPE% is closed to the public.",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"The %DEVICETYPE% is closed to the public.",kID);
             }
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
         if (iRemenu) AuthMenu(kID, Auth(kID,FALSE));
@@ -542,12 +543,12 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
                 g_iLimitRange = TRUE;
                 // as the default is range limit on, we do not need to store anything for this
                 llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken + "limitrange", "");
-                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Public access range is limited.",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Public access range is limited.",kID);
             } else if (sAction == "off") {
                 g_iLimitRange = FALSE;
                 // save off state for limited range (default is on)
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken + "limitrange=" + (string) g_iLimitRange, "");
-                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Public access range is simwide.",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Public access range is simwide.",kID);
             }
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
         if (iRemenu) AuthMenu(kID, Auth(kID,FALSE));
@@ -563,6 +564,14 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
             }
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
         if (iRemenu) AuthMenu(kID, Auth(kID,FALSE));
+    } else if (sCommand == "flavor") {
+        if (kID != g_sWearerID) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
+        else if (sAction) {
+            g_sFlavor = llGetSubString(sStr,7,15);
+            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nYour new flavor is \""+g_sFlavor+"\".\n",kID);
+            llMessageLinked(LINK_SAVE,LM_SETTING_SAVE,g_sSettingToken+"flavor="+g_sFlavor,"");
+        } else 
+            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nYour current flavor is \""+g_sFlavor+"\".\n\nTo set a new flavor type \"/%CHANNEL% %PREFIX% flavor MyFlavor\". Flavors must be single names and can only be a maximum of 9 characters.\n",kID);
     }
 }
 
@@ -643,6 +652,7 @@ default {
                 else if (sToken == "norun") g_iRunawayDisable = (integer)sValue;
                 else if (sToken == "trust") g_lTrust = llParseString2List(sValue, [","], [""]);
                 else if (sToken == "block") g_lBlock = llParseString2List(sValue, [","], [""]);
+                else if (sToken == "flavor") g_sFlavor = sValue;
             } else if (llToLower(sStr) == "settings=sent") {
                 if (llGetListLength(g_lOwner) && g_iFirstRun) {
                     SayOwners();
@@ -678,11 +688,11 @@ default {
                             "− Trust","rm trust",
                             "− Block","rm block",
                             "Group ☐","group on",
-                            "Group ☒","group off",
+                            "Group ☑","group off",
                             "Public ☐","public on",
-                            "Public ☒","public off",
-                            "Vanilla ☐","vanilla on",
-                            "Vanilla ☒","vanilla off",
+                            "Public ☑","public off",
+                            g_sFlavor+" ☐","vanilla on",
+                            g_sFlavor+" ☑","vanilla off",
                             "Access List","list",
                             "Runaway","runaway"
                           ];
@@ -741,7 +751,7 @@ default {
                     g_sGroupName = llGetSubString(sBody, iPos + 7, iPos2 - 1);
                 }
             }
-            llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Group set to " + g_sGroupName + ".",g_kDialoger);
+            llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"Group set to " + g_sGroupName + ".",g_kDialoger);
             llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken + "groupname=" + g_sGroupName, "");
         }
     }

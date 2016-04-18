@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                         Communicator - 160404.1                          //
+//                         Communicator - 160413.1                          //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2016 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Master Starship, Satomi Ahn, Joy Stipe, Wendy Starfall, littlemousy,    //
@@ -295,13 +295,13 @@ UserCommand(key kID, integer iAuth, string sStr) {
                 g_iPublicListenChan = TRUE;
                 llListenRemove(g_iPublicListener);
                 g_iPublicListener = llListen(0, "", NULL_KEY, "");
-                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"\n\nPublic channel listener enabled.\nTo disable it type: /%CHANNEL%%PREFIX% channel -1\n",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"\n\nPublic channel listener enabled.\nTo disable it type: /%CHANNEL% %PREFIX% channel -1\n",kID);
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sGlobalToken + "channel=" + (string)g_iPrivateListenChan + ",TRUE", "");
                 llMessageLinked(LINK_SET, LM_SETTING_RESPONSE, g_sGlobalToken + "channel=" + (string)g_iPrivateListenChan + ",TRUE", "");
             } else if (iNewChan == -1) {  //disable public listener
                 g_iPublicListenChan = FALSE;
                 llListenRemove(g_iPublicListener);
-                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"\n\nPublic channel listener disabled.\nTo enable it type: /%CHANNEL%%PREFIX% channel 0\n",kID);
+                llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"\n\nPublic channel listener disabled.\nTo enable it type: /%CHANNEL% %PREFIX% channel 0\n",kID);
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sGlobalToken + "channel=" + (string)g_iPrivateListenChan + ",FALSE", "");
                 llMessageLinked(LINK_SET, LM_SETTING_RESPONSE, g_sGlobalToken + "channel=" + (string)g_iPrivateListenChan + ",FALSE", "");
             }
@@ -365,23 +365,19 @@ default {
         g_iListenHandleAtt = llListen(g_iInterfaceChannel, "", "", "");
         g_iHUDListener = llListen(g_iHUDChan, "", NULL_KEY ,"");
         integer iAttachPt = llGetAttached();
-        if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
+        if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) { // if collar is attached to the body (thus excluding HUD and root/avatar center)
             llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
+            llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
+        }
         //Debug("Starting");
     }
 
     attach(key kID) {
         if (kID == NULL_KEY)
             llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=No");
-        else
-            llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
-        integer iAttachPt = llGetAttached();
-        if ((iAttachPt > 0 && iAttachPt < 31) || iAttachPt == 39) // if collar is attached to the body (thus excluding HUD and root/avatar center)
-            llRequestPermissions(g_kWearer, PERMISSION_TRIGGER_ANIMATION);
     }
 
-    listen(integer iChan, string sName, key kID, string sMsg)
-    {
+    listen(integer iChan, string sName, key kID, string sMsg) {
         if (iChan == g_iHUDChan) {
             //check for a ping, if we find one we request auth and answer in LMs with a pong
             if (sMsg==(string)g_kWearer + ":ping")
