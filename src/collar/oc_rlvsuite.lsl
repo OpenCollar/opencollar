@@ -90,6 +90,7 @@ string bluriness;
 integer g_iListener;
 integer g_iFolderRLV = 98745923;
 integer g_iFolderRLVSearch = 98745925;
+integer g_iSitRLV = 98745927;
 integer g_iTimeOut = 30; //timeout on viewer response commands
 integer g_iRlvOn = FALSE;
 integer g_iRlvaOn = FALSE;
@@ -307,7 +308,12 @@ doRestrictions(){
     else llMessageLinked(LINK_RLV,RLV_CMD,"tplm=y,tploc=y,tplure=y,sittp=y","vdRestrict");
 
     if (g_iStandRestricted) {
-        if (llGetAgentInfo(g_kWearer)&AGENT_SITTING) llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
+        if (llGetAgentInfo(g_kWearer)&AGENT_SITTING && g_iRlvaOn) {
+            llSetTimerEvent(g_iTimeOut);
+            g_iListener = llListen(g_iSitRLV, "", llGetOwner(), "");
+            llOwnerSay("@getsitid="+(string)g_iSitRLV);                    
+            //llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
+        }
     } else llMessageLinked(LINK_RLV,RLV_CMD,"unsit=y","vdRestrict");
 
     if (g_iRummageRestricted)  llMessageLinked(LINK_RLV,RLV_CMD,"showinv=n,viewscript=n,viewtexture=n,edit=n,rez=n","vdRestrict");
@@ -767,6 +773,16 @@ default {
                     Dialog(g_kMenuClicker, sPrompt, lFolderMatches, [UPMENU], 0, g_iAuth, "multimatch");
                     g_iAuth = CMD_EVERYONE;
                 }
+            }
+        }
+        else if (iChan == g_iSitRLV) {
+            if ( (key)sMsg != NULL_KEY) {
+                g_kLastForcedSeat = (key)sMsg;
+                llMessageLinked(LINK_RLV,RLV_CMD,"unsit=y","vdRestrict");
+                llSleep(0.5);
+                llMessageLinked(LINK_RLV,RLV_CMD,"sit:"+sMsg+"=force","vdRestrict");
+                if (g_iStandRestricted) llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
+                g_iSitting = TRUE;
             }
         }
     }
