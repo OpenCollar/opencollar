@@ -778,6 +778,7 @@ default {
         else if (iChan == g_iSitRLV) {
             if ( (key)sMsg != NULL_KEY) {
                 g_kLastForcedSeat = (key)sMsg;
+                g_sLastForcedSeat = llKey2Name(g_kLastForcedSeat);
                 llMessageLinked(LINK_RLV,RLV_CMD,"unsit=y","vdRestrict");
                 llSleep(0.5);
                 llMessageLinked(LINK_RLV,RLV_CMD,"sit:"+sMsg+"=force","vdRestrict");
