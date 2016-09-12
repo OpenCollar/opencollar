@@ -307,7 +307,7 @@ doRestrictions(){
     else llMessageLinked(LINK_RLV,RLV_CMD,"tplm=y,tploc=y,tplure=y,sittp=y","vdRestrict");
 
     if (g_iStandRestricted) {
-        if (llGetAgentInfo(g_kWearer)&AGENT_SITTING) llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
+        if (llGetAgentInfo(g_kWearer)&AGENT_SITTING && g_iSitting) llMessageLinked(LINK_RLV,RLV_CMD,"unsit=n","vdRestrict");
     } else llMessageLinked(LINK_RLV,RLV_CMD,"unsit=y","vdRestrict");
 
     if (g_iRummageRestricted)  llMessageLinked(LINK_RLV,RLV_CMD,"showinv=n,viewscript=n,viewtexture=n,edit=n,rez=n","vdRestrict");
