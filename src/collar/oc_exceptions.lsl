@@ -83,17 +83,19 @@ list g_lRLVcmds = [
     "recvemote", //8
     "tplure",   //16
     "accepttp",   //32
-    "startim"   //64
+    "startim",   //64
+    "accepttprequest" //128
         ];
 
 list g_lBinCmds = [ //binary values for each item in g_lRLVcmds
-    8,
-    4,
-    2,
-    32,
     1,
+    2,
+    4,
+    8,
     16,
-    8
+    32,
+    64,
+    128
         ];
 
 list g_lPrettyCmds = [ //showing menu-friendly command names for each item in g_lRLVcmds
@@ -102,24 +104,30 @@ list g_lPrettyCmds = [ //showing menu-friendly command names for each item in g_
     "RcvChat",
     "RcvEmote",
     "Lure",
-    "refuseTP"
+    "refuseTP",
+    "startIM",
+    "refuseTPoffer"
         ];
 
 list g_lDescriptionsOn = [ //showing descriptions for commands when exempted
-    "Can send or start IMs even when blocked",
+    "Can send IMs even when blocked",
     "Can receive their IMs even when blocked",
     "Can see their Chat even when blocked",
     "Can see their Emotes even when blocked",
     "Can receive their Teleport offers even when blocked",
-    "Wearer cannot refuse a tp offer from them"  //counter-intuitive, but other exceptions stop restrictions from working for subject, while this one adds its own restriction.
+    "Wearer cannot refuse a tp offer from them",  //counter-intuitive, but other exceptions stop restrictions from working for subject, while this one adds its own restriction.
+    "Can Start IMs even when Blocked",
+    "Wearer will automatically send a tp Offer on request"
 ];
 list g_lDescriptionsOff =[ //descriptions of commands when not exempted.
-    "Sending and starting IMs to them can be blocked",
+    "Sending IMs to them can be blocked",
     "Receiving IMs from them can be blocked",
     "Seeing chat from them can be blocked",
     "Seeing emotes from them can be blocked",
     "Teleport offers from them can be blocked",
-    "Wearer can refuse their tp offers"
+    "Wearer can refuse their tp offers",
+    "Starting IM's even when blocked",
+    "Wearer will not automatically send a tp Offer on request"
         ];
 
 string TURNON = "☐";
