@@ -462,6 +462,7 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
             sOutput="closed";
             if (g_iOpenAccess) sOutput="open";
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Public Access: "+ sOutput,kID);
+            if (!g_iLimitRange) if(g_iGroupEnabled || g_iOpenAccess) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Access range: simwide",kID);
         }
         else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
         if (iRemenu) AuthMenu(kID, iNum);
