@@ -512,7 +512,7 @@ default {
             if(llGetInventoryNumber(INVENTORY_LANDMARK)) {
                 g_sLandmarkName = llGetInventoryName(INVENTORY_LANDMARK, 0);
                 // This takes a few seconds, so give user a message.
-                llOwnerSay("Proccessing landmark. This may take a few moments.");
+                llOwnerSay("Processing landmark. This may take a few moments.");
                 g_kLandmarkData = llRequestInventoryData(g_sLandmarkName);
             }
         }
