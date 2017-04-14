@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Particle - 161225.1                             //
+//                          Particle - 170414.1                             //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2016 Lulu Pink, Nandana Singh, Garvin Twine,       //
 //  Cleo Collins, Satomi Ahn, Joy Stipe, Wendy Starfall, Romka Swallowtail, //
@@ -112,7 +112,7 @@ string L_RIBBON_TEX = "Silk"; //texture name when using the ribbon_mask particle
 string L_COSTUM_TEX_ID;
 // Defalut leash particle, can read from defaultsettings:
 // leashParticle=Shine~1~ParticleMode~Ribbon~R_Texture~Silk~C_Texture~Chain~Color~<1,1,1>~Size~<0.07,0.07,1.0>~Gravity~-0.7~C_TextureID~keyID~R_TextureID~keyID
-list g_lDefaultSettings = [L_GLOW,"1",L_TURN,"0",L_STRICT,"0","ParticleMode","Ribbon","R_Texture","Silk","C_Texture","Chain",L_COLOR,"<1.0,1.0,1.0>",L_SIZE,"<0.04,0.04,1.0>",L_GRAVITY,"-1.0"];
+list g_lDefaultSettings = [L_GLOW,"1",L_TURN,"0",L_STRICT,"0","ParticleMode","Ribbon","R_Texture","Silk","C_Texture","Chain",L_COLOR,"<1.0,1.0,1.0>",L_SIZE,"<0.04,0.04,1.0>",L_GRAVITY,"-1.0","HideMode","0"];
 
 list g_lSettings=g_lDefaultSettings;
 
@@ -126,7 +126,8 @@ key g_kLeashToPoint;
 key g_kParticleTarget;
 integer g_iLeasherInRange;
 integer g_iAwayCounter;
-
+integer g_iShow;
+integer g_iHideMode;
 integer g_iLeashActive;
 integer g_iTurnMode;
 integer g_iStrictMode;
@@ -237,10 +238,12 @@ Particles(integer iLink, key kParticleTarget) {
 StartParticles(key kParticleTarget) {
     //Debug(llList2CSV(g_lLeashPrims));
     StopParticles(FALSE);
-    for (g_iLoop = 0; g_iLoop < llGetListLength(g_lLeashPrims); g_iLoop = g_iLoop + 3) {
-        if ((integer)llList2String(g_lLeashPrims, g_iLoop + 2)) {
-            Particles((integer)llList2String(g_lLeashPrims, g_iLoop + 1), kParticleTarget);
-           //if (g_sParticleMode == "Classic") g_iLoop = g_iLoop + 3;
+    if (g_iShow) {
+        for (g_iLoop = 0; g_iLoop < llGetListLength(g_lLeashPrims); g_iLoop = g_iLoop + 3) {
+            if ((integer)llList2String(g_lLeashPrims, g_iLoop + 2)) {
+                Particles((integer)llList2String(g_lLeashPrims, g_iLoop + 1), kParticleTarget);
+              //if (g_sParticleMode == "Classic") g_iLoop = g_iLoop + 3;
+            }
         }
     }
     g_iLeashActive = TRUE;
@@ -326,6 +329,7 @@ GetSettings(integer iStartParticles) {
     g_vLeashColor = (vector)GetSetting(L_COLOR);
     g_vLeashGravity.z = (float)GetSetting(L_GRAVITY);
     g_iParticleGlow = (integer)GetSetting(L_GLOW);
+    g_iHideMode = (integer)GetSetting("HideMode");
     if (g_sParticleMode == "Classic") SetTexture(g_sClassicTexture, NULLKEY);
     else if (g_sParticleMode == "Ribbon") SetTexture(g_sRibbonTexture, NULLKEY);
     if (iStartParticles &&  g_kLeashedTo != NULLKEY){
@@ -397,8 +401,9 @@ ConfigureMenu(key kIn, integer iAuth) {
     if (g_sParticleMode == "Ribbon") lButtons += ["☐ "+L_CLASSIC_TEX,"☒ "+L_RIBBON_TEX,"☐ Invisible"];
     else if (g_sParticleMode == "noParticle") lButtons += ["☐ "+L_CLASSIC_TEX,"☐ "+L_RIBBON_TEX,"☒ Invisible"];
     else if (g_sParticleMode == "Classic")  lButtons += ["☒ "+L_CLASSIC_TEX,"☐ "+L_RIBBON_TEX,"☐ Invisible"];
-
     lButtons += [L_FEEL, L_COLOR];
+    if (g_iHideMode) lButtons += "☑ Hide";
+    else lButtons += "☐ Hide";
     string sPrompt = "\n[http://www.opencollar.at/leash.html Leash Configuration]\n\nCustomize the looks and feel of your leash.";
     Dialog(kIn, sPrompt, lButtons, [UPMENU], 0, iAuth,"configure");
 }
@@ -429,6 +434,8 @@ default {
     state_entry() {
         g_kWearer = llGetOwner();
         FailSafe();
+        if (g_iHideMode) g_iShow = (integer)llGetAlpha(ALL_SIDES); //check alpha
+        else g_iShow = 1;
         FindLinkedPrims();
         StopParticles(TRUE);
         GetSettings(FALSE);
@@ -552,6 +559,12 @@ default {
                             SaveSettings("R_Texture", g_sRibbonTexture, TRUE);
                         }
                         SaveSettings("ParticleMode", g_sParticleMode, TRUE);
+                    } else if(sButtonType == "Hide") {
+                        if (sButtonCheck == "☐") g_iHideMode = 1;
+                        else g_iHideMode = 0;
+                        SaveSettings("HideMode", (string)g_iHideMode, TRUE);
+                        if (g_iHideMode) g_iShow = (integer)llGetAlpha(ALL_SIDES); //check alpha
+                        else g_iShow = 1;
                     }
                     if (g_sParticleMode != "noParticle" && g_iLeashActive) StartParticles(g_kParticleTarget);
                     else if (g_iLeashActive) StopParticles(FALSE);
@@ -718,6 +731,17 @@ default {
                 if (llSubStringIndex(GetSetting("R_Texture"), "!")==0) SaveSettings("R_Texture", "Silk", TRUE);
             }
            // GetSettings(TRUE);
+        }
+        if (iChange & CHANGED_COLOR) {
+            integer iShow = (integer)llGetAlpha(ALL_SIDES); //check alpha
+            if (iShow != g_iShow) {   //check there's a difference to avoid infinite loop
+                if (g_iHideMode) g_iShow = iShow;
+                else g_iShow = 1;
+                if (g_iLeashActive) {
+                    if (g_sParticleMode != "noParticle") StartParticles(g_kParticleTarget);
+                    else StopParticles(FALSE);
+                }
+            }
         }
       /*  if (iChange & CHANGED_REGION) {
             if (g_iProfiled) {
