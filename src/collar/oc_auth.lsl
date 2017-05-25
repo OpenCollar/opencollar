@@ -457,9 +457,16 @@ UserCommand(integer iNum, string sStr, key kID, integer iRemenu) { // here iNum:
                 sOutput += "\n" + NameURI(llList2String(g_lBlock, --iLength));
             if (sOutput) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Blocked: "+sOutput,kID);
             //if (g_sGroupName) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Group: "+g_sGroupName,kID);
-            if (g_kGroup) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Group: secondlife:///app/group/"+(string)g_kGroup+"/about",kID);
+            if (g_kGroup) {
+                sOutput = "simwide";
+                if (g_iLimitRange) sOutput="chat range";
+                llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"secondlife:///app/group/"+(string)g_kGroup+"/about: "+sOutput,kID);
+            }
             sOutput="closed";
-            if (g_iOpenAccess) sOutput="open";
+            if (g_iOpenAccess) {
+                sOutput = "simwide";
+                if (g_iLimitRange) sOutput="chat range";
+            }
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Public Access: "+ sOutput,kID);
         }
         else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",kID);
