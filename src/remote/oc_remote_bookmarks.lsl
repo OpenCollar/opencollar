@@ -66,6 +66,8 @@ list   g_lDestinations_Slurls         = []; //Destination list direct from stati
 list   g_lVolatile_Destinations       = []; //These are in memory preferences that are not yet saved into the notecard
 list   g_lVolatile_Slurls             = []; //These are in memory preferences that are not yet saved into the notecard
 key    g_kRequestHandle               = NULL_KEY; //Sim Request Handle to convert global coordinates
+key    g_kLandmarkData                = NULL_KEY; //Landmark data request dataserver key
+string g_sLandmarkName                = ""; //Current landmark inventory item name
 vector g_vLocalPos                    = ZERO_VECTOR;
 string g_sRegion;
 
@@ -416,9 +418,21 @@ default {
                         + "/"+(string)((integer)g_vLocalPos.y)
                         + "/"+(string)((integer)g_vLocalPos.z);
             llMessageLinked(LINK_THIS,CMD_REMOTE, "hudtpto:" + pos_str + "=force","");
-            llOwnerSay("Follow your Partner(s) right way by clicking here: secondlife:///app/teleport/"+llEscapeURL(g_sRegion)+sPos);
-        }
-        if(kID == g_kDataID) {
+            // Teleporting with a global region offset (like from a landmark) results in an exposed secondlife: url, but it does seem to work corectly in Firestorm. Just hide it?
+            llOwnerSay("[secondlife:///app/teleport/"+llEscapeURL(g_sRegion)+sPos+" Click here to follow your partner(s)]");
+        } else if(kID == g_kLandmarkData) {
+            // Remove < and > from string
+            string sPosition = llGetSubString(sData, 1, -2);
+            // We are halfway there, so give another update on teleport status.
+            llOwnerSay("Teleporting your partner(s) to " + g_sLandmarkName);
+            // Delete all landmarks
+            while(g_sLandmarkName) {
+                llRemoveInventory(g_sLandmarkName);
+                g_sLandmarkName = llGetInventoryName(INVENTORY_LANDMARK, 0);
+            }
+            // sData is an offset from this region. This still works, even though it's a weird number.
+            TeleportTo(llGetRegionName() + "(" + sPosition + ")");
+        } else if(kID == g_kDataID) {
             list split;
             if(sData != EOF) {
                 if(llGetSubString(sData, 0, 2) != "") {
@@ -493,6 +507,14 @@ default {
         if(iChange & CHANGED_INVENTORY) {
             FailSafe();
             ReadDestinations();
+
+            // Check for landmarks in inventory, and begin a teleport to the first one.
+            if(llGetInventoryNumber(INVENTORY_LANDMARK)) {
+                g_sLandmarkName = llGetInventoryName(INVENTORY_LANDMARK, 0);
+                // This takes a few seconds, so give user a message.
+                llOwnerSay("Processing landmark. This may take a few moments.");
+                g_kLandmarkData = llRequestInventoryData(g_sLandmarkName);
+            }
         }
         if(iChange & CHANGED_OWNER)  llResetScript();
 /*
