@@ -126,7 +126,7 @@ key g_kLeashToPoint;
 key g_kParticleTarget;
 integer g_iLeasherInRange;
 integer g_iAwayCounter;
-
+integer g_iGlobalShow;
 integer g_iLeashActive;
 integer g_iTurnMode;
 integer g_iStrictMode;
@@ -237,10 +237,12 @@ Particles(integer iLink, key kParticleTarget) {
 StartParticles(key kParticleTarget) {
     //Debug(llList2CSV(g_lLeashPrims));
     StopParticles(FALSE);
-    for (g_iLoop = 0; g_iLoop < llGetListLength(g_lLeashPrims); g_iLoop = g_iLoop + 3) {
-        if ((integer)llList2String(g_lLeashPrims, g_iLoop + 2)) {
-            Particles((integer)llList2String(g_lLeashPrims, g_iLoop + 1), kParticleTarget);
-           //if (g_sParticleMode == "Classic") g_iLoop = g_iLoop + 3;
+    if (g_iGlobalShow) {
+        for (g_iLoop = 0; g_iLoop < llGetListLength(g_lLeashPrims); g_iLoop = g_iLoop + 3) {
+            if ((integer)llList2String(g_lLeashPrims, g_iLoop + 2)) {
+                Particles((integer)llList2String(g_lLeashPrims, g_iLoop + 1), kParticleTarget);
+              //if (g_sParticleMode == "Classic") g_iLoop = g_iLoop + 3;
+            }
         }
     }
     g_iLeashActive = TRUE;
@@ -429,6 +431,7 @@ default {
     state_entry() {
         g_kWearer = llGetOwner();
         FailSafe();
+        g_iGlobalShow = (integer)llGetAlpha(ALL_SIDES) ; //check alpha
         FindLinkedPrims();
         StopParticles(TRUE);
         GetSettings(FALSE);
@@ -718,6 +721,16 @@ default {
                 if (llSubStringIndex(GetSetting("R_Texture"), "!")==0) SaveSettings("R_Texture", "Silk", TRUE);
             }
            // GetSettings(TRUE);
+        }
+        if (iChange & CHANGED_COLOR) {
+            integer iShow = (integer)llGetAlpha(ALL_SIDES) ; //check alpha
+            if (iShow != g_iGlobalShow) {   //check there's a difference to avoid infinite loop
+                g_iGlobalShow = iShow;
+                if (g_iLeashActive) {
+                    if (g_iGlobalShow && g_sParticleMode != "noParticle") StartParticles(g_kParticleTarget);
+                    else StopParticles(FALSE);
+                }
+            }
         }
       /*  if (iChange & CHANGED_REGION) {
             if (g_iProfiled) {
