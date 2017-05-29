@@ -657,6 +657,7 @@ default {
         if (iNum >= CMD_OWNER && iNum <= CMD_WEARER) UserCommand(iNum, sStr, kID);
         else if (iNum == MENUNAME_REQUEST && sStr == g_sParentMenu)
             llMessageLinked(iSender, MENUNAME_RESPONSE, g_sParentMenu + "|" + g_sSubMenu, "");
+        else if (iNum==CMD_SAFEWORD) SafeWord();
         else if (iNum==CMD_ADDSRC)
             g_lSources+=[kID];
         else if (iNum==CMD_REMSRC) {
