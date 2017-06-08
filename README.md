@@ -1,5 +1,7 @@
 ### Welcome to OpenCollar Six™
 
+[![Join the chat at https://gitter.im/virtualdisgrace/opencollar](https://badges.gitter.im/virtualdisgrace/opencollar.svg)](https://gitter.im/virtualdisgrace/opencollar?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 OpenCollar Six is a set of LSL scripts and other creative content, such as animations, sounds, textures, graphics and 3D models, which can be used to create role play devices in the form of scripted accessory and/or so-called HUDs for the metaverse.
 
 Punk, goth and fetish collars would be the most popular of those and OpenCollar eventually became everyone's script set of choice to create items that are used for creative role play amongst adults in Second Life®. OpenCollar is [free software](http://www.gnu.org/philosophy/free-sw.html "What is free software?")."
