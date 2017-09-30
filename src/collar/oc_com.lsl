@@ -424,15 +424,6 @@ default {
             else if (!llSubStringIndex(sMsg,(string)g_kWearer + ":")){
                 sMsg = llGetSubString(sMsg, 37, -1);
                 llMessageLinked(LINK_AUTH, CMD_ZERO, sMsg, llGetOwnerKey(kID));
-            } else if (iChan == g_iInterfaceChannel && llGetOwnerKey(kID) == g_kWearer) { //for the rare but possible case g_iHUDChan == g_iInterfaceChannel
-                if (sMsg == "OpenCollar?") llRegionSayTo(g_kWearer, g_iInterfaceChannel, "OpenCollar=Yes");
-                else if (sMsg == "OpenCollar=Yes" && g_iHighlander) llRegionSayTo(kID,g_iInterfaceChannel,"There can be only one!");
-                else if (sMsg == "There can be only one!" && llGetOwnerKey(kID) == g_kWearer && g_iHighlander) {
-                    llOwnerSay("/me has been detached.");
-                    llRequestPermissions(g_kWearer,PERMISSION_ATTACH);
-                } else if (llSubStringIndex(sMsg, "AuthRequest")==0)
-                    llMessageLinked(LINK_AUTH,AUTH_REQUEST,(string)kID+(string)g_iInterfaceChannel,llGetSubString(sMsg,12,-1));
-                else llMessageLinked(LINK_AUTH, CMD_ZERO, sMsg, llGetOwnerKey(kID));
             } else
                 llMessageLinked(LINK_AUTH, CMD_ZERO, sMsg, llGetOwnerKey(kID));
             return;
