@@ -453,7 +453,7 @@ default {
         } else if (iNum == RLV_REFRESH) {
             g_iRLV = TRUE;
             refreshRlvListener();
-        } else if (iNum == CMD_SAFEWORD && kID == g_kWearer) {
+        } else if (iNum == CMD_SAFEWORD) {
             g_iRecentSafeword = TRUE;
             refreshRlvListener();
             llSetTimerEvent(10.);
