@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                         Communicator - 171129.1                          //
+//                         Communicator - 171129.2                          //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2017 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Master Starship, Satomi Ahn, Joy Stipe, Wendy Starfall, littlemousy,    //
@@ -351,7 +351,7 @@ UserCommand(key kID, integer iAuth, string sStr) {
             } else if (sStr == "mv anims") {
                 integer i = llGetInventoryNumber(INVENTORY_ANIMATION);
                 if (i) MoveAnims(i);
-                else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nThere are currently no animations in the %DEVICETYPE%'s root.\n",g_kWearer);
+                //else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"\n\nThere are currently no animations in the %DEVICETYPE%'s root.\n",g_kWearer);
             } else if (sCommand == "busted") {
                 if (sValue == "on") {
                     llMessageLinked(LINK_SAVE,LM_SETTING_SAVE,g_sGlobalToken+"touchNotify=1","");
