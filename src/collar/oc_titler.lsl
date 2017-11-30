@@ -207,7 +207,7 @@ UserCommand(integer iAuth, string sStr, key kAv) {
         g_iOn = FALSE;
         ShowHideText();
         llResetScript();*/
-    } else if (sCommand == "title") {
+    } else if (sCommand == "title" || sCommand == "graph") {
         integer iIsCommand;
         if (llGetListLength(lParams) <= 2) iIsCommand = TRUE;
         if (g_iOn && iAuth > g_iLastRank) //only change text if commander has same or greater auth
