@@ -129,6 +129,20 @@ Debug(string sStr) {
     llOwnerSay(llGetScriptName() + "(min free:"+(string)(llGetMemoryLimit()-llGetSPMaxMemory())+")["+(string)llGetFreeMemory()+"] :\n" + sStr);
 }*/
 
+// make a silly ascii-art bargraph
+string MakeGraph(integer iPercent, string sTitle) {
+    string sResult = (string)iPercent+"% "+sTitle+"\n";
+    integer iSlots = llRound(iPercent / 10);
+    integer i;
+    for (i = 0; i < iSlots; i++) {
+        sResult = sResult + "█";
+    }
+    for (i = 0; i < (10-iSlots); i++) {
+        sResult = sResult + "▒";
+    }
+    return sResult;
+}
+
 Dialog(key kRCPT, string sPrompt, list lChoices, list lUtilityButtons, integer iPage, integer iAuth, string iMenuType) {
     key kMenuID = llGenerateKey();
     llMessageLinked(LINK_DIALOG, DIALOG, (string)kRCPT + "|" + sPrompt + "|" + (string)iPage + "|" + llDumpList2String(lChoices, "`") + "|" + llDumpList2String(lUtilityButtons, "`") + "|" + (string)iAuth, kMenuID);
@@ -192,7 +206,7 @@ UserCommand(integer iAuth, string sStr, key kAv) {
         g_iOn = FALSE;
         ShowHideText();
         llResetScript();*/
-    } else if (sCommand == "title") {
+    } else if (sCommand == "title" || sCommand == "graph") {
         integer iIsCommand;
         if (llGetListLength(lParams) <= 2) iIsCommand = TRUE;
         if (g_iOn && iAuth > g_iLastRank) //only change text if commander has same or greater auth
@@ -224,6 +238,9 @@ UserCommand(integer iAuth, string sStr, key kAv) {
                 llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken+"title", "");
             } else {
                 g_iOn = TRUE;
+                if (sCommand == "graph") {
+                    g_sText = MakeGraph((integer) sAction, llList2String(lParams,2));
+                }
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken+"title="+g_sText, "");
             }
             g_iLastRank=iAuth;
