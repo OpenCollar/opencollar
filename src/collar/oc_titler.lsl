@@ -236,12 +236,12 @@ UserCommand(integer iAuth, string sStr, key kAv) {
             g_sText = llDumpList2String(llParseStringKeepNulls(sNewText, ["\\n"], []), "\n");// make it possible to insert line breaks in hover text
             if (sNewText == "") {
                 g_iOn = FALSE;
-                if (sCommand == "graph") {
-                    g_sText = MakeGraph((integer) sAction, llList2String(lParams,2));
-                }
                 llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken+"title", "");
             } else {
                 g_iOn = TRUE;
+                if (sCommand == "graph") {
+                    g_sText = MakeGraph((integer) sAction, llList2String(lParams,2));
+                }
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken+"title="+g_sText, "");
             }
             g_iLastRank=iAuth;
