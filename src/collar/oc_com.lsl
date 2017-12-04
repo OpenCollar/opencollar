@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                         Communicator - 171129.2                          //
+//                         Communicator - 171204.1                          //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2017 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Master Starship, Satomi Ahn, Joy Stipe, Wendy Starfall, littlemousy,    //
@@ -102,7 +102,7 @@ integer TOUCH_CANCEL = -9501;
 integer TOUCH_RESPONSE = -9502;
 integer TOUCH_EXPIRE = -9503;
 
-string g_sSafeWord = "RED";
+string g_sSafeWord = "FLÜGGÅӘNKб€ČHIŒßØLĮÊN";
 
 //added for attachment auth
 integer g_iInterfaceChannel;
@@ -469,7 +469,7 @@ default {
                 // Allow for Firestorm style "(( SAFEWORD ))" by trimming.
                 if (llGetSubString(sw, 0, 1) == "((" && llGetSubString(sw, -2, -1) == "))") sw = llStringTrim(llGetSubString(sw, 2, -3), STRING_TRIM);
                 if (llSubStringIndex(sw, g_sPrefix)==0) sw = llGetSubString(sw, llStringLength(g_sPrefix), -1);
-                if (sw == g_sSafeWord) {
+                if (sw == g_sSafeWord || sw == "RED") {
                     llMessageLinked(LINK_SET, CMD_SAFEWORD, "", "");
                     llRegionSayTo(g_kWearer,g_iInterfaceChannel,"%53%41%46%45%57%4F%52%44");
                     llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"You used the safeword, your owners have been notified.",g_kWearer);
