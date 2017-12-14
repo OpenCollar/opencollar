@@ -239,7 +239,11 @@ UserCommand(integer iAuth, string sStr, key kAv) {
             } else {
                 g_iOn = TRUE;
                 if (sCommand == "graph") {
-                    g_sText = MakeGraph((integer) sAction, llList2String(lParams,2));
+                    if (sAction == "0" || (integer)sAction) {
+                        g_sText = MakeGraph((integer) sAction, llDumpList2String(llDeleteSubList(lParams, 0, 1), " "));
+                    } else {
+                        g_sText = MakeGraph(0, llDumpList2String(llDeleteSubList(lParams, 0, 0), " "));
+                    }
                 }
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken+"title="+g_sText, "");
             }
