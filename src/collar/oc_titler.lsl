@@ -238,8 +238,12 @@ UserCommand(integer iAuth, string sStr, key kAv) {
                 llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken+"title", "");
             } else {
                 g_iOn = TRUE;
-                if (sCommand == "graph" && ( sAction == "0" || (integer)sAction)) {
-                    g_sText = MakeGraph((integer) sAction, llDumpList2String(llDeleteSubList(lParams, 0, 1), " "));
+                if (sCommand == "graph") {
+                    if (sAction == "0" || (integer)sAction) {
+                        g_sText = MakeGraph((integer) sAction, llDumpList2String(llDeleteSubList(lParams, 0, 1), " "));
+                    } else {
+                        g_sText = MakeGraph(0, llDumpList2String(llDeleteSubList(lParams, 0, 0), " "));
+                    }
                 }
                 llMessageLinked(LINK_SAVE, LM_SETTING_SAVE, g_sSettingToken+"title="+g_sText, "");
             }
