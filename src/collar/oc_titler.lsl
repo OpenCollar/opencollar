@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                           Titler - 171214.1                              //
+//                           Titler - 171214.2                              //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2017 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Satomi Ahn, Kisamin, Joy Stipe, Wendy Starfall, littlemousy,            //
@@ -133,6 +133,8 @@ Debug(string sStr) {
 string MakeGraph(integer iPercent, string sTitle) {
     string sResult = (string)iPercent+"% "+sTitle+"\n";
     integer iSlots = llRound(iPercent / 10);
+    if (iPercent <= 100) iSlots = llRound(iPercent / 10);
+    else iSlots = 11;
     integer i;
     for (i = 0; i < iSlots; i++) {
         sResult = sResult + "█";
