@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Settings - 170620.1                             //
+//                          Settings - 171203.1                             //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2017 Nandana Singh, Cleo Collins, Master Starship, //
 //  Satomi Ahn, Garvin Twine, Joy Stipe, Alex Carpenter, Xenhat Liamano,    //
@@ -299,9 +299,6 @@ LoadSetting(string sData, integer iLine) {
                             if (llList2Key(lTest,n)) //if this is not a valid key, it's useless
                                 lOut += llList2String(lTest,n);
                             integer iTest = llGetListLength(lOut);
-                            if (sToken == "owner" &&  iTest == 3)  jump next;
-                            else if (sToken == "trust" &&  iTest == 15)  jump next;
-                            else if (sToken == "block" &&  iTest == 9)  jump next;
                         } while (++n < llGetListLength(lTest));
                         @next;
                         sValue = llDumpList2String(lOut,",");
