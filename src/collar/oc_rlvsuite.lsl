@@ -19,7 +19,7 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//       RLV Suite - 171111.1            .*' /  .*' ; .*`- +'  `*'          //
+//       RLV Suite - 171213.1            .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2014 - 2017 Wendy Starfall, littlemousy, Sumi Perl,       //
@@ -291,8 +291,8 @@ doRestrictions(){
     if (g_iSendRestricted)     llMessageLinked(LINK_RLV,RLV_CMD,"sendim=n","vdRestrict");
     else llMessageLinked(LINK_RLV,RLV_CMD,"sendim=y","vdRestrict");
 
-    if (g_iReadRestricted)     llMessageLinked(LINK_RLV,RLV_CMD,"recvim=n","vdRestrict");
-    else llMessageLinked(LINK_RLV,RLV_CMD,"recvim=y","vdRestrict");
+    if (g_iReadRestricted)     llMessageLinked(LINK_RLV,RLV_CMD,"recvim=n,viewnote=n","vdRestrict");
+    else llMessageLinked(LINK_RLV,RLV_CMD,"recvim=y,viewnote=y","vdRestrict");
 
     if (g_iHearRestricted)     llMessageLinked(LINK_RLV,RLV_CMD,"recvchat=n","vdRestrict");
     else llMessageLinked(LINK_RLV,RLV_CMD,"recvchat=y","vdRestrict");
