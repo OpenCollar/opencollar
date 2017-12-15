@@ -21,7 +21,7 @@
 //                    |     .'    ~~~~       \    / :                       //
 //                     \.. /               `. `--' .'                       //
 //                        |                  ~----~                         //
-//                          Animator - 171116.2                             //
+//                          Animator - 171214.2                             //
 // ------------------------------------------------------------------------ //
 //  Copyright (c) 2008 - 2017 Nandana Singh, Garvin Twine, Cleo Collins,    //
 //  Master Starship, Satomi Ahn, Joy Stipe, Wendy Starfall, Medea Destiny,  //
@@ -277,6 +277,7 @@ integer SetPosture(integer iOn, key kCommander) {
 SetHover(string sStr) {
     float fNewHover = g_fHoverIncrement;
     if (sStr == "↓" || sStr == "hoverdown") fNewHover = -fNewHover;
+    else if (sStr != "↑" && sStr != "hoverup") return;
     if (g_sCurrentPose == "") {
         g_fStandHover += fNewHover;
         fNewHover = g_fStandHover;
@@ -294,9 +295,10 @@ SetHover(string sStr) {
         else
             g_lHeightAdjustments = llDeleteSubList(g_lHeightAdjustments,index,index+1);
     } else {
-        fNewHover += g_fStandHover;
+        //fNewHover += g_fStandHover;
         g_lHeightAdjustments += [g_sCurrentPose,fNewHover];
     }
+    //fNewHover += g_fStandHover;
     @next;
     llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;"+(string)fNewHover+"=force",g_kWearer);
     llMessageLinked(LINK_SAVE,LM_SETTING_SAVE,"offset_hovers="+llDumpList2String(g_lHeightAdjustments,","),"");
@@ -341,10 +343,15 @@ PlayAnim(string sAnim){  //plays anim and heightfix, depending on methods config
     }
     if (g_iRLVA_ON && g_iHoverOn) {
         integer index = llListFindList(g_lHeightAdjustments,[sAnim]);
-        if (~index)
-            llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;"+llList2String(g_lHeightAdjustments,index+1)+"=force",g_kWearer);
+        if (~index) 
+            llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;"+llList2String(g_lHeightAdjustments,index+1)+"=force",g_kWearer); 
         else if (g_fStandHover)
-            llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;"+(string)g_fStandHover+"=force",g_kWearer);
+            llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;0.0=force",g_kWearer); 
+    //        llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;"+(string)g_fStandHover+"=force",g_kWearer); 
+       /* float fHover;
+        if (~index) fHover = (float)llList2String(g_lHeightAdjustments,index+1);
+        fHover += g_fStandHover;
+        llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;"+(string)fHover+"=force",g_kWearer);*/
     }
     llStartAnimation(sAnim);
 }
@@ -423,8 +430,15 @@ UserCommand(integer iNum, string sStr, key kID) {
         }
     } else if (sStr == "animations") AnimMenu(kID, iNum);
     else if (sStr == "pose") PoseMenu(kID, 0, iNum);
-    else if (!llSubStringIndex(sCommand,"hover")) SetHover(sCommand);
-    else if (sStr == "runaway" && (iNum == CMD_OWNER || iNum == CMD_WEARER)) {
+    else if (!llSubStringIndex(sCommand,"hover")) {
+        if (llToLower(sStr) == "hover reset") {
+            llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"The default hover was reset.",kID);
+            llMessageLinked(LINK_SAVE,LM_SETTING_DELETE,"offset_standhover","");
+            g_fStandHover = 0.0;
+            if (g_iRLVA_ON && g_iHoverOn && g_lAnims == [])
+                llMessageLinked(LINK_RLV,RLV_CMD,"adjustheight:1;0;0.0=force",g_kWearer);
+        } else SetHover(sCommand);
+    } else if (sStr == "runaway" && (iNum == CMD_OWNER || iNum == CMD_WEARER)) {
         if (g_sCurrentPose != "") StopAnim(g_sCurrentPose);
         llMessageLinked(LINK_SAVE, LM_SETTING_DELETE, g_sSettingToken+"currentpose", "");
     } else if (sCommand=="posture") {
