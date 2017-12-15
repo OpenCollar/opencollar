@@ -36,7 +36,7 @@ update(){
     integer pin = (integer)llFrand(99999998.0) + 1;
     llSetRemoteScriptAccessPin(pin);
     integer chan_installer = -12345;
-    if (upstream) chan_installer = -7483213;
+    if (upstream) chan_installer = -7484213;
     llRegionSayTo(id_installer,chan_installer,"ready|"+(string)pin);
 }
 

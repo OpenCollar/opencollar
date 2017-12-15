@@ -13,46 +13,12 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
-
+ 
  */
-
-
-// # --------------------------------------------------------------------- v1.1 #
-// # ---------------- Here is some stuff that you should edit! ---------------- #
-// # ------ Always write in between the quotation marks "just like that" ------ #
-
-
-string headline = "";
-// Example: string headline = "Property of House Lannister";
-
-string about = "";
-// Example: string about = "This collar was forged by the mighty duergar of Undrendark!";
-
-string version = "";
-// Example: string version = "1.0";
-
-string group = "";  // Group URI
-// Example: string group = "secondlife:///app/group/19657888-576f-83e9-2580-7c3da7c0e4ca/about";
-
-string landmark = ""; // SLURL
-// Example: string landmark = "http://maps.secondlife.com/secondlife/Hippo%20Hollow/128/128/2";
-
-string locking = "dec9fb53-0fef-29ae-a21d-b3047525d312"; // key of the lock sound
-string unlocking = "82fa6d06-b494-f97c-2908-84009380c8d1"; // key of the unlock sound
-
-
-// # ----- Everything below this line should only by edited by scripters! ----- #
-// # -------------------------------------------------------------------------- #
-
-
+ 
 // This plugin creates the root (or main), apps and settings menus,
 // and has the default LOCK/UNLOCK button. It can also dispense the help
 // and license files (if present in contents) and can print info/version.
-
-// It also includes code for the tiny steam-engine behind the LOCK/UNLOCK
-// button and can play different noises depending on lock/unlock action,
-// and reveal or hide a lock element on the device. There is also dedicated
-// logic for a stealth function that can optionally hide the whole device.
 
 integer CMD_OWNER = 500;
 integer CMD_WEARER = 503;
@@ -69,118 +35,22 @@ integer LM_SETTING_DELETE = 2003;
 integer MENUNAME_REQUEST = 3000;
 integer MENUNAME_RESPONSE = 3001;
 integer MENUNAME_REMOVE = 3003;
-integer RLV_CMD = 6000;
-integer RLV_REFRESH = 6001;
-integer RLV_CLEAR = 6002;
 integer DIALOG = -9000;
 integer DIALOG_RESPONSE = -9001;
 integer DIALOG_TIMEOUT = -9002;
 
 key wearer;
 
+integer version;
+
 string that_token = "global_";
+string about;
 string dist;
 string safeword = "RED";
 integer locked;
 integer hidden;
 integer looks;
 
-//lock
-list closed_locks;
-list open_locks;
-list closed_locks_glows;
-list open_locks_glows;
-
-show_hide_lock() {
-    if (hidden) return;
-    integer i;
-    integer links = llGetListLength(open_locks);
-    for (;i < links; ++i) {
-        llSetLinkAlpha(llList2Integer(open_locks,i),!locked,ALL_SIDES);
-        update_glows(llList2Integer(open_locks,i),!locked);
-    }
-    links = llGetListLength(closed_locks);
-    for (i=0; i < links; ++i) {
-        llSetLinkAlpha(llList2Integer(closed_locks,i),locked,ALL_SIDES);
-        update_glows(llList2Integer(closed_locks,i),locked);
-    }
-}
-
-update_glows(integer link, integer alpha) {
-    list glows;
-    integer index;
-    if (alpha) {
-        glows = open_locks_glows;
-        if (locked) glows = closed_locks_glows;
-        index = llListFindList(glows,[link]);
-        if (!~index) llSetLinkPrimitiveParamsFast(link,[PRIM_GLOW,ALL_SIDES,llList2Float(glows,index+1)]);
-    } else {
-        float glow = llList2Float(llGetLinkPrimitiveParams(link,[PRIM_GLOW,0]),0);
-        glows = closed_locks_glows;
-        if (locked) glows = open_locks_glows;
-        index = llListFindList(glows,[link]);
-        if (~index && glow > 0) glows = llListReplaceList(glows,[glow],index+1,index+1);
-        if (~index && glow == 0) glows = llDeleteSubList(glows,index,index+1);
-        if (!~index && glow > 0) glows += [link,glow];
-        if (locked) open_locks_glows = glows;
-        else closed_locks_glows = glows;
-        llSetLinkPrimitiveParamsFast(link,[PRIM_GLOW,ALL_SIDES,0.0]);
-    }
-}
-
-get_locks() {
-    open_locks = [];
-    closed_locks = [];
-    integer i = llGetNumberOfPrims();
-    string prim_name;
-    for (;i > 1; --i) {
-        prim_name = (string)llGetLinkPrimitiveParams(i,[PRIM_NAME]);
-        if (prim_name == "Lock" || prim_name == "ClosedLock")
-            closed_locks += i;
-        else if (prim_name == "OpenLock")
-            open_locks += i;
-    }
-}
-
-//stealth
-list glowy;
-stealth (string str) {
-    if (str == "hide") hidden = TRUE;
-    else if (str == "show") hidden = FALSE;
-    else hidden = !hidden;
-    llSetLinkAlpha(LINK_SET,(float)(!hidden),ALL_SIDES);
-    integer count;
-    if (hidden) {
-        count = llGetNumberOfPrims();
-        float glow;
-        for (;count > 0; --count) {
-            glow = llList2Float(llGetLinkPrimitiveParams(count,[PRIM_GLOW,0]),0);
-            if (glow > 0) glowy += [count,glow];
-        }
-        llSetLinkPrimitiveParamsFast(LINK_SET,[PRIM_GLOW,ALL_SIDES,0.0]);
-    } else {
-        integer i;
-        count = llGetListLength(glowy);
-        for (;i < count;i += 2)
-            llSetLinkPrimitiveParamsFast(llList2Integer(glowy,i),[PRIM_GLOW,ALL_SIDES,llList2Float(glowy,i+1)]);
-        glowy = [];
-    }
-    show_hide_lock();
-}
-
-//update
-integer upstream = 1;
-key id_installer;
-
-update() {
-    integer pin = (integer)llFrand(99999998.0) + 1;
-    llSetRemoteScriptAccessPin(pin);
-    integer chan_installer = -12345;
-    if (upstream) chan_installer = -7484213;
-    llRegionSayTo(id_installer,chan_installer,"ready|"+(string)pin);
-}
-
-//menus
 list these_menus;
 
 dialog(key id, string context, list buttons, list arrows, integer page, integer auth, string name) {
@@ -200,10 +70,7 @@ integer menu_rlv;
 integer menu_kidnap;
 
 menu_root(key id, integer auth) {
-    string context = "\n"+headline;
-    context += "\n\nPrefix: %PREFIX%";
-    context += "\nChannel: /%CHANNEL%";
-    if (safeword) context += "\nSafeword: "+safeword;
+    string context = "\n [http://www.opencollar.at/main-menu.html /root]";
     list these_buttons = ["Apps"];
     if (menu_anim) these_buttons += "Animations";
     else these_buttons += "-";
@@ -219,11 +86,13 @@ menu_root(key id, integer auth) {
 }
 
 menu_settings(key id, integer auth) {
-    string context = "\nSettings";
+    string context = "\n [http://www.opencollar.at/settings.html ./settings]";
     list these_buttons = ["Print","Load","Fix"];
     these_buttons += adjusters;
-    if (hidden) these_buttons += ["☑ Stealth"];
-    else these_buttons += ["☐ Stealth"];
+    if (llGetInventoryType("oc_stealth") == INVENTORY_SCRIPT) {
+        if (hidden) these_buttons += ["☑ Stealth"];
+        else these_buttons += ["☐ Stealth"];
+    } else these_buttons += ["-"];
     if (looks) these_buttons += "Looks";
     else if (llGetInventoryType("oc_themes") == INVENTORY_SCRIPT)
         these_buttons += "Themes";
@@ -231,18 +100,16 @@ menu_settings(key id, integer auth) {
 }
 
 menu_apps(key id, integer auth) {
-    string context="\nApps & Plugins";
+    string context="\n [http://www.opencollar.at/apps.html ./apps]";
     dialog(id,context,apps,["BACK"],0,auth,"Apps");
 }
 
 menu_about(key id) {
     string context = "\nVersion: "+(string)version+"\nOrigin: ";
     if (dist) context += uri("agent/"+dist);
-    else context += "";
-    context += "\n\n“"+about+"”";
-    context += "\n\n"+group;
-    context += "\n"+landmark;
-    context += "\n\nOpenCollar scripts were used in this product to an unknown extent. Relevant [https://raw.githubusercontent.com/OpenCollar/opencollar/master/LICENSE license terms] still apply.";
+    else context += "Unknown";
+    context+="\n\n"+about;
+    context+="\n\nThe OpenCollar Six™ scripts were used in this product to an unknown extent. The OpenCollar project can't support this product. Relevant [https://raw.githubusercontent.com/VirtualDisgrace/opencollar/master/LICENSE license terms] still apply.";
     llDialog(id,context,["OK"],-12345);
 }
 
@@ -279,37 +146,9 @@ commands(integer auth, string str, key id) {
     else if (str == "settings") {
         if (auth == CMD_OWNER || auth == CMD_WEARER) menu_settings(id,auth);
     } else if (cmd == "fix") {
-        if (id == wearer) {
+        if (id == wearer){
             make_menus();
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"I've fixed the menus.",id);
-        } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",id);
-    } else if (!llSubStringIndex(str,".- ... -.-") && id == wearer) {
-        id_installer = (key)llGetSubString(str,-36,-1);
-        dialog(id,"\nReady to install?",["Yes","No"],["Cancel"],0,auth,"update");
-    } else if (str == "hide" || str == "show" || str == "stealth") {
-        if (auth == CMD_OWNER || auth == CMD_WEARER) stealth(str);
-        else if ((key)id) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",id);
-    } else if (str == "lock") {
-        if (auth == CMD_OWNER || id == wearer ) {
-            locked = TRUE;
-            llMessageLinked(LINK_SAVE,LM_SETTING_SAVE,that_token+"locked=1","");
-            llMessageLinked(LINK_ROOT,LM_SETTING_RESPONSE,that_token+"locked=1","");
-            llOwnerSay("@detach=n");
-            llMessageLinked(LINK_RLV,RLV_CMD,"detach=n","main");
-            llPlaySound(locking,1.0);
-            show_hide_lock();
-            llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"/me is locked.",id);
-        } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",id);;
-    } else if (str == "runaway" || str == "unlock") {
-        if (auth == CMD_OWNER) {
-            locked = FALSE;
-            llMessageLinked(LINK_SAVE,LM_SETTING_DELETE,that_token+"locked","");
-            llMessageLinked(LINK_ROOT,LM_SETTING_RESPONSE,that_token+"locked=0","");
-            llOwnerSay("@detach=y");
-            llMessageLinked(LINK_RLV,RLV_CMD,"detach=y","main");
-            llPlaySound(unlocking,1.0);
-            show_hide_lock();
-            llMessageLinked(LINK_DIALOG,NOTIFY,"1"+"/me is unlocked.",id);
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",id);
     }
 }
@@ -317,14 +156,7 @@ commands(integer auth, string str, key id) {
 failsafe() {
     string name = llGetScriptName();
     if((key)name) return;
-    if (name != "oc_root") {
-        llOwnerSay("\n\nYour script \""+name+"\" has to be named \"oc_root\" or it might cause compatiblity issues, please rename and add your script again to your artwork.\n");
-        llRemoveInventory(name);
-    }
-    // this version of oc_root is a combo, we don't need those other plugins
-    if (llGetInventoryType("oc_lock") == INVENTORY_SCRIPT) llRemoveInventory("oc_lock");
-    if (llGetInventoryType("oc_stealth") == INVENTORY_SCRIPT) llRemoveInventory("oc_stealth");
-    if (llGetInventoryType("oc_update") == INVENTORY_SCRIPT) llRemoveInventory("oc_update");
+    if(name != "oc_root") llRemoveInventory(name);
 }
 
 make_menus() {
@@ -340,13 +172,12 @@ make_menus() {
 }
 
 init() {
-    get_locks();
     hidden = !(integer)llGetAlpha(ALL_SIDES);
     failsafe();
     llSetTimerEvent(1.0);
 }
 
-string uri(string str) {
+string uri(string str){
     return "secondlife:///app/"+str+"/inspect";
 }
 
@@ -392,11 +223,11 @@ default {
                 params = llParseString2List(str,["|"],[]);
                 id = (key)llList2String(params,0);
                 string button = llList2String(params,1);
-                //integer page = (integer)llList2String(params,2);
+                integer page = (integer)llList2String(params,2);
                 integer auth = (integer)llList2String(params,3);
                 string menu = llList2String(these_menus,menuindex + 1);
                 these_menus = llDeleteSubList(these_menus,menuindex - 1,menuindex + 1);
-                if (menu == "Main") {
+                if (menu == "Main"){
                     if (button == "LOCK" || button== "UNLOCK")
                         llMessageLinked(LINK_ROOT,auth,button,id);
                     else if (button == "About") menu_about(id);
@@ -431,24 +262,15 @@ default {
                         return;
                     }
                     menu_settings(id,auth);
-                } else if (menu == "update") {
-                    if (button == "Yes") update();
-                    else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"cancelled",id);
                 }
             }
         } else if (num >= CMD_OWNER && num <= CMD_WEARER) commands(num,str,id);
-        else if (num == RLV_REFRESH || num == RLV_CLEAR) {
-            if (locked) llMessageLinked(LINK_RLV, RLV_CMD,"detach=n","main");
-            else llMessageLinked(LINK_RLV,RLV_CMD,"detach=y","main");
-        } else if (num == LM_SETTING_RESPONSE) {
+        else if (num == LM_SETTING_RESPONSE) {
             params = llParseString2List(str,["="],[]);
             string this_token = llList2String(params,0);
             string value = llList2String(params,1);
-            if (this_token == that_token+"locked") {
-                locked = (integer)value;
-                if (locked) llOwnerSay("@detach=n");
-                show_hide_lock();
-            } else if (this_token == that_token+"safeword") safeword = value;
+            if (this_token == that_token+"locked") locked = (integer)value;
+            else if (this_token == that_token+"safeword") safeword = value;
             else if (this_token == "intern_dist") dist = value;
             else if (this_token == "intern_looks") looks = (integer)value;
         } else if (num == DIALOG_TIMEOUT) {
@@ -465,10 +287,8 @@ default {
         }
         if (changes & CHANGED_COLOR)
             hidden = !(integer)llGetAlpha(ALL_SIDES);
-        if (changes & CHANGED_LINK) {
-            get_locks();
+        if (changes & CHANGED_LINK)
             llMessageLinked(LINK_ALL_OTHERS,LINK_UPDATE,"LINK_REQUEST","");
-        }
     }
     timer() {
         make_menus();
