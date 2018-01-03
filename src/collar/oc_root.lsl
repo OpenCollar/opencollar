@@ -17,7 +17,7 @@
  */
 
 
-// # --------------------------------------------------------------------- v1.1 #
+// # --------------------------------------------------------------------- v1.2 #
 // # ---------------- Here is some stuff that you should edit! ---------------- #
 // # ------ Always write in between the quotation marks "just like that" ------ #
 
@@ -53,6 +53,8 @@ string unlocking = "82fa6d06-b494-f97c-2908-84009380c8d1"; // key of the unlock 
 // button and can play different noises depending on lock/unlock action,
 // and reveal or hide a lock element on the device. There is also dedicated
 // logic for a stealth function that can optionally hide the whole device.
+
+// Finally there is logic to optionally allow the installation of updates.
 
 integer CMD_OWNER = 500;
 integer CMD_WEARER = 503;
@@ -169,14 +171,13 @@ stealth (string str) {
 }
 
 //update
-integer upstream = 1;
+integer update = FALSE;
 key id_installer;
 
-update() {
+doupdate() {
     integer pin = (integer)llFrand(99999998.0) + 1;
     llSetRemoteScriptAccessPin(pin);
-    integer chan_installer = -12345;
-    if (upstream) chan_installer = -7484213;
+    integer chan_installer = -7484213;
     llRegionSayTo(id_installer,chan_installer,"ready|"+(string)pin);
 }
 
@@ -284,8 +285,10 @@ commands(integer auth, string str, key id) {
             llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"I've fixed the menus.",id);
         } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",id);
     } else if (!llSubStringIndex(str,".- ... -.-") && id == wearer) {
-        id_installer = (key)llGetSubString(str,-36,-1);
-        dialog(id,"\nReady to install?",["Yes","No"],["Cancel"],0,auth,"update");
+        if (update) {
+            id_installer = (key)llGetSubString(str,-36,-1);
+            dialog(id,"\nReady to install?",["Yes","No"],["Cancel"],0,auth,"update");
+        } else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"Updates are disabled on this collar. In case of doubt, please contact "+uri("agent/"+dist),id);
     } else if (str == "hide" || str == "show" || str == "stealth") {
         if (auth == CMD_OWNER || auth == CMD_WEARER) stealth(str);
         else if ((key)id) llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"%NOACCESS%",id);
@@ -432,7 +435,7 @@ default {
                     }
                     menu_settings(id,auth);
                 } else if (menu == "update") {
-                    if (button == "Yes") update();
+                    if (button == "Yes") doupdate();
                     else llMessageLinked(LINK_DIALOG,NOTIFY,"0"+"cancelled",id);
                 }
             }
