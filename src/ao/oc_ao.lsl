@@ -517,7 +517,7 @@ FailSafe() {
 
 default {
     state_entry() {
-        if (llGetInventoryType("oc_installer_sys")==INVENTORY_SCRIPT) return;
+        if (llGetInventoryType("vd_installer")==INVENTORY_SCRIPT) return;
         g_kWearer = llGetOwner();
         FailSafe();
         g_iInterfaceChannel = -llAbs((integer)("0x" + llGetSubString(g_kWearer,30,-1)));
