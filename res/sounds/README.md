@@ -16,4 +16,4 @@ Constraints specific to Second Life®:
   2. Samples have to be exported as monophonic 44,100 Hz 16 bit PCM.
 
 License:
-* All sounds and binaries contributed to this repository are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International Public License](https://creativecommons.org/licenses/by-sa/4.0/)
+* Sound binaries contributed to this repository are licensed under a [Creative Commons Attribution-ShareAlike 4.0 International Public License](https://creativecommons.org/licenses/by-sa/4.0/)
