@@ -19,10 +19,10 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//     OpenCollar AO - 170620.1          .*' /  .*' ; .*`- +'  `*'          //
+//     OpenCollar AO - 180205.1          .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2008 - 2017 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
+//  Copyright (c) 2008 - 2018 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
 //  Wendy Starfall, littlemousy, Romka Swallowtail, Garvin Twine et al.     //
 // ------------------------------------------------------------------------ //
 //  This script is free software: you can redistribute it and/or modify     //
@@ -676,8 +676,10 @@ default {
                     g_lAnims2Choose = [];
                     if (llGetInventoryType(sMessage) == INVENTORY_ANIMATION) {
                         if (sMenuType == "Sitting") g_sSitAnim = sMessage;
-                        else if (sMenuType == "Sitting on Ground") g_sSitAnywhereAnim = sMessage;
-                        else if (sMenuType == "Walking") g_sWalkAnim = sMessage;
+                        else if (sMenuType == "Sitting on Ground") {
+                            g_sSitAnywhereAnim = sMessage;
+                            if (g_iSitAnywhereOn) llSetAnimationOverride("Standing",sMessage);
+                        } else if (sMenuType == "Walking") g_sWalkAnim = sMessage;
                         if (g_iAO_ON && (sMenuType != "Sitting" || g_iSitAnimOn))
                             llSetAnimationOverride(sMenuType,sMessage);
                     } else llOwnerSay("No "+sMenuType+" animation set.");
