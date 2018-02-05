@@ -19,10 +19,10 @@
 //                                          '  `+.;  ;  '      :            //
 //                                          :  '  |    ;       ;-.          //
 //                                          ; '   : :`-:     _.`* ;         //
-//       Remote System - 170620.1        .*' /  .*' ; .*`- +'  `*'          //
+//       Remote System - 180205.1        .*' /  .*' ; .*`- +'  `*'          //
 //                                       `*-*   `*-*  `*-*'                 //
 // ------------------------------------------------------------------------ //
-//  Copyright (c) 2014 - 2017 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
+//  Copyright (c) 2014 - 2018 Nandana Singh, Jessenia Mocha, Alexei Maven,  //
 //  Master Starship, Wendy Starfall, North Glenwalker, Ray Zopf, Sumi Perl, //
 //  Kire Faulkes, Zinn Ixtar, Builder's Brewery, Romka Swallowtail et al.   //
 // ------------------------------------------------------------------------ //
@@ -101,7 +101,7 @@ integer DIALOG               = -9000;
 integer DIALOG_RESPONSE      = -9001;
 integer DIALOG_TIMEOUT       = -9002;
 integer CMD_REMOTE           = 10000;
-
+integer UPDATE = 5555;
 string UPMENU          = "BACK";
 string g_sListPartners  = "List";
 string g_sRemovePartner = "Remove";
@@ -364,7 +364,10 @@ default {
             lParams = [];
         } else if (iNum == SUBMENU && sStr == "Main") MainMenu();
         else if (iNum == CMD_REMOTE) SendCollarCommand(sStr);
-        else if (iNum == 111) {
+        else if (iNum == UPDATE) {
+            if (sStr != "") g_lPartners = llCSV2List(sStr);
+            else llMessageLinked(iSender,UPDATE+1,llList2CSV(g_lPartners),"");
+        } else if (iNum == 111) {
             g_sTextureALL = sStr;
             if (g_sActivePartnerID == g_sAllPartners)
                 llSetLinkPrimitiveParamsFast(g_iPicturePrim,[PRIM_TEXTURE, ALL_SIDES, g_sTextureALL , <1.0, 1.0, 0.0>, ZERO_VECTOR, 0.0]);
